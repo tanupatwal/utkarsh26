@@ -9,7 +9,8 @@ export default function AnimatedBackground() {
   const [isMounted, setIsMounted] = useState(false);
 
   // Parallax effect: background moves 12% slower than content
-  const backgroundY = useTransform(scrollY, [0, 1000], [0, -120]);
+  // Adjusted to 0 to prevent bottom cutoff as per user request for "full length"
+  const backgroundY = useTransform(scrollY, [0, 1000], [0, 0]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -27,7 +28,7 @@ export default function AnimatedBackground() {
         style={{ y: backgroundY }}
       >
         {/* Using Next.js Image optimization with responsive loading */}
-        <div className="relative w-full h-[120vh]">
+        <div className="relative w-full h-full">
           <Image
             src="/assets/hero-bg-4k-source.png"
             alt="Utkarsh Hero Background - Fusion of Heritage and Tech"
