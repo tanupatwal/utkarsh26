@@ -1,15 +1,9 @@
 'use client';
 
-import React, { useRef } from 'react';
-import { motion, useScroll, useTransform, useSpring } from 'framer-motion';
+import React, { useRef, useState, useEffect } from 'react';
+import { motion, useScroll, useTransform, useSpring, useMotionValue, useMotionTemplate } from 'framer-motion';
 
 // --- Utility Components for Animations ---
-
-function ParallaxText({ children, baseVelocity = 100 }: { children: string; baseVelocity: number }) {
-  // A simplified version of a marquee or parallax text if needed.
-  // For now, we will just use standard motion elements.
-  return <span>{children}</span>;
-}
 
 const RevealTitle = ({ children, className }: { children: React.ReactNode; className?: string }) => {
   return (
@@ -38,11 +32,28 @@ const RevealText = ({ children, delay = 0 }: { children: React.ReactNode; delay?
   );
 };
 
+const StatCard = ({ number, label, delay }: { number: string; label: string; delay: number }) => (
+  <RevealText delay={delay}>
+    <motion.div 
+      whileHover={{ scale: 1.1, textShadow: "0 0 8px rgb(255, 255, 255)" }}
+      className="group cursor-default"
+    >
+      <div className="font-orbitron text-4xl font-bold text-white mb-2 group-hover:text-heritage-gold transition-colors duration-300">{number}</div>
+      <div className="text-sm text-gray-400 uppercase tracking-wider group-hover:text-white transition-colors duration-300">{label}</div>
+    </motion.div>
+  </RevealText>
+);
+
 // --- Main Component ---
 
 export default function AboutSection() {
   const containerRef = useRef<HTMLDivElement>(null);
-  
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  // Mouse Position for Spotlight & Tilt
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+
   // Scroll Progress for Parallax Background
   const { scrollYProgress } = useScroll({
     target: containerRef,
@@ -59,12 +70,67 @@ export default function AboutSection() {
   const rotateMandala = useTransform(springScroll, [0, 1], [0, 90]);
   const scaleCircuit = useTransform(springScroll, [0, 1], [0.8, 1.2]);
 
+  // Card Tilt Logic
+  const x = useMotionValue(0);
+  const y = useMotionValue(0);
+  const rotateX = useSpring(useTransform(y, [-0.5, 0.5], [10, -10]), { stiffness: 150, damping: 20 });
+  const rotateY = useSpring(useTransform(x, [-0.5, 0.5], [-10, 10]), { stiffness: 150, damping: 20 });
+
+  function handleMouseMove(event: React.MouseEvent<HTMLDivElement>) {
+    const { clientX, clientY } = event;
+    const { left, top, width, height } = event.currentTarget.getBoundingClientRect();
+    
+    // Calculate normalized position (-0.5 to 0.5) for tilt
+    const nX = (clientX - left) / width - 0.5;
+    const nY = (clientY - top) / height - 0.5;
+    
+    x.set(nX);
+    y.set(nY);
+    
+    // Update global mouse position relative to section for spotlight
+    if (containerRef.current) {
+        const rect = containerRef.current.getBoundingClientRect();
+        mouseX.set(clientX - rect.left);
+        mouseY.set(clientY - rect.top);
+    }
+  }
+
+  function handleMouseLeave() {
+    x.set(0);
+    y.set(0);
+  }
+
   return (
     <section 
       ref={containerRef} 
+      onMouseMove={handleMouseMove}
       className="relative min-h-screen py-24 md:py-40 bg-navy-dark overflow-hidden flex items-center justify-center"
       id="about"
     >
+      {/* --- Noise Texture Overlay --- */}
+      <div className="absolute inset-0 z-0 opacity-5 pointer-events-none mix-blend-overlay">
+         <svg className='isolate' width='100%' height='100%'>
+            <filter id='noiseFilter'>
+                <feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/>
+            </filter>
+            <rect width='100%' height='100%' filter='url(#noiseFilter)'/>
+         </svg>
+      </div>
+
+      {/* --- Mouse Spotlight --- */}
+      <motion.div
+        className="absolute inset-0 z-0 pointer-events-none opacity-30"
+        style={{
+          background: useMotionTemplate`
+            radial-gradient(
+              600px circle at ${mouseX}px ${mouseY}px,
+              rgba(255, 255, 255, 0.08),
+              transparent 80%
+            )
+          `,
+        }}
+      />
+
       {/* --- Ambient Background --- */}
       <div className="absolute inset-0 z-0 opacity-40 pointer-events-none">
         {/* Heritage Gradient Blob */}
@@ -111,9 +177,15 @@ export default function AboutSection() {
             
             <RevealTitle className="font-cinzel text-5xl md:text-7xl lg:text-8xl leading-tight text-white mb-8">
                 ABOUT <br />
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-heritage-saffron via-white to-tech-cyan">
+                <motion.span 
+                  whileHover={{ 
+                    filter: "drop-shadow(0 0 15px rgba(255,165,0,0.5))",
+                    scale: 1.05
+                  }}
+                  className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-heritage-saffron via-white to-tech-cyan cursor-grab active:cursor-grabbing"
+                >
                   UTKARSH
-                </span>
+                </motion.span>
             </RevealTitle>
 
             <motion.div
@@ -123,51 +195,58 @@ export default function AboutSection() {
             
             {/* Stats / Highlight */}
             <div className="flex justify-center md:justify-start gap-12 text-center">
-                <RevealText delay={0.2}>
-                    <div className="font-orbitron text-4xl font-bold text-white mb-2">18+</div>
-                    <div className="text-sm text-gray-400 uppercase tracking-wider">Years</div>
-                </RevealText>
-                <RevealText delay={0.3}>
-                    <div className="font-orbitron text-4xl font-bold text-white mb-2">20k+</div>
-                    <div className="text-sm text-gray-400 uppercase tracking-wider">Footfall</div>
-                </RevealText>
-                <RevealText delay={0.4}>
-                    <div className="font-orbitron text-4xl font-bold text-white mb-2">50+</div>
-                    <div className="text-sm text-gray-400 uppercase tracking-wider">Events</div>
-                </RevealText>
+                <StatCard number="18+" label="Years" delay={0.2} />
+                <StatCard number="20k+" label="Footfall" delay={0.3} />
+                <StatCard number="50+" label="Events" delay={0.4} />
             </div>
         </div>
 
-        {/* Right Side: Narrative Content */}
-        <div className="w-full md:w-1/2">
-            <div className="relative p-8 md:p-12 backdrop-blur-sm bg-navy-card/30 border border-white/10 rounded-2xl">
+        {/* Right Side: Narrative Content - TILT CARD */}
+        <div className="w-full md:w-1/2 [perspective:1000px]">
+            <motion.div 
+                ref={cardRef}
+                style={{ 
+                    rotateX, 
+                    rotateY,
+                    transformStyle: "preserve-3d"
+                }}
+                onMouseLeave={handleMouseLeave}
+                className="relative p-8 md:p-12 backdrop-blur-xl bg-navy-card/40 border border-white/10 rounded-2xl shadow-2xl shadow-black/50"
+            >
+                {/* Glossy sheen effect overlay */}
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
+                
                 {/* Decorative corner accents */}
                 <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-heritage-gold rounded-tl-xl" />
                 <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-tech-cyan rounded-br-xl" />
 
-                <RevealText delay={0.1}>
-                    <p className="text-lg md:text-xl leading-relaxed text-gray-300 font-outfit mb-6">
-                        <span className="text-heritage-gold font-bold">Utkarsh</span>, formerly known as <span className="text-white font-medium">INNOVIZ</span>, is a three-day extravaganza celebrating arts, culture, and engineering.
-                    </p>
-                </RevealText>
+                {/* Content */}
+                <div style={{ transform: "translateZ(30px)" }}>
+                    <RevealText delay={0.1}>
+                        <p className="text-lg md:text-xl leading-relaxed text-gray-300 font-outfit mb-6">
+                            <span className="text-heritage-gold font-bold">Utkarsh</span>, formerly known as <span className="text-white font-medium">INNOVIZ</span>, is a three-day extravaganza celebrating arts, culture, and engineering.
+                        </p>
+                    </RevealText>
 
-                <RevealText delay={0.2}>
-                    <p className="text-base md:text-lg leading-relaxed text-gray-400 font-outfit mb-6">
-                        As a premier tech fest, it brings together bright minds, groundbreaking ideas, and cutting-edge advancements that shape the future. From hands-on workshops and competitive hackathons to insightful talks by industry experts.
-                    </p>
-                </RevealText>
+                    <RevealText delay={0.2}>
+                        <p className="text-base md:text-lg leading-relaxed text-gray-400 font-outfit mb-6">
+                            As a premier tech fest, it brings together bright minds, groundbreaking ideas, and cutting-edge advancements that shape the future. From hands-on workshops and competitive hackathons to insightful talks by industry experts.
+                        </p>
+                    </RevealText>
 
-                <RevealText delay={0.3}>
-                     <p className="text-base md:text-lg leading-relaxed text-gray-400 font-outfit">
-                        Since its inception in <span className="text-tech-cyan font-bold">2006</span>, UTKARSH has established itself as a premier event in Delhi & NCR. Join us in pushing boundaries, redefining the present, and pioneering a smarter tomorrow.
-                    </p>
-                </RevealText>
+                    <RevealText delay={0.3}>
+                        <p className="text-base md:text-lg leading-relaxed text-gray-400 font-outfit">
+                            Since its inception in <span className="text-tech-cyan font-bold">2006</span>, UTKARSH has established itself as a premier event in Delhi & NCR. Join us in pushing boundaries, redefining the present, and pioneering a smarter tomorrow.
+                        </p>
+                    </RevealText>
+                </div>
 
                  {/* Interactive Element (Optional CTA or Decor) */}
                  <motion.div 
                     initial={{ opacity: 0 }}
                     whileInView={{ opacity: 1 }}
                     transition={{ delay: 0.6, duration: 1 }}
+                    style={{ transform: "translateZ(20px)" }}
                     className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between"
                  >
                     <span className="text-sm font-medium text-white/60">February 2026</span>
@@ -177,7 +256,7 @@ export default function AboutSection() {
                         <div className="h-2 w-2 rounded-full bg-heritage-gold animate-pulse delay-150" />
                     </div>
                 </motion.div>
-            </div>
+            </motion.div>
         </div>
 
       </div>
