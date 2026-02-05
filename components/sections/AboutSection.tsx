@@ -34,12 +34,12 @@ const RevealText = ({ children, delay = 0 }: { children: React.ReactNode; delay?
 
 const StatCard = ({ number, label, delay }: { number: string; label: string; delay: number }) => (
   <RevealText delay={delay}>
-    <motion.div 
+    <motion.div
       whileHover={{ scale: 1.1, textShadow: "0 0 8px rgb(255, 255, 255)" }}
-      className="group cursor-default"
+      className="group cursor-default flex flex-col items-center"
     >
-      <div className="font-orbitron text-4xl font-bold text-white mb-2 group-hover:text-heritage-gold transition-colors duration-300">{number}</div>
-      <div className="text-sm text-gray-400 uppercase tracking-wider group-hover:text-white transition-colors duration-300">{label}</div>
+      <div className="font-orbitron text-5xl font-black text-white mb-2 group-hover:text-heritage-gold transition-colors duration-300 drop-shadow-md">{number}</div>
+      <div className="text-sm font-bold text-gray-400 uppercase tracking-[0.2em] group-hover:text-white transition-colors duration-300">{label}</div>
     </motion.div>
   </RevealText>
 );
@@ -79,19 +79,19 @@ export default function AboutSection() {
   function handleMouseMove(event: React.MouseEvent<HTMLDivElement>) {
     const { clientX, clientY } = event;
     const { left, top, width, height } = event.currentTarget.getBoundingClientRect();
-    
+
     // Calculate normalized position (-0.5 to 0.5) for tilt
     const nX = (clientX - left) / width - 0.5;
     const nY = (clientY - top) / height - 0.5;
-    
+
     x.set(nX);
     y.set(nY);
-    
+
     // Update global mouse position relative to section for spotlight
     if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        mouseX.set(clientX - rect.left);
-        mouseY.set(clientY - rect.top);
+      const rect = containerRef.current.getBoundingClientRect();
+      mouseX.set(clientX - rect.left);
+      mouseY.set(clientY - rect.top);
     }
   }
 
@@ -101,20 +101,20 @@ export default function AboutSection() {
   }
 
   return (
-    <section 
-      ref={containerRef} 
+    <section
+      ref={containerRef}
       onMouseMove={handleMouseMove}
       className="relative min-h-screen py-24 md:py-40 bg-navy-dark overflow-hidden flex items-center justify-center"
       id="about"
     >
       {/* --- Noise Texture Overlay --- */}
       <div className="absolute inset-0 z-0 opacity-5 pointer-events-none mix-blend-overlay">
-         <svg className='isolate' width='100%' height='100%'>
-            <filter id='noiseFilter'>
-                <feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/>
-            </filter>
-            <rect width='100%' height='100%' filter='url(#noiseFilter)'/>
-         </svg>
+        <svg className='isolate' width='100%' height='100%'>
+          <filter id='noiseFilter'>
+            <feTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch' />
+          </filter>
+          <rect width='100%' height='100%' filter='url(#noiseFilter)' />
+        </svg>
       </div>
 
       {/* --- Mouse Spotlight --- */}
@@ -134,129 +134,123 @@ export default function AboutSection() {
       {/* --- Ambient Background --- */}
       <div className="absolute inset-0 z-0 opacity-40 pointer-events-none">
         {/* Heritage Gradient Blob */}
-        <motion.div 
-            style={{ y: yHeritage }}
-            className="absolute -top-1/4 -left-1/4 w-[80vw] h-[80vw] bg-heritage-saffron/10 rounded-full blur-[120px]" 
+        <motion.div
+          style={{ y: yHeritage }}
+          className="absolute -top-1/4 -left-1/4 w-[80vw] h-[80vw] bg-heritage-saffron/10 rounded-full blur-[120px]"
         />
         {/* Tech Gradient Blob */}
-        <motion.div 
-            style={{ y: yTech }}
-            className="absolute top-1/3 -right-1/4 w-[60vw] h-[60vw] bg-tech-purple/10 rounded-full blur-[100px]" 
+        <motion.div
+          style={{ y: yTech }}
+          className="absolute top-1/3 -right-1/4 w-[60vw] h-[60vw] bg-tech-purple/10 rounded-full blur-[100px]"
         />
       </div>
 
       {/* --- Decorative Elements (Parallax) --- */}
       <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden">
         {/* Spinning Mandala (Left) */}
-        <motion.div 
+        <motion.div
           style={{ rotate: rotateMandala, y: yHeritage, opacity: 0.15 }}
           className="absolute top-10 -left-64 md:-left-32 w-[600px] h-[600px] border-[1px] border-heritage-gold rounded-full border-dashed"
         >
-             <div className="absolute inset-4 border border-heritage-orange rounded-full opacity-50" />
-             <div className="absolute inset-12 border border-heritage-red rounded-full opacity-30" />
+          <div className="absolute inset-4 border border-heritage-orange rounded-full opacity-50" />
+          <div className="absolute inset-12 border border-heritage-red rounded-full opacity-30" />
         </motion.div>
 
         {/* Tech Circuit Grid (Right) */}
-        <motion.div 
-           style={{ scale: scaleCircuit, y: yTech, opacity: 0.15 }}
-           className="absolute bottom-10 -right-64 md:-right-32 w-[600px] h-[600px]"
+        <motion.div
+          style={{ scale: scaleCircuit, y: yTech, opacity: 0.15 }}
+          className="absolute bottom-10 -right-64 md:-right-32 w-[600px] h-[600px]"
         >
-            <div className="w-full h-full border border-tech-cyan/30 bg-[linear-gradient(45deg,transparent_25%,rgba(0,240,255,0.05)_50%,transparent_75%)] bg-[length:50px_50px]" />
+          <div className="w-full h-full border border-tech-cyan/30 bg-[linear-gradient(45deg,transparent_25%,rgba(0,240,255,0.05)_50%,transparent_75%)] bg-[length:50px_50px]" />
         </motion.div>
       </div>
 
 
       {/* --- Main Content Container --- */}
-      <div className="container mx-auto px-6 relative z-10 flex flex-col md:flex-row items-center gap-16 md:gap-24">
-        
+      <div className="container mx-auto px-6 relative z-10 flex flex-col md:flex-row items-center md:items-end gap-16 md:gap-24">
+
         {/* Left Side: Visual/Text Title Block */}
         <div className="w-full md:w-1/2 text-center md:text-left">
-            <RevealTitle className="font-outfit text-sm md:text-base tracking-[0.3em] text-heritage-gold uppercase mb-4">
-                The Legacy Continues
-            </RevealTitle>
-            
-            <RevealTitle className="font-cinzel text-5xl md:text-7xl lg:text-8xl leading-tight text-white mb-8">
-                ABOUT <br />
-                <motion.span 
-                  whileHover={{ 
-                    filter: "drop-shadow(0 0 15px rgba(255,165,0,0.5))",
-                    scale: 1.05
-                  }}
-                  className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-heritage-saffron via-white to-tech-cyan cursor-grab active:cursor-grabbing"
-                >
-                  UTKARSH
-                </motion.span>
-            </RevealTitle>
+          <RevealTitle className="font-outfit text-sm md:text-base tracking-[0.3em] text-heritage-gold uppercase mb-4">
+            The Legacy Continues
+          </RevealTitle>
 
-            <motion.div
-              style={{ scaleX: useTransform(scrollYProgress, [0.1, 0.4], [0, 1]) }}
-              className="h-1 w-32 md:w-64 bg-gradient-to-r from-heritage-orange to-tech-blue origin-left mb-10 mx-auto md:mx-0"
-            />
-            
-            {/* Stats / Highlight */}
-            <div className="flex justify-center md:justify-start gap-12 text-center">
-                <StatCard number="18+" label="Years" delay={0.2} />
-                <StatCard number="20k+" label="Footfall" delay={0.3} />
-                <StatCard number="50+" label="Events" delay={0.4} />
-            </div>
+          <RevealTitle className="font-cinzel text-5xl md:text-7xl lg:text-8xl leading-tight text-white mb-8 drop-shadow-lg">
+            ABOUT <br />
+            <motion.span
+              whileHover={{
+                filter: "drop-shadow(0 0 15px rgba(255,165,0,0.5))",
+                scale: 1.05
+              }}
+              className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-heritage-saffron via-white to-tech-cyan cursor-grab active:cursor-grabbing"
+            >
+              UTKARSH
+            </motion.span>
+          </RevealTitle>
+
+          <motion.div
+            style={{ scaleX: useTransform(scrollYProgress, [0.1, 0.4], [0, 1]) }}
+            className="h-1 w-32 md:w-64 bg-gradient-to-r from-heritage-orange to-tech-blue origin-left mb-10 mx-auto md:mx-0"
+          />
+
+          {/* Stats / Highlight */}
+          <div className="flex justify-center md:justify-start items-center gap-8 text-center">
+            <StatCard number="18+" label="Years" delay={0.2} />
+            <div className="w-px h-12 bg-white/20 hidden md:block" />
+            <StatCard number="20k+" label="Footfall" delay={0.3} />
+            <div className="w-px h-12 bg-white/20 hidden md:block" />
+            <StatCard number="50+" label="Events" delay={0.4} />
+          </div>
         </div>
 
         {/* Right Side: Narrative Content - TILT CARD */}
         <div className="w-full md:w-1/2 [perspective:1000px]">
-            <motion.div 
-                ref={cardRef}
-                style={{ 
-                    rotateX, 
-                    rotateY,
-                    transformStyle: "preserve-3d"
-                }}
-                onMouseLeave={handleMouseLeave}
-                className="relative p-8 md:p-12 backdrop-blur-xl bg-navy-card/40 border border-white/10 rounded-2xl shadow-2xl shadow-black/50"
+          <motion.div
+            ref={cardRef}
+            style={{
+              rotateX,
+              rotateY,
+              transformStyle: "preserve-3d"
+            }}
+            onMouseLeave={handleMouseLeave}
+            className="relative p-10 md:p-14 backdrop-blur-xl bg-navy-card/40 border border-white/10 rounded-2xl shadow-2xl shadow-black/50"
+          >
+            {/* Date Badge */}
+            <div
+              style={{ transform: "translateZ(40px)" }}
+              className="absolute top-6 right-6 px-3 py-1 bg-white/5 border border-white/10 rounded-full text-xs font-mono text-heritage-gold backdrop-blur-md shadow-lg"
             >
-                {/* Glossy sheen effect overlay */}
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
-                
-                {/* Decorative corner accents */}
-                <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-heritage-gold rounded-tl-xl" />
-                <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-tech-cyan rounded-br-xl" />
+              FEB 2026
+            </div>
 
-                {/* Content */}
-                <div style={{ transform: "translateZ(30px)" }}>
-                    <RevealText delay={0.1}>
-                        <p className="text-lg md:text-xl leading-relaxed text-gray-300 font-outfit mb-6">
-                            <span className="text-heritage-gold font-bold">Utkarsh</span>, formerly known as <span className="text-white font-medium">INNOVIZ</span>, is a three-day extravaganza celebrating arts, culture, and engineering.
-                        </p>
-                    </RevealText>
+            {/* Glossy sheen effect overlay */}
+            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-white/5 to-transparent pointer-events-none" />
 
-                    <RevealText delay={0.2}>
-                        <p className="text-base md:text-lg leading-relaxed text-gray-400 font-outfit mb-6">
-                            As a premier tech fest, it brings together bright minds, groundbreaking ideas, and cutting-edge advancements that shape the future. From hands-on workshops and competitive hackathons to insightful talks by industry experts.
-                        </p>
-                    </RevealText>
+            {/* Decorative corner accents */}
+            <div className="absolute top-0 left-0 w-8 h-8 border-t-[1px] border-l-[1px] border-heritage-gold rounded-tl-xl" />
+            <div className="absolute bottom-0 right-0 w-8 h-8 border-b-[1px] border-r-[1px] border-tech-cyan rounded-br-xl" />
 
-                    <RevealText delay={0.3}>
-                        <p className="text-base md:text-lg leading-relaxed text-gray-400 font-outfit">
-                            Since its inception in <span className="text-tech-cyan font-bold">2006</span>, UTKARSH has established itself as a premier event in Delhi & NCR. Join us in pushing boundaries, redefining the present, and pioneering a smarter tomorrow.
-                        </p>
-                    </RevealText>
-                </div>
+            {/* Content */}
+            <div style={{ transform: "translateZ(30px)" }}>
+              <RevealText delay={0.1}>
+                <p className="text-lg md:text-xl leading-[1.6] tracking-[0.5px] text-gray-300 font-outfit mb-6">
+                  <span className="text-heritage-gold font-bold">Utkarsh</span>, formerly known as <span className="text-white font-medium">INNOVIZ</span>, is a <strong className="text-white">three-day extravaganza</strong> celebrating arts, culture, and engineering.
+                </p>
+              </RevealText>
 
-                 {/* Interactive Element (Optional CTA or Decor) */}
-                 <motion.div 
-                    initial={{ opacity: 0 }}
-                    whileInView={{ opacity: 1 }}
-                    transition={{ delay: 0.6, duration: 1 }}
-                    style={{ transform: "translateZ(20px)" }}
-                    className="mt-8 pt-6 border-t border-white/5 flex items-center justify-between"
-                 >
-                    <span className="text-sm font-medium text-white/60">February 2026</span>
-                    <div className="flex space-x-2">
-                        <div className="h-2 w-2 rounded-full bg-heritage-red animate-pulse" />
-                        <div className="h-2 w-2 rounded-full bg-tech-blue animate-pulse delay-75" />
-                        <div className="h-2 w-2 rounded-full bg-heritage-gold animate-pulse delay-150" />
-                    </div>
-                </motion.div>
-            </motion.div>
+              <RevealText delay={0.2}>
+                <p className="text-base md:text-lg leading-[1.6] tracking-[0.5px] text-gray-400 font-outfit mb-6">
+                  As a <strong className="text-white">premier tech fest</strong>, it brings together bright minds, groundbreaking ideas, and cutting-edge advancements that shape the future. From hands-on workshops and competitive hackathons to insightful talks by industry experts.
+                </p>
+              </RevealText>
+
+              <RevealText delay={0.3}>
+                <p className="text-base md:text-lg leading-[1.6] tracking-[0.5px] text-gray-400 font-outfit">
+                  Since its inception in <span className="text-tech-cyan font-bold">2006</span>, UTKARSH has established itself as a premier event in <strong className="text-white">Delhi & NCR</strong>. Join us in pushing boundaries, redefining the present, and pioneering a smarter tomorrow.
+                </p>
+              </RevealText>
+            </div>
+          </motion.div>
         </div>
 
       </div>
