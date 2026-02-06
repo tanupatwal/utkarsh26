@@ -9,25 +9,31 @@ import { LoadingOverlay } from './components/overlays';
 const App: React.FC = () => {
     return (
         <div className="w-full h-screen relative bg-black">
-            {/* Header branding */}
-            <div className="absolute top-8 left-8 z-50 pointer-events-none mix-blend-difference">
-                <h1 className="text-white text-xl font-bold tracking-widest uppercase border-b border-white pb-2">
-                    Vortex // Archives
+
+            {/* Header branding - UTKARSH themed */}
+            <div className="absolute top-8 left-8 z-50 pointer-events-none">
+                <h1
+                    className="text-xl font-bold tracking-widest uppercase pb-2"
+                    style={{
+                        fontFamily: "'Orbitron', sans-serif",
+                        background: 'linear-gradient(90deg, #F5C16C, #00E5FF)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        textShadow: '0 0 20px rgba(245, 193, 108, 0.3)',
+                    }}
+                >
+                    UTKARSH 2026
                 </h1>
             </div>
 
-            {/* Scroll hint */}
-            <div className="absolute bottom-8 right-8 z-50 pointer-events-none">
-                <span className="text-white text-xs opacity-50 uppercase tracking-widest">
-                    Scroll to Explore
-                </span>
-            </div>
+            {/* Scroll hint - only shown when hero fades */}
 
-            {/* 3D Canvas */}
+            {/* 3D Canvas - transparent to show background initially */}
             <Canvas
                 camera={{ position: [0, 0, 0], fov: 75 }}
-                gl={{ antialias: true, alpha: false }}
+                gl={{ antialias: true, alpha: true }}
                 dpr={[1, 2]}
+                style={{ position: 'absolute', top: 0, left: 0, zIndex: 10 }}
             >
                 <Suspense fallback={null}>
                     <Experience />

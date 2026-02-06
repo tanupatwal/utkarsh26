@@ -13,7 +13,7 @@ import { GalleryGroup } from '../sections/gallery';
 import { SpeedLines } from '../effects';
 
 // Overlays
-import { HeroOverlay } from '../overlays';
+import { HeroOverlay, AnimatedBackground } from '../overlays';
 
 /**
  * Experience - Main 3D scene orchestrator.
@@ -31,6 +31,9 @@ const Experience: React.FC = () => {
                 <GalleryGroup />
 
                 <Scroll html style={{ width: '100%', height: '100%' }}>
+                    {/* Background fades out on scroll */}
+                    <AnimatedBackground />
+                    {/* Foreground title overlay */}
                     <HeroOverlay />
                 </Scroll>
             </ScrollControls>

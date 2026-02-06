@@ -1,39 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vortex Scrollytelling</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <style>
-      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;400;800&display=swap');
-      
-      body, html {
-        margin: 0;
-        padding: 0;
-        width: 100%;
-        height: 100%;
-        overflow: hidden;
-        background-color: #000;
-        font-family: 'Inter', sans-serif;
-      }
-      
-      #root {
-        width: 100%;
-        height: 100%;
-      }
 
-      /* Custom scrollbar hide */
-      ::-webkit-scrollbar {
-        width: 0px;
-        background: transparent;
-      }
-      
-      .wisp-text {
-        transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-        will-change: transform, opacity, filter, letter-spacing;
-      }
-    </style>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vortex Scrollytelling</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;400;800&family=Orbitron:wght@400;600;700;800;900&display=swap');
+
+    body,
+    html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #000;
+      font-family: 'Inter', sans-serif;
+    }
+
+    #root {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Custom scrollbar hide */
+    ::-webkit-scrollbar {
+      width: 0px;
+      background: transparent;
+    }
+
+    .wisp-text {
+      transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: transform, opacity, filter, letter-spacing;
+    }
+  </style>
   <script type="importmap">
 {
   "imports": {
@@ -46,10 +48,12 @@
   }
 }
 </script>
-<link rel="stylesheet" href="/index.css">
+  <link rel="stylesheet" href="/index.css">
 </head>
-  <body>
-    <div id="root"></div>
+
+<body>
+  <div id="root"></div>
   <script type="module" src="/src/main.tsx"></script>
 </body>
+
 </html>

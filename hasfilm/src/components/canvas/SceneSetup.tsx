@@ -7,11 +7,9 @@ import { SCENE_CONFIG } from '../../config';
 const SceneSetup: React.FC = () => {
     return (
         <>
-            {/* Background color */}
-            <color attach="background" args={[SCENE_CONFIG.FOG_COLOR]} />
-
-            {/* Fog for depth effect */}
-            <fog attach="fog" args={[SCENE_CONFIG.FOG_COLOR, 10, 50]} />
+            {/* No background color - canvas is transparent to show hero image */}
+            {/* Fog starts later for depth during tunnel/gallery phases */}
+            <fog attach="fog" args={[SCENE_CONFIG.FOG_COLOR, 15, 60]} />
 
             {/* Ambient lighting */}
             <ambientLight intensity={0.5} />
