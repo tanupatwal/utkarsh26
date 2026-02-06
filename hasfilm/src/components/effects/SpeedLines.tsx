@@ -76,14 +76,12 @@ const SpeedLines: React.FC = () => {
     });
 
     return (
-        <instancedMesh ref={meshRef} args={[undefined, undefined, count]}>
-            <dodecahedronGeometry args={[0.05, 0]} />
-            <meshBasicMaterial
-                color="#a0a0ff"
-                transparent
-                opacity={0.6}
-                blending={THREE.AdditiveBlending}
-            />
+        <instancedMesh ref={meshRef} args={[new THREE.DodecahedronGeometry(0.05, 0), new THREE.MeshBasicMaterial({
+            color: '#a0a0ff',
+            transparent: true,
+            opacity: 0.6,
+            blending: THREE.AdditiveBlending,
+        }), count]}>
         </instancedMesh>
     );
 };

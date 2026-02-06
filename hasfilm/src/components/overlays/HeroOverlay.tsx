@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useScroll } from '@react-three/drei';
 import { TIMELINE } from '../../config';
@@ -10,40 +10,28 @@ import { TIMELINE } from '../../config';
 const HeroOverlay: React.FC = () => {
     const scroll = useScroll();
     const containerRef = React.useRef<HTMLDivElement>(null);
-    const [isVisible, setIsVisible] = useState(true);
-    const [opacity, setOpacity] = useState(1);
 
     useFrame(() => {
         const r = scroll.offset;
 
+        if (!containerRef.current) return;
+
         // Show hero during initial scroll, fade out as we enter tunnel
         if (r < 0.05) {
-            setIsVisible(true);
-            setOpacity(1);
-            if (containerRef.current) {
-                containerRef.current.style.transform = 'scale(1)';
-                containerRef.current.style.opacity = '1';
-            }
+            containerRef.current.style.transform = 'scale(1)';
+            containerRef.current.style.opacity = '1';
         } else if (r < TIMELINE.TUNNEL_END * 0.5) {
-            setIsVisible(true);
             // Fade out during tunnel entry
             const fadeProgress = (r - 0.05) / (TIMELINE.TUNNEL_END * 0.5 - 0.05);
-            setOpacity(Math.max(0, 1 - fadeProgress));
 
-            if (containerRef.current) {
-                // Dive effect: Scale up text as we scroll
-                containerRef.current.style.transform = `scale(${1 + r * 8})`;
-                containerRef.current.style.opacity = Math.max(0, 1 - fadeProgress).toString();
-                // Ensure pointer events are disabled when fading out to prevent blocking
-                containerRef.current.style.pointerEvents = fadeProgress > 0.5 ? 'none' : 'auto';
-            }
+            // Dive effect: Scale up text as we scroll
+            containerRef.current.style.transform = `scale(${1 + r * 8})`;
+            containerRef.current.style.opacity = Math.max(0, 1 - fadeProgress).toString();
+            // Ensure pointer events are disabled when fading out to prevent blocking
+            containerRef.current.style.pointerEvents = fadeProgress > 0.5 ? 'none' : 'auto';
         } else {
-            setIsVisible(false);
-            setOpacity(0);
-            if (containerRef.current) {
-                containerRef.current.style.opacity = '0';
-                containerRef.current.style.pointerEvents = 'none';
-            }
+            containerRef.current.style.opacity = '0';
+            containerRef.current.style.pointerEvents = 'none';
         }
     });
 
