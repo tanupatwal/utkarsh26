@@ -1,0 +1,5 @@
+{
+  "name": "Vortex Scrollytelling",
+  "description": "A 3D tunnel zoom transition morphing into a cylindrical scrollytelling experience using React Three Fiber and Shaders.",
+  "requestFramePermissions": []
+}
