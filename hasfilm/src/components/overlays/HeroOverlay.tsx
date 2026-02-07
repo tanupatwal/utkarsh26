@@ -1,7 +1,7 @@
 import React from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useScroll } from '@react-three/drei';
-import { TIMELINE } from '../../config';
+import { TIMELINE, SCROLL_CONFIG } from '../../config';
 
 /**
  * HeroOverlay - UTKARSH 2026 hero content with scroll-based visibility.
@@ -13,19 +13,21 @@ const HeroOverlay: React.FC = () => {
 
     useFrame(() => {
         const r = scroll.offset;
+        const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 0;
+        const compensateY = viewportHeight * (SCROLL_CONFIG.PAGES - 1) * r;
 
         if (!containerRef.current) return;
 
         // Show hero during initial scroll, fade out as we enter tunnel
         if (r < 0.05) {
-            containerRef.current.style.transform = 'scale(1)';
+            containerRef.current.style.transform = `translate3d(0, ${compensateY}px, 0) scale(1)`;
             containerRef.current.style.opacity = '1';
         } else if (r < TIMELINE.TUNNEL_END * 0.5) {
             // Fade out during tunnel entry
             const fadeProgress = (r - 0.05) / (TIMELINE.TUNNEL_END * 0.5 - 0.05);
 
             // Dive effect: Scale up text as we scroll
-            containerRef.current.style.transform = `scale(${1 + r * 8})`;
+            containerRef.current.style.transform = `translate3d(0, ${compensateY}px, 0) scale(${1 + r * 8})`;
             containerRef.current.style.opacity = Math.max(0, 1 - fadeProgress).toString();
             // Ensure pointer events are disabled when fading out to prevent blocking
             containerRef.current.style.pointerEvents = fadeProgress > 0.5 ? 'none' : 'auto';

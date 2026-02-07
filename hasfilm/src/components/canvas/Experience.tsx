@@ -1,5 +1,6 @@
 import React from 'react';
 import { ScrollControls, Scroll } from '@react-three/drei';
+import { SCROLL_CONFIG } from '../../config';
 
 // Canvas components
 import SceneSetup from './SceneSetup';
@@ -25,13 +26,13 @@ const Experience: React.FC = () => {
             <SceneSetup />
             <SpeedLines />
 
-            <ScrollControls pages={8} damping={0.2}>
+            <ScrollControls pages={SCROLL_CONFIG.PAGES} damping={0.2}>
                 <TunnelGroup />
                 <FlatAboutSection />
                 <GalleryGroup />
 
                 <Scroll html style={{ width: '100%', height: '100%' }}>
-                    {/* Background fades out on scroll */}
+                    {/* Fixed-feel overlays with scroll compensation */}
                     <AnimatedBackground />
                     {/* Foreground title overlay */}
                     <HeroOverlay />

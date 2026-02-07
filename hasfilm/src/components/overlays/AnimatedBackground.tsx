@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useScroll } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
-import { TIMELINE } from '../../config';
+import { TIMELINE, SCROLL_CONFIG } from '../../config';
 
 /**
  * AnimatedBackground - Hero background with parallax image and effects.
@@ -20,6 +20,8 @@ const AnimatedBackground: React.FC = () => {
     if (!containerRef.current) return;
 
     const r = scroll.offset;
+    const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 0;
+    const compensateY = viewportHeight * (SCROLL_CONFIG.PAGES - 1) * r;
 
     // Fade out logic:
     // Visible at start (r=0)
@@ -39,7 +41,7 @@ const AnimatedBackground: React.FC = () => {
       containerRef.current.style.opacity = opacity.toString();
       // "Dive in" effect: Zoom in significantly as we scroll
       // Scale from 1 to ~4 before disappearing
-      containerRef.current.style.transform = `scale(${1 + r * 5})`;
+      containerRef.current.style.transform = `translate3d(0, ${compensateY}px, 0) scale(${1 + r * 5})`;
       containerRef.current.style.display = opacity <= 0.01 ? 'none' : 'block';
     } else {
       containerRef.current.style.opacity = '0';
