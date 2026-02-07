@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useScroll } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
-import { TIMELINE, SCROLL_CONFIG } from '../../config';
+import { SCROLL_CONFIG, TRANSITION_CONFIG, rangeProgress } from '../../config';
 
 /**
  * AnimatedBackground - Hero background with parallax image and effects.
@@ -23,30 +23,33 @@ const AnimatedBackground: React.FC = () => {
     const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 0;
     const compensateY = viewportHeight * (SCROLL_CONFIG.PAGES - 1) * r;
 
-    // Fade out logic:
-    // Visible at start (r=0)
-    // Starts fading at 50% of tunnel end
-    // Completely gone by tunnel end
-    if (r < TIMELINE.TUNNEL_END) {
-      const fadeStart = 0;
-      const fadeEnd = TIMELINE.TUNNEL_END * 0.8; // Fade out slightly before tunnel really gets going
+    let scale = 1;
+    let opacity = 1;
 
-      // Map scroll range to opacity (1 to 0)
-      let opacity = 1;
-      if (r > fadeStart) {
-        opacity = 1 - (r - fadeStart) / (fadeEnd - fadeStart);
-        opacity = Math.max(0, Math.min(1, opacity));
-      }
-
-      containerRef.current.style.opacity = opacity.toString();
-      // "Dive in" effect: Zoom in significantly as we scroll
-      // Scale from 1 to ~4 before disappearing
-      containerRef.current.style.transform = `translate3d(0, ${compensateY}px, 0) scale(${1 + r * 5})`;
-      containerRef.current.style.display = opacity <= 0.01 ? 'none' : 'block';
-    } else {
-      containerRef.current.style.opacity = '0';
-      containerRef.current.style.display = 'none';
+    // Stage 1: static hero background
+    if (r < TRANSITION_CONFIG.HERO_HOLD_END) {
+      scale = 1;
+      opacity = 1;
     }
+    // Stage 2: zoom only, no fade
+    else if (r < TRANSITION_CONFIG.HERO_ZOOM_END) {
+      const t = rangeProgress(r, TRANSITION_CONFIG.HERO_HOLD_END, TRANSITION_CONFIG.HERO_ZOOM_END);
+      scale = 1 + t * (TRANSITION_CONFIG.BG_ZOOM_SCALE - 1);
+      opacity = 1;
+    }
+    // Stage 3: handoff fade
+    else if (r < TRANSITION_CONFIG.HERO_HANDOFF_END) {
+      const t = rangeProgress(r, TRANSITION_CONFIG.HERO_ZOOM_END, TRANSITION_CONFIG.HERO_HANDOFF_END);
+      scale = TRANSITION_CONFIG.BG_ZOOM_SCALE + t * (TRANSITION_CONFIG.BG_EXIT_SCALE - TRANSITION_CONFIG.BG_ZOOM_SCALE);
+      opacity = 1 - t;
+    } else {
+      scale = TRANSITION_CONFIG.BG_EXIT_SCALE;
+      opacity = 0;
+    }
+
+    containerRef.current.style.opacity = opacity.toString();
+    containerRef.current.style.transform = `translate3d(0, ${compensateY}px, 0) scale(${scale})`;
+    containerRef.current.style.display = opacity <= 0.01 ? 'none' : 'block';
   });
 
   return (

@@ -2,8 +2,7 @@ import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { Image, useScroll } from '@react-three/drei';
 import * as THREE from 'three';
-import { TIMELINE } from '../../../config';
-import { SCENE_CONFIG } from '../../../config';
+import { TIMELINE, SCENE_CONFIG, TRANSITION_CONFIG, rangeProgress } from '../../../config';
 import { CONTENT } from '../../../data';
 
 const TUNNEL_DIST = 80;
@@ -20,6 +19,12 @@ const TunnelGroup: React.FC = () => {
         if (!groupRef.current) return;
         const r = scroll.offset;
 
+        // Tunnel should not be visible during hero hold/zoom stage
+        if (r < TRANSITION_CONFIG.TUNNEL_REVEAL_START) {
+            groupRef.current.visible = false;
+            return;
+        }
+
         // Hide when past the about section
         if (r > TIMELINE.ABOUT_START + 0.1) {
             groupRef.current.visible = false;
@@ -27,18 +32,27 @@ const TunnelGroup: React.FC = () => {
         }
         groupRef.current.visible = true;
 
-        // Move tunnel forward as we scroll
-        const progress = Math.min(r / TIMELINE.TUNNEL_END, 1);
+        // Move tunnel forward only after reveal starts
+        const progress = rangeProgress(r, TRANSITION_CONFIG.TUNNEL_REVEAL_START, TIMELINE.TUNNEL_END);
         groupRef.current.position.z = progress * TUNNEL_DIST;
         groupRef.current.rotation.z = progress * Math.PI * 2;
+
+        // Fade in under blackout release
+        const revealScale = rangeProgress(
+            r,
+            TRANSITION_CONFIG.TUNNEL_REVEAL_START,
+            TRANSITION_CONFIG.BLACKOUT_RELEASE_END
+        );
+
+        let scalar = Math.max(0.001, revealScale);
 
         // Fade out at end of tunnel phase
         if (r > TIMELINE.TUNNEL_END - 0.05) {
             const fadeOut = 1 - (r - (TIMELINE.TUNNEL_END - 0.05)) / 0.05;
-            groupRef.current.scale.setScalar(Math.max(0, fadeOut));
-        } else {
-            groupRef.current.scale.setScalar(1);
+            scalar *= Math.max(0, fadeOut);
         }
+
+        groupRef.current.scale.setScalar(scalar);
     });
 
     return (

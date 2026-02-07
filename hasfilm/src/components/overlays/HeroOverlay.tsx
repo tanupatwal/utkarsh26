@@ -1,7 +1,7 @@
 import React from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useScroll } from '@react-three/drei';
-import { TIMELINE, SCROLL_CONFIG } from '../../config';
+import { SCROLL_CONFIG, TIMELINE, TRANSITION_CONFIG, rangeProgress } from '../../config';
 
 /**
  * HeroOverlay - UTKARSH 2026 hero content with scroll-based visibility.
@@ -10,46 +10,82 @@ import { TIMELINE, SCROLL_CONFIG } from '../../config';
 const HeroOverlay: React.FC = () => {
     const scroll = useScroll();
     const containerRef = React.useRef<HTMLDivElement>(null);
+    const matteRef = React.useRef<HTMLDivElement>(null);
 
     useFrame(() => {
         const r = scroll.offset;
         const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 0;
         const compensateY = viewportHeight * (SCROLL_CONFIG.PAGES - 1) * r;
 
-        if (!containerRef.current) return;
+        if (!containerRef.current || !matteRef.current) return;
 
-        // Show hero during initial scroll, fade out as we enter tunnel
-        if (r < 0.05) {
-            containerRef.current.style.transform = `translate3d(0, ${compensateY}px, 0) scale(1)`;
-            containerRef.current.style.opacity = '1';
-        } else if (r < TIMELINE.TUNNEL_END * 0.5) {
-            // Fade out during tunnel entry
-            const fadeProgress = (r - 0.05) / (TIMELINE.TUNNEL_END * 0.5 - 0.05);
+        let scale = 1;
+        let opacity = 1;
 
-            // Dive effect: Scale up text as we scroll
-            containerRef.current.style.transform = `translate3d(0, ${compensateY}px, 0) scale(${1 + r * 8})`;
-            containerRef.current.style.opacity = Math.max(0, 1 - fadeProgress).toString();
-            // Ensure pointer events are disabled when fading out to prevent blocking
-            containerRef.current.style.pointerEvents = fadeProgress > 0.5 ? 'none' : 'auto';
-        } else {
-            containerRef.current.style.opacity = '0';
-            containerRef.current.style.pointerEvents = 'none';
+        // Stage 1: static hero
+        if (r < TRANSITION_CONFIG.HERO_HOLD_END) {
+            scale = 1;
+            opacity = 1;
         }
+        // Stage 2: zoom only (no fade)
+        else if (r < TRANSITION_CONFIG.HERO_ZOOM_END) {
+            const t = rangeProgress(r, TRANSITION_CONFIG.HERO_HOLD_END, TRANSITION_CONFIG.HERO_ZOOM_END);
+            scale = 1 + t * (TRANSITION_CONFIG.HERO_ZOOM_SCALE - 1);
+            opacity = 1;
+        }
+        // Stage 3: handoff (quick fade while zooming)
+        else if (r < TRANSITION_CONFIG.HERO_HANDOFF_END) {
+            const t = rangeProgress(r, TRANSITION_CONFIG.HERO_ZOOM_END, TRANSITION_CONFIG.HERO_HANDOFF_END);
+            scale = TRANSITION_CONFIG.HERO_ZOOM_SCALE + t * (TRANSITION_CONFIG.HERO_EXIT_SCALE - TRANSITION_CONFIG.HERO_ZOOM_SCALE);
+            opacity = 1 - t;
+        } else {
+            opacity = 0;
+            scale = TRANSITION_CONFIG.HERO_EXIT_SCALE;
+        }
+
+        // Black matte masks tunnel during handoff to avoid visible overlap
+        let matteOpacity = 0;
+        if (r >= TRANSITION_CONFIG.HERO_ZOOM_END && r < TRANSITION_CONFIG.HERO_HANDOFF_END) {
+            matteOpacity = rangeProgress(r, TRANSITION_CONFIG.HERO_ZOOM_END, TRANSITION_CONFIG.HERO_HANDOFF_END);
+        } else if (r >= TRANSITION_CONFIG.HERO_HANDOFF_END && r < TRANSITION_CONFIG.BLACKOUT_RELEASE_END) {
+            matteOpacity = 1 - rangeProgress(r, TRANSITION_CONFIG.HERO_HANDOFF_END, TRANSITION_CONFIG.BLACKOUT_RELEASE_END);
+        } else {
+            matteOpacity = 0;
+        }
+
+        if (r >= TIMELINE.TUNNEL_END) {
+            matteOpacity = 0;
+        }
+
+        containerRef.current.style.transform = `translate3d(0, ${compensateY}px, 0) scale(${scale})`;
+        containerRef.current.style.opacity = Math.max(0, Math.min(1, opacity)).toString();
+        containerRef.current.style.pointerEvents = opacity > 0.5 ? 'auto' : 'none';
+        matteRef.current.style.opacity = matteOpacity.toString();
     });
 
     // We don't return null anymore to keep the ref mounted for animation
     // if (!isVisible && opacity <= 0) return null; 
 
     return (
-        <div
-            ref={containerRef}
-            className="fixed inset-0 w-full h-full z-20 pointer-events-none"
-            style={{
-                transformOrigin: 'center center',
-                transition: 'opacity 0.05s linear, transform 0.05s linear'
-            }}
-        >
-            <div className="relative container mx-auto px-6 h-full flex flex-col justify-start items-center text-center pt-[15vh]">
+        <div className="fixed inset-0 w-full h-full z-20 pointer-events-none">
+            <div
+                ref={matteRef}
+                className="absolute inset-0 z-30 pointer-events-none"
+                style={{
+                    backgroundColor: '#05070d',
+                    opacity: 0,
+                    transition: 'opacity 0.05s linear'
+                }}
+            />
+            <div
+                ref={containerRef}
+                className="absolute inset-0 z-20 w-full h-full pointer-events-none"
+                style={{
+                    transformOrigin: 'center center',
+                    transition: 'opacity 0.05s linear, transform 0.05s linear'
+                }}
+            >
+                <div className="relative container mx-auto px-6 h-full flex flex-col justify-start items-center text-center pt-[15vh]">
 
                 {/* Main Title with Glossy Effect + Highlight Band */}
                 <div
@@ -174,10 +210,10 @@ const HeroOverlay: React.FC = () => {
                         <div className="w-1 h-2 bg-white rounded-full animate-pulse" />
                     </div>
                 </div>
-            </div>
+                </div>
 
-            {/* Animation keyframes */}
-            <style>{`
+                {/* Animation keyframes */}
+                <style>{`
         @keyframes fade-in-up {
           from {
             opacity: 0;
@@ -194,6 +230,7 @@ const HeroOverlay: React.FC = () => {
           opacity: 0;
         }
       `}</style>
+            </div>
         </div>
     );
 };

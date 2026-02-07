@@ -2,7 +2,7 @@ import React, { useRef } from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useScroll, Text } from '@react-three/drei';
 import * as THREE from 'three';
-import { TIMELINE } from '../../../config';
+import { TIMELINE, rangeProgress } from '../../../config';
 
 const INTER_FONT_URL = "https://fonts.gstatic.com/s/inter/v12/UcCO3FwrK3iLTeHuS_fvQtMwCp50KnMw2boKoduKmMEVuLyfAZ9hjp-Ek-_EeA.woff";
 
@@ -19,7 +19,7 @@ const FlatAboutSection: React.FC = () => {
         const r = scroll.offset;
 
         // Visibility window
-        if (r < TIMELINE.TUNNEL_END - 0.05 || r > TIMELINE.TRANSITION + 0.1) {
+        if (r < TIMELINE.ABOUT_START || r > TIMELINE.TRANSITION + 0.1) {
             groupRef.current.visible = false;
             return;
         }
@@ -27,8 +27,9 @@ const FlatAboutSection: React.FC = () => {
 
         // Calculate opacity
         let opacity = 1;
-        if (r < TIMELINE.ABOUT_START) {
-            opacity = (r - (TIMELINE.TUNNEL_END - 0.05)) / 0.05;
+        const aboutFadeInEnd = TIMELINE.ABOUT_START + 0.05;
+        if (r < aboutFadeInEnd) {
+            opacity = rangeProgress(r, TIMELINE.ABOUT_START, aboutFadeInEnd);
         }
 
         // Slide and fade out during transition to gallery
