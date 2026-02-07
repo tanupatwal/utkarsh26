@@ -5,7 +5,8 @@ import * as THREE from 'three';
 import { TIMELINE, SCENE_CONFIG, TRANSITION_CONFIG, rangeProgress } from '../../../config';
 import { CONTENT } from '../../../data';
 
-const TUNNEL_DIST = 80;
+const TUNNEL_DIST = 190;
+const TUNNEL_ENTRY_OFFSET = -42;
 
 /**
  * TunnelGroup - Creates a spiral tunnel of images that the user flies through.
@@ -34,21 +35,23 @@ const TunnelGroup: React.FC = () => {
 
         // Move tunnel forward only after reveal starts
         const progress = rangeProgress(r, TRANSITION_CONFIG.TUNNEL_REVEAL_START, TIMELINE.TUNNEL_END);
-        groupRef.current.position.z = progress * TUNNEL_DIST;
-        groupRef.current.rotation.z = progress * Math.PI * 2;
+        const easedProgress = progress * progress * (3 - 2 * progress);
+        groupRef.current.position.z = TUNNEL_ENTRY_OFFSET + easedProgress * TUNNEL_DIST;
+        groupRef.current.rotation.z = easedProgress * Math.PI * 10;
+        groupRef.current.rotation.x = 0;
 
-        // Fade in under blackout release
+        // Fade in after deep-void phase
         const revealScale = rangeProgress(
             r,
             TRANSITION_CONFIG.TUNNEL_REVEAL_START,
-            TRANSITION_CONFIG.BLACKOUT_RELEASE_END
+            TRANSITION_CONFIG.TUNNEL_REVEAL_FULL
         );
 
         let scalar = Math.max(0.001, revealScale);
 
         // Fade out at end of tunnel phase
-        if (r > TIMELINE.TUNNEL_END - 0.05) {
-            const fadeOut = 1 - (r - (TIMELINE.TUNNEL_END - 0.05)) / 0.05;
+        if (r > TIMELINE.TUNNEL_END - 0.03) {
+            const fadeOut = 1 - (r - (TIMELINE.TUNNEL_END - 0.03)) / 0.03;
             scalar *= Math.max(0, fadeOut);
         }
 
@@ -58,8 +61,10 @@ const TunnelGroup: React.FC = () => {
     return (
         <group ref={groupRef}>
             {CONTENT.map((item, i) => {
-                const angle = (i / CONTENT.length) * Math.PI * 2;
-                const z = -10 + i * -15;
+                const angle = i * 0.72;
+                const radiusPulse = 0.78 + Math.sin(i * 0.9) * 0.28;
+                const radius = SCENE_CONFIG.TUNNEL_RADIUS * radiusPulse;
+                const z = -22 - i * 11.5;
                 return (
                     <Image
                         key={i}
@@ -67,13 +72,13 @@ const TunnelGroup: React.FC = () => {
                         transparent
                         side={THREE.DoubleSide}
                         position={[
-                            Math.cos(angle) * SCENE_CONFIG.TUNNEL_RADIUS,
-                            Math.sin(angle) * SCENE_CONFIG.TUNNEL_RADIUS,
+                            Math.cos(angle) * radius,
+                            Math.sin(angle) * radius,
                             z
                         ]}
-                        rotation={[0, 0, angle - Math.PI / 2]}
-                        scale={[4, 5]}
-                        opacity={0.6}
+                        rotation={[Math.sin(i * 0.35) * 0.12, Math.cos(i * 0.27) * 0.08, angle - Math.PI / 2]}
+                        scale={[6, 3.4]}
+                        opacity={0.92}
                     />
                 );
             })}

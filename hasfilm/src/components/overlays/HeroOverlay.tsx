@@ -1,7 +1,7 @@
 import React from 'react';
 import { useFrame } from '@react-three/fiber';
 import { useScroll } from '@react-three/drei';
-import { SCROLL_CONFIG, TIMELINE, TRANSITION_CONFIG, rangeProgress } from '../../config';
+import { SCROLL_CONFIG, TRANSITION_CONFIG, rangeProgress } from '../../config';
 
 /**
  * HeroOverlay - UTKARSH 2026 hero content with scroll-based visibility.
@@ -47,13 +47,15 @@ const HeroOverlay: React.FC = () => {
         let matteOpacity = 0;
         if (r >= TRANSITION_CONFIG.HERO_ZOOM_END && r < TRANSITION_CONFIG.HERO_HANDOFF_END) {
             matteOpacity = rangeProgress(r, TRANSITION_CONFIG.HERO_ZOOM_END, TRANSITION_CONFIG.HERO_HANDOFF_END);
-        } else if (r >= TRANSITION_CONFIG.HERO_HANDOFF_END && r < TRANSITION_CONFIG.BLACKOUT_RELEASE_END) {
-            matteOpacity = 1 - rangeProgress(r, TRANSITION_CONFIG.HERO_HANDOFF_END, TRANSITION_CONFIG.BLACKOUT_RELEASE_END);
+        } else if (r >= TRANSITION_CONFIG.HERO_HANDOFF_END && r < TRANSITION_CONFIG.VOID_END) {
+            matteOpacity = 1;
+        } else if (r >= TRANSITION_CONFIG.BLACKOUT_RELEASE_START && r < TRANSITION_CONFIG.BLACKOUT_RELEASE_END) {
+            matteOpacity = 1 - rangeProgress(
+                r,
+                TRANSITION_CONFIG.BLACKOUT_RELEASE_START,
+                TRANSITION_CONFIG.BLACKOUT_RELEASE_END
+            );
         } else {
-            matteOpacity = 0;
-        }
-
-        if (r >= TIMELINE.TUNNEL_END) {
             matteOpacity = 0;
         }
 

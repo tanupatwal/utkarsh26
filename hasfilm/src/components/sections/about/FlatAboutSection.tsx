@@ -27,7 +27,7 @@ const FlatAboutSection: React.FC = () => {
 
         // Calculate opacity
         let opacity = 1;
-        const aboutFadeInEnd = TIMELINE.ABOUT_START + 0.05;
+        const aboutFadeInEnd = TIMELINE.ABOUT_START + 0.03;
         if (r < aboutFadeInEnd) {
             opacity = rangeProgress(r, TIMELINE.ABOUT_START, aboutFadeInEnd);
         }
