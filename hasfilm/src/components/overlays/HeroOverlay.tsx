@@ -76,7 +76,7 @@ const HeroOverlay: React.FC = () => {
                 style={{
                     backgroundColor: '#05070d',
                     opacity: 0,
-                    transition: 'opacity 0.05s linear'
+                    willChange: 'opacity'
                 }}
             />
             <div
@@ -84,10 +84,11 @@ const HeroOverlay: React.FC = () => {
                 className="absolute inset-0 z-20 w-full h-full pointer-events-none"
                 style={{
                     transformOrigin: 'center center',
-                    transition: 'opacity 0.05s linear, transform 0.05s linear'
+                    willChange: 'transform, opacity',
+                    backfaceVisibility: 'hidden'
                 }}
             >
-                <div className="relative container mx-auto px-6 h-full flex flex-col justify-start items-center text-center pt-[15vh]">
+                <div className="relative container mx-auto px-6 h-full flex flex-col justify-center items-center text-center pb-20">
 
                 {/* Main Title with Glossy Effect + Highlight Band */}
                 <div
@@ -97,10 +98,6 @@ const HeroOverlay: React.FC = () => {
                     {/* Highlighter Band Wrapper */}
                     <div
                         className="relative px-8 py-3 rounded-2xl"
-                        style={{
-                            background: 'linear-gradient(to right, rgba(245,193,108,0.12), rgba(0,229,255,0.12))',
-                            backdropFilter: 'blur(3px)',
-                        }}
                     >
                         {/* UTKARSH Title - Glossy Gradient with Outline */}
                         <h1
@@ -112,8 +109,7 @@ const HeroOverlay: React.FC = () => {
                                 WebkitBackgroundClip: 'text',
                                 WebkitTextFillColor: 'transparent',
                                 backgroundClip: 'text',
-                                WebkitTextStroke: '1px rgba(0, 0, 0, 0.6)',
-                                textShadow: '0 0 25px rgba(255, 180, 80, 0.35), 0 2px 10px rgba(0, 0, 0, 0.4)',
+                                filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.8))',
                             }}
                         >
                             UTKARSH
@@ -127,81 +123,52 @@ const HeroOverlay: React.FC = () => {
                                 fontWeight: 800,
                                 color: '#9EEAFF',
                                 letterSpacing: '0.35em',
-                                textShadow: '0 0 15px rgba(0, 229, 255, 0.6), 0 2px 8px rgba(0, 0, 0, 0.5)',
-                                WebkitTextStroke: '0.5px rgba(0, 0, 0, 0.4)',
+                                textShadow: '0 2px 4px rgba(0,0,0,0.8)',
                             }}
                         >
                             2026
                         </h2>
                     </div>
+
+
                 </div>
 
                 {/* Subtitle */}
                 <div
-                    className="text-lg md:text-xl max-w-2xl mx-auto mb-8 leading-relaxed animate-fade-in-up"
+                    className="flex flex-col items-center gap-3 mb-8 animate-fade-in-up"
                     style={{
-                        color: 'rgba(255, 255, 255, 0.92)',
-                        marginTop: '20px',
-                        textShadow: '0 2px 8px rgba(0, 0, 0, 0.6)',
+                        marginTop: '25px',
                         animationDelay: '0.4s'
                     }}
                 >
-                    <p className="mb-2">
-                        Where <span style={{ color: '#F5C16C', fontWeight: 600 }}>Tradition</span> Meets <span style={{ color: '#00E5FF', fontWeight: 600 }}>Technology</span>.
+                    {/* Primary Tagline - Clean & Modern */}
+                    <p className="text-xl md:text-3xl tracking-[0.2em] uppercase text-white font-bold"
+                       style={{ 
+                           fontFamily: "'Inter', sans-serif",
+                           textShadow: '0 4px 4px rgba(0,0,0,1), 0 0 20px rgba(0,0,0,0.8), 0 0 40px rgba(0,229,255,0.3)' 
+                       }}
+                    >
+                        Evolution Through Heritage
                     </p>
-                    <p>
-                        Celebrating 20 Years of <span style={{ color: '#F5C16C', fontWeight: 600 }}>Innovation</span> &amp; <span style={{ color: '#00E5FF', fontWeight: 600 }}>Culture</span>.
+
+                    {/* Secondary Tagline - Elegant Golden Serif */}
+                    <p 
+                        className="text-3xl md:text-6xl font-serif italic tracking-wide mt-4"
+                        style={{ 
+                            fontFamily: "'Playfair Display', serif",
+                            background: 'linear-gradient(to right, #E5C56C, #FFFDE7, #D4AF37, #FFFDE7, #D4A030, #E5C56C)',
+                            backgroundSize: '200% auto',
+                            animation: 'shine 3s linear infinite',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            filter: 'drop-shadow(0 5px 15px rgba(0,0,0,1)) drop-shadow(0 0 30px rgba(245, 193, 108, 0.6))',
+                            backgroundClip: 'text'
+                        }}
+                    >
+                        Virasat se VIKAS TAK
                     </p>
                 </div>
 
-                {/* CTA Buttons - pointer-events-auto to make them clickable */}
-                <div
-                    className="flex flex-col md:flex-row gap-6 items-center pointer-events-auto animate-fade-in-up"
-                    style={{ marginTop: '30px', animationDelay: '0.6s' }}
-                >
-                    {/* Primary Button - Explore Heritage */}
-                    <a href="#heritage">
-                        <button
-                            className="group relative px-10 py-4 rounded-xl font-bold text-lg tracking-wide transition-all duration-300 overflow-hidden min-h-[48px] hover:-translate-y-1"
-                            style={{
-                                background: 'linear-gradient(90deg, #F5C16C, #FF9F43)',
-                                color: '#0B0F1A',
-                                boxShadow: '0 8px 24px rgba(245, 193, 108, 0.3)',
-                                border: 'none',
-                            }}
-                        >
-                            <span className="relative z-10 flex items-center gap-2">
-                                Explore Heritage
-                                {/* Sparkles SVG Icon */}
-                                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M12 3l1.912 5.813a2 2 0 001.272 1.272L21 12l-5.813 1.912a2 2 0 00-1.272 1.272L12 21l-1.912-5.813a2 2 0 00-1.272-1.272L3 12l5.813-1.912a2 2 0 001.272-1.272L12 3z" />
-                                </svg>
-                            </span>
-                        </button>
-                    </a>
-
-                    {/* Secondary Button - Discover Innovation */}
-                    <a href="#innovation">
-                        <button
-                            className="group relative px-10 py-4 rounded-xl font-medium text-lg tracking-wide transition-all duration-300 overflow-hidden min-h-[48px] hover:-translate-y-1 hover:border-cyan-400"
-                            style={{
-                                background: 'rgba(0, 229, 255, 0.04)',
-                                border: '1px solid rgba(0, 229, 255, 0.12)',
-                                color: '#EAF6FF',
-                                backdropFilter: 'blur(8px)',
-                                boxShadow: '0 4px 16px rgba(0, 229, 255, 0.08)',
-                            }}
-                        >
-                            <span className="relative z-10 flex items-center gap-2">
-                                Discover Innovation
-                                {/* Arrow Right SVG Icon */}
-                                <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M5 12h14M12 5l7 7-7 7" />
-                                </svg>
-                            </span>
-                        </button>
-                    </a>
-                </div>
 
                 {/* Scroll Indicator */}
                 <div
@@ -230,6 +197,12 @@ const HeroOverlay: React.FC = () => {
         .animate-fade-in-up {
           animation: fade-in-up 0.8s ease-out forwards;
           opacity: 0;
+        }
+
+        @keyframes shine {
+          to {
+            background-position: 200% center;
+          }
         }
       `}</style>
             </div>
