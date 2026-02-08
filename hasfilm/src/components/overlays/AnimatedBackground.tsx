@@ -10,10 +10,19 @@ import { SCROLL_CONFIG, TRANSITION_CONFIG, rangeProgress } from '../../config';
 const AnimatedBackground: React.FC = () => {
   const [isMounted, setIsMounted] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const scroll = useScroll();
 
   useEffect(() => {
     setIsMounted(true);
+    const timer = setTimeout(() => {
+      if (videoRef.current) {
+        videoRef.current.play().catch(err => {
+          console.log('Autoplay prevented:', err);
+        });
+      }
+    }, 3200);
+    return () => clearTimeout(timer);
   }, []);
 
   useFrame(() => {
@@ -61,13 +70,16 @@ const AnimatedBackground: React.FC = () => {
         transformOrigin: 'center center',
       }}
     >
-      {/* 
-        Background Image with Cover
+      {/*
+        Background Video with Cover
       */}
       <div className="absolute inset-0 z-0">
-        <img
-          src="/assets/hero-bg-4k-source.png"
-          alt="Utkarsh Hero Background - Fusion of Heritage and Tech"
+        <video
+          ref={videoRef}
+          src="/assets/hero_video.mp4"
+          muted
+          loop
+          playsInline
           className="w-full h-full object-cover object-center"
           style={{
             imageRendering: 'auto',
