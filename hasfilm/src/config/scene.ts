@@ -6,8 +6,8 @@ export const SCENE_CONFIG = {
     TUNNEL_RADIUS: 8,
     /** Length of the tunnel */
     TUNNEL_LENGTH: 20,
-    /** Fog color (deep black) */
-    FOG_COLOR: "#000000",
+    /** Fog color (deep blue-black, less harsh than pure black) */
+    FOG_COLOR: "#050515",
     /** Radius of the cylindrical gallery */
     CYLINDER_RADIUS: 40,
     /** Height of gallery panels (20% taller) */

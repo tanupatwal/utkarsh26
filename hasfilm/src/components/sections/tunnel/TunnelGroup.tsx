@@ -18,6 +18,11 @@ const RIBBON_COUNT = 100;
 const TUNNEL_RADIUS = 12;
 const TUNNEL_LENGTH = 100;
 
+// Auto-scroll configuration
+const AUTO_SCROLL_DURATION = 4.5; // seconds to travel through tunnel
+const AUTO_SCROLL_TRIGGER_OFFSET = TIMELINE.HERO_END + 0.02; // Trigger slightly after hero ends
+const AUTO_SCROLL_TARGET = TIMELINE.ABOUT_START + 0.02; // Scroll just past tunnel end
+
 const randomIn = (min: number, max: number): number => min + Math.random() * (max - min);
 
 const getTextureOrFallback = (
@@ -43,6 +48,13 @@ interface RibbonData {
     z: number;
     speed: number;
 }
+
+// Smooth easing function for spline-like transition (ease-in-out)
+const easeInOutCubic = (t: number): number => {
+    return t < 0.5
+        ? 4 * t * t * t
+        : 1 - Math.pow(-2 * t + 2, 3) / 2;
+};
 
 // Simple curved tile geometry
 const createCurvedTileGeometry = (
@@ -105,6 +117,7 @@ const TunnelGroup: React.FC = () => {
 
     const groupRef = useRef<THREE.Group>(null);
     const ribbonsMeshRef = useRef<THREE.InstancedMesh>(null);
+    const ribbonMaterialRef = useRef<THREE.MeshBasicMaterial | null>(null);
     const tileMeshesRef = useRef<THREE.Mesh[]>([]);
 
     const tileStatesRef = useRef<TileState[]>([]);
@@ -116,6 +129,12 @@ const TunnelGroup: React.FC = () => {
     );
 
     const vortexAngleRef = useRef(0);
+
+    // Auto-scroll state
+    const autoScrollActiveRef = useRef(false);
+    const autoScrollStartTimeRef = useRef(0);
+    const autoScrollStartOffsetRef = useRef(0);
+    const hasTriggeredRef = useRef(false);
 
     const dummy = useMemo(() => {
         const obj = new THREE.Object3D();
@@ -131,8 +150,8 @@ const TunnelGroup: React.FC = () => {
     );
 
     // Initialize ribbons data (like hyper-spatial-tunnel)
-    const ribbonData = useMemo(() => {
-        const data = [];
+    const ribbonData = useMemo((): RibbonData[] => {
+        const data: RibbonData[] = [];
         for (let i = 0; i < RIBBON_COUNT; i++) {
             const angle = (i / RIBBON_COUNT) * Math.PI * 2 + (Math.random() * 0.5);
             const radius = TUNNEL_RADIUS + (Math.random() - 0.5) * 4;
@@ -170,15 +189,59 @@ const TunnelGroup: React.FC = () => {
 
     useFrame((_state, delta) => {
         const r = scroll.offset;
+
+        // ============================================================================
+        // AUTO-SCROLL LOGIC
+        // ============================================================================
+        // Trigger auto-scroll when user reaches the end of hero section
+        const shouldTrigger = r >= AUTO_SCROLL_TRIGGER_OFFSET && r < AUTO_SCROLL_TARGET && !hasTriggeredRef.current;
+
+        if (shouldTrigger) {
+            hasTriggeredRef.current = true;
+            autoScrollActiveRef.current = true;
+            autoScrollStartTimeRef.current = performance.now();
+            autoScrollStartOffsetRef.current = r;
+        }
+
+        // Reset trigger if user scrolls back before tunnel
+        if (r < AUTO_SCROLL_TRIGGER_OFFSET) {
+            hasTriggeredRef.current = false;
+            autoScrollActiveRef.current = false;
+        }
+
+        // Apply auto-scroll if active
+        if (autoScrollActiveRef.current && scroll.el) {
+            const elapsed = (performance.now() - autoScrollStartTimeRef.current) / 1000;
+            const progress = Math.min(elapsed / AUTO_SCROLL_DURATION, 1);
+            const easedProgress = easeInOutCubic(progress);
+
+            const targetOffset = autoScrollStartOffsetRef.current +
+                (AUTO_SCROLL_TARGET - autoScrollStartOffsetRef.current) * easedProgress;
+
+            // Smoothly scroll to target
+            const scrollContainer = scroll.el as HTMLElement;
+            const scrollHeight = scrollContainer.scrollHeight - scrollContainer.clientHeight;
+            scrollContainer.scrollTop = targetOffset * scrollHeight;
+
+            // End auto-scroll when complete
+            if (progress >= 1) {
+                autoScrollActiveRef.current = false;
+            }
+        }
+
         const rawVelocity = (r - lastOffsetRef.current) / Math.max(delta, 1 / 144);
         lastOffsetRef.current = r;
 
         velocityRef.current = THREE.MathUtils.damp(velocityRef.current, rawVelocity, 6, delta);
         const velocityBoost = THREE.MathUtils.clamp(Math.abs(velocityRef.current) * 1.35, 0, 1);
 
+        const inVoid = r >= TIMELINE.HERO_END && r < TIMELINE.TUNNEL_START;
         const inTunnel = r >= TIMELINE.TUNNEL_START && r <= TIMELINE.TUNNEL_END;
         const tunnelProgress = rangeProgress(r, TIMELINE.TUNNEL_START, TIMELINE.TUNNEL_END);
-        const tunnelVisibility = inTunnel ? 1 : 0;
+
+        // Overall visibility fade-in from HERO_END to smooth transition
+        const overallProgress = rangeProgress(r, TIMELINE.HERO_END, TIMELINE.TUNNEL_START + 0.1);
+        const tunnelVisibility = THREE.MathUtils.clamp(overallProgress, 0, 1);
 
         // Group visibility
         if (groupRef.current) {
@@ -199,25 +262,51 @@ const TunnelGroup: React.FC = () => {
         vortexAngleRef.current += targetSpin * delta;
 
         // ============================================================================
-        // SHARED SPEED CALCULATIONS (for both ribbons and tiles)
+        // SPEED CALCULATIONS - New curve for better visual flow
         // ============================================================================
-        let accelProfile = 0;
-        if (inTunnel) {
-            if (tunnelProgress < 0.35) {
-                accelProfile = THREE.MathUtils.lerp(0.14, 0.44, rangeProgress(tunnelProgress, 0.2, 0.35));
-            } else if (tunnelProgress < 0.78) {
-                accelProfile = THREE.MathUtils.lerp(0.44, 0.9, rangeProgress(tunnelProgress, 0.35, 0.78));
+        // Phase 1 (0-20%): Start with visible movement - ribbons at base speed, tiles at 50%
+        // Phase 2 (20-60%): Rapid but gradual increase
+        // Phase 3 (60-100%): Way way faster speed increase
+
+        let ribbonSpeed = 0;
+        let imageSpeed = 0;
+
+        if (inVoid || inTunnel) {
+            // Combined progress for smooth speed curve across void + tunnel
+            const combinedProgress = inVoid
+                ? (r - TIMELINE.HERO_END) / (TIMELINE.TUNNEL_START - TIMELINE.HERO_END) * 0.2
+                : 0.2 + tunnelProgress * 0.8;
+
+            if (combinedProgress < 0.2) {
+                // Phase 1 (0-20%): Base visible speed
+                // Ribbons: 25 -> 50, Images: 12 -> 25 (50% of ribbon speed)
+                const phaseProgress = combinedProgress / 0.2;
+                ribbonSpeed = THREE.MathUtils.lerp(25, 50, phaseProgress);
+                imageSpeed = ribbonSpeed * 0.5;
+            } else if (combinedProgress < 0.6) {
+                // Phase 2 (20-60%): Rapid but gradual increase
+                // Ribbons: 50 -> 180, Images: 25 -> 90
+                const phaseProgress = (combinedProgress - 0.2) / 0.4;
+                // Use quadratic curve for acceleration feel
+                const easedProgress = phaseProgress * phaseProgress;
+                ribbonSpeed = THREE.MathUtils.lerp(50, 180, easedProgress);
+                imageSpeed = ribbonSpeed * 0.5;
             } else {
-                accelProfile = THREE.MathUtils.lerp(0.9, 1.16, rangeProgress(tunnelProgress, 0.78, 1));
+                // Phase 3 (60-100%): Way way faster speed increase
+                // Ribbons: 180 -> 600+, Images: 90 -> 300+
+                const phaseProgress = (combinedProgress - 0.6) / 0.4;
+                // Exponential curve for intense speed feeling
+                const easedProgress = Math.pow(phaseProgress, 2.5);
+                ribbonSpeed = THREE.MathUtils.lerp(180, 650, easedProgress);
+                imageSpeed = ribbonSpeed * 0.5;
             }
+
+            // Add velocity influence from manual scrolling
+            const velocityInfluence = velocityBoost * THREE.MathUtils.lerp(0.5, 1.5, combinedProgress);
+            ribbonSpeed += velocityInfluence * 100;
+            imageSpeed += velocityInfluence * 50;
         }
 
-        const velocityInfluence = inTunnel
-            ? velocityBoost * THREE.MathUtils.lerp(0.28, 1, rangeProgress(tunnelProgress, 0.18, 0.82))
-            : 0;
-        const baseSpeed = inTunnel
-            ? THREE.MathUtils.lerp(36, 205, accelProfile) + velocityInfluence * 120
-            : 0;
         const tileSwirl = vortexAngleRef.current * 0.95;
 
         // ============================================================================
@@ -225,11 +314,11 @@ const TunnelGroup: React.FC = () => {
         // ============================================================================
 
         if (ribbonsMeshRef.current) {
-            ribbonsMeshRef.current.visible = inTunnel;
+            ribbonsMeshRef.current.visible = (inVoid || inTunnel) && tunnelVisibility > 0.01;
 
             ribbonData.forEach((data, i) => {
-                // Move Z towards camera with same speed profile as tiles
-                data.z += baseSpeed * delta * (0.68 + data.speed * 0.2);
+                // Move Z towards camera with ribbon speed
+                data.z += ribbonSpeed * delta * (0.68 + data.speed * 0.2);
 
                 // Loop back if passed camera
                 if (data.z > 20) {
@@ -254,13 +343,25 @@ const TunnelGroup: React.FC = () => {
             });
 
             ribbonsMeshRef.current.instanceMatrix.needsUpdate = true;
+
+            // Update ribbon opacity for fade-in effect
+            if (ribbonMaterialRef.current) {
+                ribbonMaterialRef.current.opacity = 0.8 * tunnelVisibility;
+            }
         }
 
         // ============================================================================
         // IMAGE TILES
         // ============================================================================
-        const activeRatio = inTunnel
-            ? THREE.MathUtils.clamp(0.15 + tunnelProgress * 0.8 + velocityBoost * 0.35, 0, 1)
+        // Combined progress for image visibility (starts in void, not just tunnel)
+        const combinedProgress = inVoid
+            ? (r - TIMELINE.HERO_END) / (TIMELINE.TUNNEL_START - TIMELINE.HERO_END) * 0.15
+            : inTunnel
+                ? 0.15 + tunnelProgress * 0.85
+                : 0;
+
+        const activeRatio = (inVoid || inTunnel)
+            ? THREE.MathUtils.clamp(combinedProgress + velocityBoost * 0.2, 0, 1)
             : 0;
         const activeCount = Math.floor(TILE_COUNT * activeRatio);
 
@@ -268,13 +369,13 @@ const TunnelGroup: React.FC = () => {
             const mesh = tileMeshesRef.current[i];
             if (!mesh) continue;
 
-            const isActive = inTunnel && i < activeCount;
+            const isActive = (inVoid || inTunnel) && i < activeCount;
             mesh.visible = isActive;
             if (!isActive) continue;
 
             const tileState = tileStatesRef.current[i];
             if (!tileState) continue;
-            tileState.z += baseSpeed * delta * (0.68 + tileState.speedJitter * 0.65);
+            tileState.z += imageSpeed * delta * (0.68 + tileState.speedJitter * 0.65);
 
             if (tileState.z > TILE_PASS_Z) {
                 resetTileState(tileState, textures.length);
@@ -307,16 +408,16 @@ const TunnelGroup: React.FC = () => {
     });
 
     return (
-        <group ref={groupRef}>
-            {/* Fog */}
-            <fog attach="fog" args={['#000000', 10, 60]} />
-            <ambientLight intensity={0.5} />
-            <pointLight position={[0, 0, 10]} intensity={2} color="#4deeea" distance={20} decay={2} />
+        <>
+            {/* Additional lights for tunnel effect */}
+            <pointLight position={[0, 0, 10]} intensity={1.5} color="#4deeea" distance={30} decay={2} />
 
-            {/* RIBBONS - Neon light beams from hyper-spatial-tunnel */}
+            <group ref={groupRef}>
+                {/* RIBBONS - Neon light beams from hyper-spatial-tunnel */}
             <instancedMesh ref={ribbonsMeshRef} args={[undefined, undefined, RIBBON_COUNT]}>
                 <planeGeometry args={[0.2, 5]} />
                 <meshBasicMaterial
+                    ref={ribbonMaterialRef}
                     color="#4deeea"
                     transparent
                     opacity={0.8}
@@ -346,7 +447,8 @@ const TunnelGroup: React.FC = () => {
                     />
                 </mesh>
             ))}
-        </group>
+            </group>
+        </>
     );
 };
 

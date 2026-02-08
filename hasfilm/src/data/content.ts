@@ -12,9 +12,10 @@ import { ImageData } from '../types';
  *
  * Naming convention: Use frame-01.jpg, frame-02.jpg, etc. for proper ordering.
  */
-const imageModules = import.meta.glob<{ default: string }>('../../public/assets/tunnel-trailer/*', {
+const imageModules = import.meta.glob<string>('../../public/assets/tunnel-trailer/*', {
     eager: true,
-    as: 'url',
+    query: '?url',
+    import: 'default',
 });
 
 /**
