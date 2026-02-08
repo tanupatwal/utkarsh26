@@ -11,7 +11,7 @@ import { FlatAboutSection } from '../sections/about';
 import { GalleryGroup } from '../sections/gallery';
 
 // Effects
-import { SpeedLines } from '../effects';
+// import { SpeedLines } from '../effects'; // Disabled - removed neon particle effect
 
 // Overlays
 import { HeroOverlay, AnimatedBackground } from '../overlays';
@@ -24,7 +24,7 @@ const Experience: React.FC = () => {
     return (
         <>
             <SceneSetup />
-            <SpeedLines />
+            {/* <SpeedLines /> Disabled - removed neon particle effect */}
 
             <ScrollControls pages={SCROLL_CONFIG.PAGES} damping={0.2}>
                 <TunnelGroup />
