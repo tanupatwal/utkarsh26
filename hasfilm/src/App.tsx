@@ -1,7 +1,8 @@
 import React, { Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Experience } from './components/canvas';
-import { LoadingOverlay } from './components/overlays';
+import { LoadingOverlay, Navbar } from './components/overlays';
+
 
 /**
  * App - Root component that sets up the 3D canvas.
@@ -9,22 +10,6 @@ import { LoadingOverlay } from './components/overlays';
 const App: React.FC = () => {
     return (
         <div className="w-full h-screen relative bg-black">
-
-            {/* Header branding - UTKARSH themed */}
-            <div className="absolute top-8 left-8 z-50 pointer-events-none">
-                <h1
-                    className="text-xl font-bold tracking-widest uppercase pb-2"
-                    style={{
-                        fontFamily: "'Orbitron', sans-serif",
-                        background: 'linear-gradient(90deg, #F5C16C, #00E5FF)',
-                        WebkitBackgroundClip: 'text',
-                        WebkitTextFillColor: 'transparent',
-                        textShadow: '0 0 20px rgba(245, 193, 108, 0.3)',
-                    }}
-                >
-                    UTKARSH 2026
-                </h1>
-            </div>
 
             {/* Scroll hint - only shown when hero fades */}
 
@@ -40,10 +25,14 @@ const App: React.FC = () => {
                 </Suspense>
             </Canvas>
 
+            {/* Navbar */}
+            <Navbar />
+
             {/* Loading overlay */}
             <LoadingOverlay />
         </div>
     );
 };
+
 
 export default App;
