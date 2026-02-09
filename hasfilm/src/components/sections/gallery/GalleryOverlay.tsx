@@ -12,6 +12,13 @@ const GalleryOverlay: React.FC = () => {
     const [activeIndex, setActiveIndex] = useState(0);
     const innerRef = useRef<HTMLDivElement>(null);
     const opacityRef = useRef(0);
+    const textRef = useRef<HTMLDivElement>(null);
+    const progressRef = useRef<HTMLDivElement>(null);
+    const dotsRef = useRef<HTMLDivElement>(null);
+    const scrimRef = useRef<HTMLDivElement>(null);
+
+    // Smoothed exit progress (0 = fully visible, 1 = fully collapsed)
+    const exitProgress = useRef(0);
 
     useFrame((_state, delta) => {
         if (!innerRef.current) return;
@@ -41,6 +48,75 @@ const GalleryOverlay: React.FC = () => {
             
             if (index !== activeIndex) {
                 setActiveIndex(index);
+            }
+
+            // === EXIT SEQUENCE at end of gallery ===
+            // The last panel lands at ~96% progress. Everything dwells there.
+            // Only when the user scrolls PAST 0.96 does anything start leaving.
+            // Sequence:
+            //   progress 0–0.96  → full dwell, nothing fades
+            //   progress 0.96–1  → exitT ramps 0→1
+            //     ep 0.00–0.45   → text slowly fades + slides left + blurs
+            //     ep 0.45–0.60   → pause (text gone, HUD still visible)
+            //     ep 0.60–0.75   → scrim fades
+            //     ep 0.70–0.85   → progress bar slides down + fades
+            //     ep 0.75–0.95   → dots slide right + fade (last to leave)
+            const exitStart = 0.96;
+            const exitT = progress > exitStart ? (progress - exitStart) / (1 - exitStart) : 0;
+            const targetExit = Math.min(1, Math.max(0, exitT));
+            // Slower damp (3) so it feels like a deliberate, drawn-out removal
+            exitProgress.current = THREE.MathUtils.damp(exitProgress.current, targetExit, 3, delta);
+
+            const ep = exitProgress.current;
+
+            // Phase 1 (ep 0 → 0.45): Text fades slowly + slides left + blurs
+            if (textRef.current) {
+                const textT = Math.min(1, ep / 0.45);
+                const eased = textT * textT; // quadratic ease-in
+                textRef.current.style.opacity = (1 - eased).toString();
+                textRef.current.style.transform = `translate3d(${-eased * 40}px, -50%, 0)`;
+                textRef.current.style.filter = `blur(${eased * 6}px)`;
+            }
+
+            // Phase 2 (ep 0.45 → 0.60): HOLD — text gone, HUD stays
+
+            // Phase 3a (ep 0.60 → 0.75): Scrim fades out
+            if (scrimRef.current) {
+                const scrimT = Math.max(0, Math.min(1, (ep - 0.60) / 0.15));
+                scrimRef.current.style.opacity = (1 - scrimT).toString();
+            }
+
+            // Phase 3b (ep 0.70 → 0.85): Progress bar fades + slides down
+            if (progressRef.current) {
+                const barT = Math.max(0, Math.min(1, (ep - 0.70) / 0.15));
+                const barEased = barT * barT;
+                progressRef.current.style.opacity = (1 - barEased).toString();
+                progressRef.current.style.transform = `translate3d(-50%, ${barEased * 24}px, 0)`;
+            }
+
+            // Phase 3c (ep 0.75 → 0.95): Dots fade + slide right (last to leave)
+            if (dotsRef.current) {
+                const dotsT = Math.max(0, Math.min(1, (ep - 0.75) / 0.20));
+                const dotsEased = dotsT * dotsT;
+                dotsRef.current.style.opacity = (1 - dotsEased).toString();
+                dotsRef.current.style.transform = `translate3d(${dotsEased * 16}px, -50%, 0)`;
+            }
+        } else {
+            // Reset exit state + inline styles when outside gallery
+            exitProgress.current = 0;
+            if (textRef.current) {
+                textRef.current.style.opacity = '';
+                textRef.current.style.transform = '';
+                textRef.current.style.filter = '';
+            }
+            if (scrimRef.current) scrimRef.current.style.opacity = '';
+            if (progressRef.current) {
+                progressRef.current.style.opacity = '';
+                progressRef.current.style.transform = '';
+            }
+            if (dotsRef.current) {
+                dotsRef.current.style.opacity = '';
+                dotsRef.current.style.transform = '';
             }
         }
     });
@@ -83,6 +159,7 @@ const GalleryOverlay: React.FC = () => {
 
                 {/* OPTION 5 (active): Combo — left gradient scrim + text shadow */}
                 <div
+                    ref={scrimRef}
                     className="absolute inset-0 pointer-events-none"
                     style={{
                         background: 'linear-gradient(to right, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.45) 30%, rgba(0,0,0,0) 55%)',
@@ -90,7 +167,7 @@ const GalleryOverlay: React.FC = () => {
                 />
 
                 {/* 1. Progress Bar (Bottom HUD) */}
-                <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-80 h-[2px] bg-white/10">
+                <div ref={progressRef} className="absolute bottom-12 left-1/2 -translate-x-1/2 w-80 h-[2px] bg-white/10">
                     <div 
                         className="h-full bg-blue-500 transition-all duration-500 ease-out shadow-[0_0_10px_#3b82f6]"
                         style={{ width: `${((activeIndex + 1) / GALLERY_CONTENT.length) * 100}%` }}
@@ -102,7 +179,7 @@ const GalleryOverlay: React.FC = () => {
                 </div>
 
                 {/* 2. Text Content (Left Side) */}
-                <div className="absolute top-1/2 left-8 md:left-20 -translate-y-1/2 max-w-lg">
+                <div ref={textRef} className="absolute top-1/2 left-8 md:left-20 -translate-y-1/2 max-w-lg" style={{ willChange: 'transform, opacity' }}>
 
                     <div key={`title-${activeIndex}`} className="gallery-text-enter overflow-hidden relative">
                         <h2 
@@ -135,7 +212,7 @@ const GalleryOverlay: React.FC = () => {
                 </div>
 
                 {/* 3. Vertical Pagination Dots (Right Side) */}
-                <div className="absolute top-1/2 right-8 md:right-12 -translate-y-1/2 flex flex-col items-center gap-4">
+                <div ref={dotsRef} className="absolute top-1/2 right-8 md:right-12 -translate-y-1/2 flex flex-col items-center gap-4">
                     {GALLERY_CONTENT.map((_, i) => (
                         <div 
                             key={i}
