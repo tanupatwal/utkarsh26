@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import { TIMELINE, SCENE_CONFIG, CAMERA_CONFIG } from '../../../config';
 import { GALLERY_CONTENT } from '../../../data';
 import ThickPanel from './ThickPanel';
+import GalleryEffects from './GalleryEffects';
 
 /**
  * GalleryGroup - Cylindrical gallery with rotating curved panels.
@@ -82,6 +83,9 @@ const GalleryGroup: React.FC = () => {
 
                 {/* Inner Glow */}
                 <pointLight position={[0, 0, 0]} intensity={3} color="#6666ff" distance={25} />
+
+                {/* Post-Processing Effects */}
+                <GalleryEffects />
 
                 {/* Reflection Occluder - Blocks the view of the back-side reflections */}
                 <mesh position={[0, -SCENE_CONFIG.CYLINDER_HEIGHT, 0]}>
