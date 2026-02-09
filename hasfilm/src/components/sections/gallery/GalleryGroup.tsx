@@ -4,7 +4,7 @@ import { useScroll } from '@react-three/drei';
 import * as THREE from 'three';
 import { TIMELINE, SCENE_CONFIG, CAMERA_CONFIG } from '../../../config';
 import { GALLERY_CONTENT } from '../../../data';
-import CurvedPanel from './CurvedPanel';
+import ThickPanel from './ThickPanel';
 
 /**
  * GalleryGroup - Cylindrical gallery with rotating curved panels.
@@ -67,12 +67,14 @@ const GalleryGroup: React.FC = () => {
         <>
             <group ref={groupRef} position={[0, 0, 0]}>
                 {GALLERY_CONTENT.map((item, i) => (
-                    <CurvedPanel
+                    <ThickPanel
                         key={i}
                         url={item.url}
                         index={i}
                         total={GALLERY_CONTENT.length}
                         radius={SCENE_CONFIG.CYLINDER_RADIUS}
+                        gap={0.05} // Gap between panels in radians
+                        thickness={2} // Thickness of the panel
                     />
                 ))}
 
