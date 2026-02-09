@@ -73,7 +73,7 @@ const GalleryGroup: React.FC = () => {
                         index={i}
                         total={GALLERY_CONTENT.length}
                         radius={SCENE_CONFIG.CYLINDER_RADIUS}
-                        gap={0.05} // Gap between panels in radians
+                        gap={0.008} // Gap between panels in radians
                         thickness={2} // Thickness of the panel
                     />
                 ))}
