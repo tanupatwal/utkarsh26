@@ -1,6 +1,6 @@
 import React, { useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { useScroll } from '@react-three/drei';
+import { useScroll, Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
 import { TIMELINE, SCENE_CONFIG, CAMERA_CONFIG } from '../../../config';
 import { GALLERY_CONTENT } from '../../../data';
@@ -15,6 +15,7 @@ const GalleryGroup: React.FC = () => {
     const scroll = useScroll();
     const groupRef = useRef<THREE.Group>(null);
     const silhouetteRef = useRef<THREE.Group>(null);
+    const backgroundRef = useRef<THREE.Group>(null); // Ref for Parallax Layer
     const { camera, scene } = useThree();
 
     // Performance: Only render heavy effects when in/near gallery section
@@ -97,6 +98,11 @@ const GalleryGroup: React.FC = () => {
             smoothedRot.current = THREE.MathUtils.damp(smoothedRot.current, targetRot, 4, 1 / 60);
 
             groupRef.current.rotation.y = smoothedRot.current;
+
+            // PARALLAX: Rotate background at 25% speed of foreground
+            if (backgroundRef.current) {
+                backgroundRef.current.rotation.y = smoothedRot.current * 0.25;
+            }
         }
 
         camera.lookAt(0, 0, 0);
@@ -124,6 +130,18 @@ const GalleryGroup: React.FC = () => {
                 {/* HEAVY EFFECTS - Only mount when near gallery to save Hero performance */}
                 {isActive && (
                     <>
+                        {/* PARALLAX LAYER: Floating Dust / Sparkles */}
+                        <group ref={backgroundRef}>
+                            <Sparkles
+                                count={200}
+                                scale={[SCENE_CONFIG.CYLINDER_RADIUS * 1.5, SCENE_CONFIG.CYLINDER_HEIGHT, SCENE_CONFIG.CYLINDER_RADIUS * 1.5]}
+                                size={4}
+                                speed={0.4}
+                                opacity={0.5}
+                                color="#ffffff"
+                            />
+                        </group>
+
                         <GalleryEffects />
 
                         {/* Reflection Occluder - Blocks the view of the back-side reflections */}
