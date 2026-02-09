@@ -69,6 +69,23 @@ const ThickPanel: React.FC<ThickPanelProps> = ({
                 {/* Removed scale=[-1,1,1] to ensure normal orientation */}
             </mesh>
 
+            {/* SATIN FINISH OVERLAY - Creates "Curvature Softness" and "Peripheral Fade" */}
+            <mesh>
+                <cylinderGeometry
+                    args={[radius + 0.05, radius + 0.05, height, 32, 1, true, thetaStart, panelAngle]}
+                />
+                <meshPhysicalMaterial
+                    color="#000000"
+                    transparent
+                    opacity={0.1} // Subtle dimming
+                    roughness={0.6} // Satin finish, diffuses sharp pixels
+                    metalness={0.1}
+                    clearcoat={0.5} // Slight gloss
+                    clearcoatRoughness={0.4}
+                    side={THREE.DoubleSide}
+                />
+            </mesh>
+
             {/* BACK FACE (Casing) - Inner Surface */}
             <mesh>
                 <cylinderGeometry

@@ -15,7 +15,18 @@ const GalleryGroup: React.FC = () => {
     const scroll = useScroll();
     const groupRef = useRef<THREE.Group>(null);
     const silhouetteRef = useRef<THREE.Group>(null);
-    const { camera } = useThree();
+    const { camera, scene } = useThree();
+
+    // Add Atmospheric Haze (Fog)
+    React.useEffect(() => {
+        const oldFog = scene.fog;
+        // FogExp2 gives a more organic, exponential falloff than linear Fog
+        // Color #050505 matches the deep background, density 0.035 tuned for visibility at ~30-40 units
+        scene.fog = new THREE.FogExp2('#050505', 0.035);
+        return () => {
+            scene.fog = oldFog;
+        };
+    }, [scene]);
 
     const CAM_POS_START = new THREE.Vector3(
         CAMERA_CONFIG.START.x,
