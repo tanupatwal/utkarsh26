@@ -5,27 +5,27 @@ import { ImageData } from '../types';
  */
 export const GALLERY_CONTENT: ImageData[] = [
     {
-        url: "https://picsum.photos/id/237/1000/600",
+        url: "/assets/gallery/1.jpg",
         title: "Project Alpha",
         description: "Immersive events."
     },
     {
-        url: "https://picsum.photos/id/238/1000/600",
+        url: "/assets/gallery/2.jpg",
         title: "Academic Islands",
         description: "Virtual open days."
     },
     {
-        url: "https://picsum.photos/id/239/1000/600",
+        url: "/assets/gallery/3.jpg",
         title: "Neon City",
         description: "Cyberpunk exploration."
     },
     {
-        url: "https://picsum.photos/id/240/1000/600",
+        url: "/assets/gallery/4.jpg",
         title: "Data Viz",
         description: "Complex datasets."
     },
     {
-        url: "https://picsum.photos/id/242/1000/600",
+        url: "/assets/gallery/5.png",
         title: "Sculpture",
         description: "Digital artifacts."
     }
