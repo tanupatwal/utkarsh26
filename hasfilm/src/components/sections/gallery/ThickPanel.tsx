@@ -148,7 +148,8 @@ const ThickPanel: React.FC<ThickPanelProps> = ({
 
 
             {/* REFLECTION (Floor) - Restored Manual Reflection for Guaranteed Visibility */}
-            <mesh position={[0, -height + 0.1, 0]} scale={[1, -1, 1]}>
+            {/* Moved down by 0.2 to create a visible gap from the panel */}
+            <mesh position={[0, -height - 0.1, 0]} scale={[1, -1, 1]}>
                 <cylinderGeometry
                     args={[radius, radius, height, 32, 1, true, thetaStart, panelAngle]}
                 />
