@@ -27,10 +27,8 @@ const CurvedPanel: React.FC<CurvedPanelProps> = ({ url, index, total, radius }) 
     const angleOffset = Math.PI + (SCENE_CONFIG.CYLINDER_ARC / 2);
     const thetaStart = angleOffset - (index * angleStep) - angleStep;
 
-    // Depth of field effect - center panels are brighter
-    const centerIndex = (total - 1) / 2;
-    const distanceFromCenter = Math.abs(index - centerIndex) / centerIndex;
-    const opacity = THREE.MathUtils.lerp(1, 0.3, distanceFromCenter * distanceFromCenter);
+    // Full opacity for all panels
+    const opacity = 1;
 
     const height = SCENE_CONFIG.CYLINDER_HEIGHT;
 
