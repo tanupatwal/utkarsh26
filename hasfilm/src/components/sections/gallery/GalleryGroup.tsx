@@ -90,12 +90,37 @@ const GalleryGroup: React.FC = () => {
             groupRef.current.scale.setScalar(1);
 
             const rotProgress = (r - TIMELINE.GALLERY_START) / (TIMELINE.END - TIMELINE.GALLERY_START);
-            const targetRot = 0.2 + (rotProgress * Math.PI * 1.5);
+            const rawTargetRot = 0.2 + (rotProgress * Math.PI * 1.5);
+
+            // AGGRESSIVE STICKY LOGIC (Sigmoid Staircase)
+            const totalItems = GALLERY_CONTENT.length;
+            const stepSize = (Math.PI * 1.5) / (totalItems - 1);
+
+            // 1. Normalize rotation to "Item Index" space (0.0 to 4.0)
+            const rawIndex = (rawTargetRot - 0.2) / stepSize;
+
+            // 2. Separate Integer (Item #) and Fraction (Progress to next)
+            const index = Math.floor(rawIndex);
+            let frac = rawIndex - index;
+
+            // 3. Apply easing to fraction to create "Plateaus" at integers
+            // Using a steep sigmoid curve: x^3 / (x^3 + (1-x)^3) - very flat at ends, steep in middle
+            // Or standard smoothstep: t * t * (3 - 2 * t)
+            // Let's use a custom steep curve for strong "stop" feel:
+            if (frac < 0.5) {
+                frac = 4 * frac * frac * frac; // Cubic ease in
+            } else {
+                frac = 1 - Math.pow(-2 * frac + 2, 3) / 2; // Cubic ease out
+            }
+
+            // 4. Recombine
+            const stickyIndex = index + frac;
+            const stickyRot = 0.2 + (stickyIndex * stepSize);
 
             // "High-Friction Easing" / Inertia
             // damp(current, target, lambda, delta)
-            // lambda: 1-2 = very heavy/viscous. 4-5 = heavy but responsive. 10+ = snappy.
-            smoothedRot.current = THREE.MathUtils.damp(smoothedRot.current, targetRot, 4, 1 / 60);
+            // lambda: 1-2 = heavy. 5 = snappy. Increased to 5 for tighter snap feel.
+            smoothedRot.current = THREE.MathUtils.damp(smoothedRot.current, stickyRot, 5, 1 / 60);
 
             groupRef.current.rotation.y = smoothedRot.current;
 
