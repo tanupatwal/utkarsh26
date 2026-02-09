@@ -2,6 +2,8 @@ import React from 'react';
 import { ScrollControls, Scroll } from '@react-three/drei';
 import { SCROLL_CONFIG } from '../../config';
 
+import GalleryOverlay from '../sections/gallery/GalleryOverlay';
+
 // Canvas components
 import SceneSetup from './SceneSetup';
 
@@ -36,6 +38,8 @@ const Experience: React.FC = () => {
                     <AnimatedBackground />
                     {/* Foreground title overlay */}
                     <HeroOverlay />
+
+                    <GalleryOverlay />
                 </Scroll>
             </ScrollControls>
         </>

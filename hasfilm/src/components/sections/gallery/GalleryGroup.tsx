@@ -14,15 +14,14 @@ import GalleryEffects from './GalleryEffects';
 const GalleryGroup: React.FC = () => {
     const scroll = useScroll();
     const groupRef = useRef<THREE.Group>(null);
-    const silhouetteRef = useRef<THREE.Group>(null);
     const backgroundRef = useRef<THREE.Group>(null); // Ref for Parallax Layer
     const { camera, scene } = useThree();
 
     // Performance: Only render heavy effects when in/near gallery section
     const [isActive, setIsActive] = React.useState(false);
 
-    // Physics state for inertia/momentum
-    const smoothedRot = useRef(0);
+    // Physics state for inertia/momentum (initialized to 0.2 to match transition end)
+    const smoothedRot = useRef(0.2);
 
     // Add Atmospheric Haze (Fog)
     React.useEffect(() => {
@@ -90,13 +89,18 @@ const GalleryGroup: React.FC = () => {
             groupRef.current.scale.setScalar(1);
 
             const rotProgress = (r - TIMELINE.GALLERY_START) / (TIMELINE.END - TIMELINE.GALLERY_START);
-            const rawTargetRot = 0.2 + (rotProgress * Math.PI * 1.5);
 
-            // AGGRESSIVE STICKY LOGIC (Sigmoid Staircase)
+            // Compute rotation from actual panel geometry (not hardcoded)
             const totalItems = GALLERY_CONTENT.length;
-            const stepSize = (Math.PI * 1.5) / (totalItems - 1);
+            const angleStep = SCENE_CONFIG.CYLINDER_ARC / totalItems;
+            const totalRotation = angleStep * (totalItems - 1); // Exact rotation from panel 0 → panel N-1
 
-            // 1. Normalize rotation to "Item Index" space (0.0 to 4.0)
+            const rawTargetRot = 0.2 + (rotProgress * totalRotation);
+
+            // STICKY LOGIC: Snap rotation to panel boundaries
+            const stepSize = angleStep; // Each step = exactly one panel width
+
+            // 1. Normalize rotation to "Item Index" space (0.0 to N-1)
             const rawIndex = (rawTargetRot - 0.2) / stepSize;
 
             // 2. Separate Integer (Item #) and Fraction (Progress to next)

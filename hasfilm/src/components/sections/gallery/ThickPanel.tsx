@@ -37,11 +37,13 @@ const ThickPanel: React.FC<ThickPanelProps> = ({
     // Calculate the actual arc length of the panel (subtracting gap)
     const panelAngle = angleStep - gap;
 
-    // Calculate starting angle (centered)
-    // We adjust the offset so the gap is evenly distributed
-    const angleOffset = Math.PI + (SCENE_CONFIG.CYLINDER_ARC / 2);
-    // Center the panel within its slot: index * angleStep + gap/2
-    const thetaStart = angleOffset - (index * angleStep) - panelAngle - (gap / 2);
+    // Align panels with the rotation system:
+    // Camera at (0,-2,60) sees theta=0 as "front". Group rotation starts at 0.2 rad.
+    // Panel i should be centered at effective theta=0 when rotation = 0.2 + i*angleStep.
+    // So panel i's geometry center must be at theta = -(0.2 + i*angleStep).
+    // thetaStart = center - panelAngle/2
+    const GALLERY_START_ROTATION = 0.2;
+    const thetaStart = -GALLERY_START_ROTATION - (index * angleStep) - (panelAngle / 2);
 
     // Casing Material (Dark Grey / Metal)
     const casingMaterial = useMemo(() => new THREE.MeshStandardMaterial({
