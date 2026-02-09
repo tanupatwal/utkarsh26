@@ -72,16 +72,16 @@ const GalleryOverlay: React.FC = () => {
 
                 {/* 2. Text Content (Left Side) */}
                 <div className="absolute top-1/2 left-8 md:left-20 -translate-y-1/2 max-w-lg">
-                    <div className="overflow-hidden">
+                    <div key={`title-${activeIndex}`} className="gallery-text-enter overflow-hidden">
                         <h2 
-                            className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter leading-none transition-transform duration-500 ease-out"
+                            className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter leading-none"
                         >
                             {activeItem.title}
                         </h2>
                     </div>
                     
                     {/* Description Box */}
-                    <div className="mt-6 p-6 backdrop-blur-md bg-black/30 border-l-2 border-blue-500/50">
+                    <div key={`desc-${activeIndex}`} className="gallery-text-enter mt-6 p-6 backdrop-blur-md bg-black/30 border-l-2 border-blue-500/50">
                         <p className="text-lg text-white/80 leading-relaxed font-light">
                             {activeItem.description}
                         </p>

@@ -35,6 +35,15 @@
       transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
       will-change: transform, opacity, filter, letter-spacing;
     }
+
+    /* Gallery HUD text crossfade */
+    @keyframes galleryFadeIn {
+      0%   { opacity: 0; transform: translateY(12px); filter: blur(4px); }
+      100% { opacity: 1; transform: translateY(0);    filter: blur(0);   }
+    }
+    .gallery-text-enter {
+      animation: galleryFadeIn 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
   </style>
   <script type="importmap">
 {
