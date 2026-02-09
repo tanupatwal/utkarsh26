@@ -6,6 +6,7 @@ import { TIMELINE, SCENE_CONFIG, CAMERA_CONFIG } from '../../../config';
 import { GALLERY_CONTENT } from '../../../data';
 import ThickPanel from './ThickPanel';
 import GalleryEffects from './GalleryEffects';
+import { useGalleryColors, tintFogColor } from '../../../hooks/useGalleryColors';
 
 /**
  * GalleryGroup - Cylindrical gallery with rotating curved panels.
@@ -22,6 +23,14 @@ const GalleryGroup: React.FC = () => {
 
     // Physics state for inertia/momentum (initialized to 0.2 to match transition end)
     const smoothedRot = useRef(0.2);
+
+    // === AMBIENT COLOR SYSTEM ===
+    const galleryColors = useGalleryColors();
+    const pointLightRef = useRef<THREE.PointLight>(null);
+    const ambientLightRef = useRef<THREE.PointLight>(null);
+    const glowMaterialRef = useRef<THREE.MeshBasicMaterial>(null);
+    const currentAmbientColor = useRef(new THREE.Color(0.4, 0.4, 1.0));
+    const currentFogColor = useRef(new THREE.Color('#050505'));
 
     // Add Atmospheric Haze (Fog)
     React.useEffect(() => {
@@ -132,6 +141,41 @@ const GalleryGroup: React.FC = () => {
             if (backgroundRef.current) {
                 backgroundRef.current.rotation.y = smoothedRot.current * 0.25;
             }
+
+            // === AMBIENT COLOR UPDATE ===
+            // Compute active panel index (same logic as GalleryOverlay)
+            const progress = (r - TIMELINE.GALLERY_START) / (TIMELINE.END - TIMELINE.GALLERY_START);
+            const colorRawIndex = progress * (totalItems - 1);
+            const colorIndex = Math.max(0, Math.min(Math.round(colorRawIndex), totalItems - 1));
+
+            const targetColor = galleryColors[colorIndex];
+            if (targetColor) {
+                // Smooth exponential decay color interpolation (frame-rate independent)
+                const dampFactor = 1 - Math.exp(-2.5 * (1 / 60));
+                currentAmbientColor.current.lerp(targetColor, dampFactor);
+
+                // Update pointLight to the ambient color
+                if (pointLightRef.current) {
+                    pointLightRef.current.color.copy(currentAmbientColor.current);
+                }
+
+                // Update secondary ambient light (softer, wider spread)
+                if (ambientLightRef.current) {
+                    ambientLightRef.current.color.copy(currentAmbientColor.current);
+                }
+
+                // Update fog with a very dark tinted version
+                if (scene.fog && scene.fog instanceof THREE.FogExp2) {
+                    const targetFog = tintFogColor(currentAmbientColor.current, 0.12);
+                    currentFogColor.current.lerp(targetFog, dampFactor);
+                    scene.fog.color.copy(currentFogColor.current);
+                }
+
+                // Update ambient glow mesh
+                if (glowMaterialRef.current) {
+                    glowMaterialRef.current.color.copy(currentAmbientColor.current);
+                }
+            }
         }
 
         camera.lookAt(0, 0, 0);
@@ -153,8 +197,23 @@ const GalleryGroup: React.FC = () => {
                     />
                 ))}
 
-                {/* Inner Glow - Always present when gallery is visible */}
-                <pointLight position={[0, 0, 0]} intensity={3} color="#6666ff" distance={25} />
+                {/* Inner Glow - Dynamic ambient color from focused image */}
+                <pointLight ref={pointLightRef} position={[0, 0, 0]} intensity={3} color="#6666ff" distance={25} />
+
+                {/* Secondary Ambient Fill Light - wider, softer spread */}
+                <pointLight ref={ambientLightRef} position={[0, 5, 0]} intensity={1.5} color="#6666ff" distance={60} />
+
+                {/* Ambient Glow Sphere - subtle volumetric color wash */}
+                <mesh>
+                    <sphereGeometry args={[SCENE_CONFIG.CYLINDER_RADIUS * 0.75, 32, 32]} />
+                    <meshBasicMaterial
+                        ref={glowMaterialRef}
+                        color="#6666ff"
+                        transparent
+                        opacity={0.025}
+                        side={THREE.BackSide}
+                    />
+                </mesh>
 
                 {/* HEAVY EFFECTS - Only mount when near gallery to save Hero performance */}
                 {isActive && (
