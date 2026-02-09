@@ -90,7 +90,12 @@ const GalleryGroup: React.FC = () => {
 
             const scale = THREE.MathUtils.lerp(0.8, 1, smoothT);
             groupRef.current.scale.setScalar(scale);
-            groupRef.current.rotation.y = smoothT * 0.2;
+
+            const transitionRot = smoothT * 0.2;
+            groupRef.current.rotation.y = transitionRot;
+
+            // Keep smoothedRot synced so there's no jump when entering/leaving ACTIVE phase
+            smoothedRot.current = transitionRot;
         }
         // ACTIVE gallery phase
         else if (r >= TIMELINE.GALLERY_START) {
@@ -102,19 +107,18 @@ const GalleryGroup: React.FC = () => {
             // Compute rotation from actual panel geometry (not hardcoded)
             const totalItems = GALLERY_CONTENT.length;
             const angleStep = SCENE_CONFIG.CYLINDER_ARC / totalItems;
-            const totalRotation = angleStep * (totalItems - 1); // Exact rotation from panel 0 → panel N-1
 
-            const rawTargetRot = 0.2 + (rotProgress * totalRotation);
-
-            // STICKY LOGIC: Snap rotation to panel boundaries
-            const stepSize = angleStep; // Each step = exactly one panel width
-
-            // 1. Normalize rotation to "Item Index" space (0.0 to N-1)
-            const rawIndex = (rawTargetRot - 0.2) / stepSize;
+            // Map scroll to index space with half-step padding at both ends
+            // so every panel (including first and last) gets equal dwell time.
+            // rawIndex ranges from -0.5 to N-0.5, centered on each integer.
+            const rawIndex = Math.max(0, Math.min(rotProgress * totalItems - 0.5, totalItems - 1));
 
             // 2. Separate Integer (Item #) and Fraction (Progress to next)
-            const index = Math.floor(rawIndex);
-            let frac = rawIndex - index;
+            const index = Math.min(Math.floor(rawIndex), totalItems - 2);
+            let frac = index >= 0 ? rawIndex - index : 0;
+
+            // Clamp frac for last panel
+            if (rawIndex >= totalItems - 1) { frac = 0; }
 
             // 3. Apply easing to fraction to create "Plateaus" at integers
             // Using a steep sigmoid curve: x^3 / (x^3 + (1-x)^3) - very flat at ends, steep in middle
@@ -127,8 +131,8 @@ const GalleryGroup: React.FC = () => {
             }
 
             // 4. Recombine
-            const stickyIndex = index + frac;
-            const stickyRot = 0.2 + (stickyIndex * stepSize);
+            const stickyIndex = rawIndex >= totalItems - 1 ? totalItems - 1 : index + frac;
+            const stickyRot = 0.2 + (stickyIndex * angleStep);
 
             // "High-Friction Easing" / Inertia
             // damp(current, target, lambda, delta)
@@ -143,10 +147,8 @@ const GalleryGroup: React.FC = () => {
             }
 
             // === AMBIENT COLOR UPDATE ===
-            // Compute active panel index (same logic as GalleryOverlay)
-            const progress = (r - TIMELINE.GALLERY_START) / (TIMELINE.END - TIMELINE.GALLERY_START);
-            const colorRawIndex = progress * (totalItems - 1);
-            const colorIndex = Math.max(0, Math.min(Math.round(colorRawIndex), totalItems - 1));
+            // Use the same clamped rawIndex for color (matches visible panel)
+            const colorIndex = Math.max(0, Math.min(Math.round(rawIndex), totalItems - 1));
 
             const targetColor = galleryColors[colorIndex];
             if (targetColor) {

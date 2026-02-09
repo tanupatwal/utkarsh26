@@ -34,9 +34,10 @@ const GalleryOverlay: React.FC = () => {
             const totalItems = GALLERY_CONTENT.length;
             const progress = (r - TIMELINE.GALLERY_START) / (TIMELINE.END - TIMELINE.GALLERY_START);
             
-            const rawIndex = progress * (totalItems - 1);
-            const snappedIndex = Math.round(rawIndex);
-            const index = Math.max(0, Math.min(snappedIndex, totalItems - 1));
+            // Half-step padding: maps scroll evenly across all panels
+            // so panel 0 and panel N-1 each get equal dwell time
+            const rawIndex = Math.max(0, Math.min(progress * totalItems - 0.5, totalItems - 1));
+            const index = Math.round(rawIndex);
             
             if (index !== activeIndex) {
                 setActiveIndex(index);
