@@ -78,8 +78,16 @@ const GalleryGroup: React.FC = () => {
                     />
                 ))}
 
+
+
                 {/* Inner Glow */}
                 <pointLight position={[0, 0, 0]} intensity={3} color="#6666ff" distance={25} />
+
+                {/* Reflection Occluder - Blocks the view of the back-side reflections */}
+                <mesh position={[0, -SCENE_CONFIG.CYLINDER_HEIGHT, 0]}>
+                    <cylinderGeometry args={[SCENE_CONFIG.CYLINDER_RADIUS - 0.1, SCENE_CONFIG.CYLINDER_RADIUS - 0.1, SCENE_CONFIG.CYLINDER_HEIGHT, 64, 1, true]} />
+                    <meshBasicMaterial color="#000000" side={THREE.DoubleSide} />
+                </mesh>
             </group>
         </>
     );

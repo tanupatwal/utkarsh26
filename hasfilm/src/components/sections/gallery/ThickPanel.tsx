@@ -129,7 +129,8 @@ const ThickPanel: React.FC<ThickPanelProps> = ({
             </mesh>
 
 
-            {/* REFLECTION (Floor) */}
+
+            {/* REFLECTION (Floor) - Restored Manual Reflection for Guaranteed Visibility */}
             <mesh position={[0, -height + 0.1, 0]} scale={[1, -1, 1]}>
                 <cylinderGeometry
                     args={[radius, radius, height, 32, 1, true, thetaStart, panelAngle]}
@@ -137,7 +138,7 @@ const ThickPanel: React.FC<ThickPanelProps> = ({
                 <meshBasicMaterial
                     map={texture}
                     transparent
-                    opacity={0.2}
+                    opacity={0.3} // Increased slightly for better visibility
                     side={THREE.DoubleSide}
                     blending={THREE.AdditiveBlending}
                 />
