@@ -58,6 +58,37 @@ const GalleryOverlay: React.FC = () => {
                     willChange: 'transform, opacity',
                 }}
             >
+                {/* OPTION 1: Left-side gradient scrim for text readability */}
+                {/* <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                        background: 'linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.55) 35%, rgba(0,0,0,0) 60%)',
+                    }}
+                /> */}
+
+                {/* OPTION 2 (saved): Text shadow + stroke on title for readability
+                    Title style: textShadow: '0 0 20px rgba(0,0,0,0.9), 0 0 40px rgba(0,0,0,0.6), 2px 2px 8px rgba(0,0,0,0.8), -2px -2px 8px rgba(0,0,0,0.8)'
+                    Desc style:  textShadow: '0 0 12px rgba(0,0,0,0.8), 1px 1px 4px rgba(0,0,0,0.7)'
+                */}
+
+                {/* OPTION 3 (saved): Frosted glass panel behind entire text block
+                    <div className="absolute -inset-8 rounded-2xl backdrop-blur-xl bg-black/40"
+                        style={{ maskImage: 'linear-gradient(to right, black 60%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to right, black 60%, transparent 100%)' }}
+                    />
+                */}
+
+                {/* OPTION 4 (saved): Outlined / stroke text with -webkit-text-stroke
+                    WebkitTextStroke: '1.5px rgba(0,0,0,0.7)', paintOrder: 'stroke fill', textShadow: '0 2px 20px rgba(0,0,0,0.7)'
+                */}
+
+                {/* OPTION 5 (active): Combo — left gradient scrim + text shadow */}
+                <div
+                    className="absolute inset-0 pointer-events-none"
+                    style={{
+                        background: 'linear-gradient(to right, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.45) 30%, rgba(0,0,0,0) 55%)',
+                    }}
+                />
+
                 {/* 1. Progress Bar (Bottom HUD) */}
                 <div className="absolute bottom-12 left-1/2 -translate-x-1/2 w-80 h-[2px] bg-white/10">
                     <div 
@@ -72,17 +103,26 @@ const GalleryOverlay: React.FC = () => {
 
                 {/* 2. Text Content (Left Side) */}
                 <div className="absolute top-1/2 left-8 md:left-20 -translate-y-1/2 max-w-lg">
-                    <div key={`title-${activeIndex}`} className="gallery-text-enter overflow-hidden">
+
+                    <div key={`title-${activeIndex}`} className="gallery-text-enter overflow-hidden relative">
                         <h2 
                             className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter leading-none"
+                            style={{
+                                textShadow: '0 0 15px rgba(0,0,0,0.8), 0 2px 30px rgba(0,0,0,0.5)',
+                            }}
                         >
                             {activeItem.title}
                         </h2>
                     </div>
                     
                     {/* Description Box */}
-                    <div key={`desc-${activeIndex}`} className="gallery-text-enter mt-6 p-6 backdrop-blur-md bg-black/30 border-l-2 border-blue-500/50">
-                        <p className="text-lg text-white/80 leading-relaxed font-light">
+                    <div key={`desc-${activeIndex}`} className="gallery-text-enter relative mt-6 p-6 border-l-2 border-blue-500/50">
+                        <p
+                            className="text-lg text-white/80 leading-relaxed font-light"
+                            style={{
+                                textShadow: '0 0 10px rgba(0,0,0,0.6)',
+                            }}
+                        >
                             {activeItem.description}
                         </p>
                         <div className="mt-4 flex items-center gap-4">
