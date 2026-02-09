@@ -17,12 +17,19 @@ const GalleryGroup: React.FC = () => {
     const silhouetteRef = useRef<THREE.Group>(null);
     const { camera, scene } = useThree();
 
+    // Performance: Only render heavy effects when in/near gallery section
+    const [isActive, setIsActive] = React.useState(false);
+
+    // Physics state for inertia/momentum
+    const smoothedRot = useRef(0);
+
     // Add Atmospheric Haze (Fog)
     React.useEffect(() => {
         const oldFog = scene.fog;
         // FogExp2 gives a more organic, exponential falloff than linear Fog
-        // Color #050505 matches the deep background, density 0.035 tuned for visibility at ~30-40 units
-        scene.fog = new THREE.FogExp2('#050505', 0.035);
+        // Color #050505 matches the deep background
+        // Reduced density to 0.012 to prevent "pale" / washed-out colors (visibility ~55% at r=50)
+        scene.fog = new THREE.FogExp2('#050505', 0.012);
         return () => {
             scene.fog = oldFog;
         };
@@ -40,17 +47,30 @@ const GalleryGroup: React.FC = () => {
     );
 
     useFrame(() => {
-        if (!groupRef.current) return;
         const r = scroll.offset;
 
-        // Hide during about section
+        // Manage active state for performance (Unmount effects when far away)
+        // Activation threshold: slightly before ABOUT_STAY to ensure smooth fade in
+        const shouldBeActive = r > (TIMELINE.ABOUT_STAY - 0.1);
+
+        if (isActive !== shouldBeActive) {
+            setIsActive(shouldBeActive);
+        }
+
+        // Return early if not active component context (though hooks still run)
+        if (!groupRef.current) return;
+
+        // Hide during about section (Visual visibility)
         if (r < TIMELINE.ABOUT_STAY) {
             groupRef.current.visible = false;
-            if (silhouetteRef.current) silhouetteRef.current.visible = false;
-            return;
+            // No early return here if we want to update other refs, but here visible=false is enough usually.
+            // But we need to make sure logic below doesn't run if hidden, or does it?
+            // TRANSITION logic needs to run if r >= ABOUT_STAY
+            if (r < TIMELINE.ABOUT_STAY) return;
         }
+
+        // If we are here, we are visible
         groupRef.current.visible = true;
-        if (silhouetteRef.current) silhouetteRef.current.visible = true;
 
         // TRANSITION phase
         if (r >= TIMELINE.ABOUT_STAY && r < TIMELINE.GALLERY_START) {
@@ -69,7 +89,14 @@ const GalleryGroup: React.FC = () => {
             groupRef.current.scale.setScalar(1);
 
             const rotProgress = (r - TIMELINE.GALLERY_START) / (TIMELINE.END - TIMELINE.GALLERY_START);
-            groupRef.current.rotation.y = 0.2 + (rotProgress * Math.PI * 1.5);
+            const targetRot = 0.2 + (rotProgress * Math.PI * 1.5);
+
+            // "High-Friction Easing" / Inertia
+            // damp(current, target, lambda, delta)
+            // lambda: 1-2 = very heavy/viscous. 4-5 = heavy but responsive. 10+ = snappy.
+            smoothedRot.current = THREE.MathUtils.damp(smoothedRot.current, targetRot, 4, 1 / 60);
+
+            groupRef.current.rotation.y = smoothedRot.current;
         }
 
         camera.lookAt(0, 0, 0);
@@ -78,6 +105,7 @@ const GalleryGroup: React.FC = () => {
     return (
         <>
             <group ref={groupRef} position={[0, 0, 0]}>
+                {/* Always render content geometry, just control visibility via useFrame */}
                 {GALLERY_CONTENT.map((item, i) => (
                     <ThickPanel
                         key={i}
@@ -90,19 +118,21 @@ const GalleryGroup: React.FC = () => {
                     />
                 ))}
 
-
-
-                {/* Inner Glow */}
+                {/* Inner Glow - Always present when gallery is visible */}
                 <pointLight position={[0, 0, 0]} intensity={3} color="#6666ff" distance={25} />
 
-                {/* Post-Processing Effects */}
-                <GalleryEffects />
+                {/* HEAVY EFFECTS - Only mount when near gallery to save Hero performance */}
+                {isActive && (
+                    <>
+                        <GalleryEffects />
 
-                {/* Reflection Occluder - Blocks the view of the back-side reflections */}
-                <mesh position={[0, -SCENE_CONFIG.CYLINDER_HEIGHT, 0]}>
-                    <cylinderGeometry args={[SCENE_CONFIG.CYLINDER_RADIUS - 0.1, SCENE_CONFIG.CYLINDER_RADIUS - 0.1, SCENE_CONFIG.CYLINDER_HEIGHT, 64, 1, true]} />
-                    <meshBasicMaterial color="#000000" side={THREE.DoubleSide} />
-                </mesh>
+                        {/* Reflection Occluder */}
+                        <mesh position={[0, -SCENE_CONFIG.CYLINDER_HEIGHT, 0]}>
+                            <cylinderGeometry args={[SCENE_CONFIG.CYLINDER_RADIUS - 0.1, SCENE_CONFIG.CYLINDER_RADIUS - 0.1, SCENE_CONFIG.CYLINDER_HEIGHT, 64, 1, true]} />
+                            <meshBasicMaterial color="#000000" side={THREE.DoubleSide} />
+                        </mesh>
+                    </>
+                )}
             </group>
         </>
     );

@@ -65,6 +65,7 @@ const ThickPanel: React.FC<ThickPanelProps> = ({
                 <meshBasicMaterial
                     map={texture}
                     side={THREE.DoubleSide}
+                    toneMapped={false} // CRITICAL: Preserves true colors against fog/post-processing
                 />
                 {/* Removed scale=[-1,1,1] to ensure normal orientation */}
             </mesh>
@@ -75,12 +76,11 @@ const ThickPanel: React.FC<ThickPanelProps> = ({
                     args={[radius + 0.05, radius + 0.05, height, 32, 1, true, thetaStart, panelAngle]}
                 />
                 <meshPhysicalMaterial
-                    color="#000000"
                     transparent
-                    opacity={0.1} // Subtle dimming
-                    roughness={0.6} // Satin finish, diffuses sharp pixels
+                    opacity={0.1}
+                    roughness={0.6} // Satin finish
                     metalness={0.1}
-                    clearcoat={0.5} // Slight gloss
+                    clearcoat={0.5}
                     clearcoatRoughness={0.4}
                     side={THREE.DoubleSide}
                 />
