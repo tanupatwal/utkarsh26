@@ -27,8 +27,9 @@ const GalleryOverlay: React.FC = () => {
         const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 0;
         const targetY = viewportHeight * (SCROLL_CONFIG.PAGES - 1) * r;
 
-        // 1. Visibility Logic: Fade in when gallery's first media is in view
-        const isVisible = r >= TIMELINE.GALLERY_START && r <= TIMELINE.END;
+        // 1. Visibility Logic: Fade in for gallery, fade out before dissolve
+        const GALLERY_VIEW_END = 0.91;
+        const isVisible = r >= TIMELINE.GALLERY_START && r <= GALLERY_VIEW_END;
         const targetOpacity = isVisible ? 1 : 0;
         opacityRef.current = THREE.MathUtils.damp(opacityRef.current, targetOpacity, 3, delta);
 
@@ -36,16 +37,16 @@ const GalleryOverlay: React.FC = () => {
         innerRef.current.style.transform = `translate3d(0, ${targetY}px, 0)`;
         innerRef.current.style.opacity = opacityRef.current.toString();
 
-        // 2. Active Index Calculation
+        // 2. Active Index Calculation — must use same range as GalleryGroup's viewing phase
         if (r >= TIMELINE.GALLERY_START) {
             const totalItems = GALLERY_CONTENT.length;
-            const progress = (r - TIMELINE.GALLERY_START) / (TIMELINE.END - TIMELINE.GALLERY_START);
-            
+            const progress = (r - TIMELINE.GALLERY_START) / (GALLERY_VIEW_END - TIMELINE.GALLERY_START);
+
             // Half-step padding: maps scroll evenly across all panels
             // so panel 0 and panel N-1 each get equal dwell time
             const rawIndex = Math.max(0, Math.min(progress * totalItems - 0.5, totalItems - 1));
             const index = Math.round(rawIndex);
-            
+
             if (index !== activeIndex) {
                 setActiveIndex(index);
             }
@@ -168,7 +169,7 @@ const GalleryOverlay: React.FC = () => {
 
                 {/* 1. Progress Bar (Bottom HUD) */}
                 <div ref={progressRef} className="absolute bottom-12 left-1/2 -translate-x-1/2 w-80 h-[2px] bg-white/10">
-                    <div 
+                    <div
                         className="h-full bg-blue-500 transition-all duration-500 ease-out shadow-[0_0_10px_#3b82f6]"
                         style={{ width: `${((activeIndex + 1) / GALLERY_CONTENT.length) * 100}%` }}
                     />
@@ -182,7 +183,7 @@ const GalleryOverlay: React.FC = () => {
                 <div ref={textRef} className="absolute top-1/2 left-8 md:left-20 -translate-y-1/2 max-w-lg" style={{ willChange: 'transform, opacity' }}>
 
                     <div key={`title-${activeIndex}`} className="gallery-text-enter overflow-hidden relative">
-                        <h2 
+                        <h2
                             className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter leading-none"
                             style={{
                                 textShadow: '0 0 15px rgba(0,0,0,0.8), 0 2px 30px rgba(0,0,0,0.5)',
@@ -191,7 +192,7 @@ const GalleryOverlay: React.FC = () => {
                             {activeItem.title}
                         </h2>
                     </div>
-                    
+
                     {/* Description Box */}
                     <div key={`desc-${activeIndex}`} className="gallery-text-enter relative mt-6 p-6 border-l-2 border-blue-500/50">
                         <p
@@ -214,7 +215,7 @@ const GalleryOverlay: React.FC = () => {
                 {/* 3. Vertical Pagination Dots (Right Side) */}
                 <div ref={dotsRef} className="absolute top-1/2 right-8 md:right-12 -translate-y-1/2 flex flex-col items-center gap-4">
                     {GALLERY_CONTENT.map((_, i) => (
-                        <div 
+                        <div
                             key={i}
                             className={`w-1 transition-all duration-500 ${i === activeIndex ? 'h-8 bg-blue-500' : 'h-2 bg-white/20'}`}
                         />

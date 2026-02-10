@@ -11,6 +11,7 @@ import { useGalleryColors, tintFogColor } from '../../../hooks/useGalleryColors'
 /**
  * GalleryGroup - Cylindrical gallery with rotating curved panels.
  * Visible during the final phase of scroll (GALLERY_START - END).
+ * The last panel disintegrates from left → right when scrolled past.
  */
 const GalleryGroup: React.FC = () => {
     const scroll = useScroll();
@@ -24,6 +25,10 @@ const GalleryGroup: React.FC = () => {
     // Physics state for inertia/momentum (initialized to 0.2 to match transition end)
     const smoothedRot = useRef(0.2);
 
+    // Dissolve progress refs (0 = visible, 1 = fully dissolved)
+    const dissolveProgressRef = useRef(0);       // last panel
+    const dissolveProgressRef2 = useRef(0);      // second-to-last panel (delayed)
+
     // === AMBIENT COLOR SYSTEM ===
     const galleryColors = useGalleryColors();
     const pointLightRef = useRef<THREE.PointLight>(null);
@@ -35,9 +40,6 @@ const GalleryGroup: React.FC = () => {
     // Add Atmospheric Haze (Fog)
     React.useEffect(() => {
         const oldFog = scene.fog;
-        // FogExp2 gives a more organic, exponential falloff than linear Fog
-        // Color #050505 matches the deep background
-        // Reduced density to 0.012 to prevent "pale" / washed-out colors (visibility ~55% at r=50)
         scene.fog = new THREE.FogExp2('#050505', 0.012);
         return () => {
             scene.fog = oldFog;
@@ -55,30 +57,49 @@ const GalleryGroup: React.FC = () => {
         CAMERA_CONFIG.END.z
     );
 
+    // === Helper: Update ambient color system ===
+    function updateAmbientColors(rawIndex: number, totalItems: number) {
+        const colorIndex = Math.max(0, Math.min(Math.round(rawIndex), totalItems - 1));
+        const targetColor = galleryColors[colorIndex];
+        if (!targetColor) return;
+
+        const dampFactor = 1 - Math.exp(-2.5 * (1 / 60));
+        currentAmbientColor.current.lerp(targetColor, dampFactor);
+
+        if (pointLightRef.current) {
+            pointLightRef.current.color.copy(currentAmbientColor.current);
+        }
+        if (ambientLightRef.current) {
+            ambientLightRef.current.color.copy(currentAmbientColor.current);
+        }
+        if (scene.fog && scene.fog instanceof THREE.FogExp2) {
+            const targetFog = tintFogColor(currentAmbientColor.current, 0.12);
+            currentFogColor.current.lerp(targetFog, dampFactor);
+            scene.fog.color.copy(currentFogColor.current);
+        }
+        if (glowMaterialRef.current) {
+            glowMaterialRef.current.color.copy(currentAmbientColor.current);
+        }
+    }
+
     useFrame(() => {
         const r = scroll.offset;
 
-        // Manage active state for performance (Unmount effects when far away)
-        // Activation threshold: slightly before ABOUT_STAY to ensure smooth fade in
+        // Manage active state for performance
         const shouldBeActive = r > (TIMELINE.ABOUT_STAY - 0.1);
 
         if (isActive !== shouldBeActive) {
             setIsActive(shouldBeActive);
         }
 
-        // Return early if not active component context (though hooks still run)
         if (!groupRef.current) return;
 
-        // Hide during about section (Visual visibility)
+        // Hide during about section
         if (r < TIMELINE.ABOUT_STAY) {
             groupRef.current.visible = false;
-            // No early return here if we want to update other refs, but here visible=false is enough usually.
-            // But we need to make sure logic below doesn't run if hidden, or does it?
-            // TRANSITION logic needs to run if r >= ABOUT_STAY
             if (r < TIMELINE.ABOUT_STAY) return;
         }
 
-        // If we are here, we are visible
         groupRef.current.visible = true;
 
         // TRANSITION phase
@@ -94,110 +115,132 @@ const GalleryGroup: React.FC = () => {
             const transitionRot = smoothT * 0.2;
             groupRef.current.rotation.y = transitionRot;
 
-            // Keep smoothedRot synced so there's no jump when entering/leaving ACTIVE phase
             smoothedRot.current = transitionRot;
         }
-        // ACTIVE gallery phase
+        // ACTIVE gallery phase — split into: Viewing → Pause → Dissolve
         else if (r >= TIMELINE.GALLERY_START) {
             camera.position.copy(CAM_POS_END);
             groupRef.current.scale.setScalar(1);
 
-            const rotProgress = (r - TIMELINE.GALLERY_START) / (TIMELINE.END - TIMELINE.GALLERY_START);
-
-            // Compute rotation from actual panel geometry (not hardcoded)
             const totalItems = GALLERY_CONTENT.length;
             const angleStep = SCENE_CONFIG.CYLINDER_ARC / totalItems;
 
-            // Map scroll to index space with half-step padding at both ends
-            // so every panel (including first and last) gets equal dwell time.
-            // rawIndex ranges from -0.5 to N-0.5, centered on each integer.
-            const rawIndex = Math.max(0, Math.min(rotProgress * totalItems - 0.5, totalItems - 1));
+            // ── Sub-phase boundaries (compressed to make room for dark/title/bento) ──
+            const GALLERY_VIEW_END = 0.91;   // Gallery sticky scroll ends
+            const DISSOLVE_START = 0.93;     // Dissolve begins (after a pause)
+            const DISSOLVE_END = 0.97;       // Dissolve complete → screen goes dark
 
-            // 2. Separate Integer (Item #) and Fraction (Progress to next)
-            const index = Math.min(Math.floor(rawIndex), totalItems - 2);
-            let frac = index >= 0 ? rawIndex - index : 0;
+            if (r < GALLERY_VIEW_END) {
+                // ── SUB-PHASE A: Sticky scroll through panels ──
+                const rotProgress = (r - TIMELINE.GALLERY_START) / (GALLERY_VIEW_END - TIMELINE.GALLERY_START);
 
-            // Clamp frac for last panel
-            if (rawIndex >= totalItems - 1) { frac = 0; }
+                const rawIndex = Math.max(0, Math.min(rotProgress * totalItems - 0.5, totalItems - 1));
+                const index = Math.min(Math.floor(rawIndex), totalItems - 2);
+                let frac = index >= 0 ? rawIndex - index : 0;
 
-            // 3. Apply easing to fraction to create "Plateaus" at integers
-            // Using a steep sigmoid curve: x^3 / (x^3 + (1-x)^3) - very flat at ends, steep in middle
-            // Or standard smoothstep: t * t * (3 - 2 * t)
-            // Let's use a custom steep curve for strong "stop" feel:
-            if (frac < 0.5) {
-                frac = 4 * frac * frac * frac; // Cubic ease in
+                if (rawIndex >= totalItems - 1) { frac = 0; }
+
+                // Sticky easing
+                if (frac < 0.5) {
+                    frac = 4 * frac * frac * frac;
+                } else {
+                    frac = 1 - Math.pow(-2 * frac + 2, 3) / 2;
+                }
+
+                const stickyIndex = rawIndex >= totalItems - 1 ? totalItems - 1 : index + frac;
+                const stickyRot = 0.2 + (stickyIndex * angleStep);
+
+                smoothedRot.current = THREE.MathUtils.damp(smoothedRot.current, stickyRot, 5, 1 / 60);
+                groupRef.current.rotation.y = smoothedRot.current;
+
+                // PARALLAX
+                if (backgroundRef.current) {
+                    backgroundRef.current.rotation.y = smoothedRot.current * 0.25;
+                }
+
+                dissolveProgressRef.current = 0;
+                dissolveProgressRef2.current = 0;
+                updateAmbientColors(rawIndex, totalItems);
+
+            } else if (r < DISSOLVE_START) {
+                // ── SUB-PHASE B: Pause — last panel dwells, HUD fades ──
+                const lastPanelRot = 0.2 + ((totalItems - 1) * angleStep);
+                smoothedRot.current = THREE.MathUtils.damp(smoothedRot.current, lastPanelRot, 5, 1 / 60);
+                groupRef.current.rotation.y = smoothedRot.current;
+
+                dissolveProgressRef.current = 0;
+                dissolveProgressRef2.current = 0;
+                updateAmbientColors(totalItems - 1, totalItems);
+
+            } else if (r < DISSOLVE_END) {
+                // ── SUB-PHASE C: Dissolve + Zoom (slow→fast) ──
+                const lastPanelRot = 0.2 + ((totalItems - 1) * angleStep);
+                smoothedRot.current = THREE.MathUtils.damp(smoothedRot.current, lastPanelRot, 5, 1 / 60);
+                groupRef.current.rotation.y = smoothedRot.current;
+
+                // Dissolve progress: 0 → 1
+                const dissolveT = (r - DISSOLVE_START) / (DISSOLVE_END - DISSOLVE_START);
+                const clampedT = Math.max(0, Math.min(1, dissolveT));
+                const eased = clampedT < 0.5
+                    ? 2 * clampedT * clampedT
+                    : 1 - Math.pow(-2 * clampedT + 2, 2) / 2;
+                dissolveProgressRef.current = eased;
+
+                // Second-to-last panel: delayed, caps at ~40%
+                const delay2 = 0.35;
+                const raw2 = Math.max(0, (clampedT - delay2) / (1 - delay2));
+                dissolveProgressRef2.current = Math.min(0.4, raw2 * 0.6);
+
+                // Camera zoom: SLOW first half, then RAPID acceleration
+                // Using exponential curve: t^3 gives slow start, fast finish
+                const zoomT = clampedT * clampedT * clampedT;
+                const targetZ = THREE.MathUtils.lerp(CAM_POS_END.z, 35, zoomT);
+                camera.position.set(CAM_POS_END.x, CAM_POS_END.y, targetZ);
+
+                updateAmbientColors(totalItems - 1, totalItems);
+
             } else {
-                frac = 1 - Math.pow(-2 * frac + 2, 3) / 2; // Cubic ease out
-            }
+                // ── SUB-PHASE D: Post-dissolve — gallery fully dissolved, camera locked ──
+                const lastPanelRot = 0.2 + ((totalItems - 1) * angleStep);
+                smoothedRot.current = THREE.MathUtils.damp(smoothedRot.current, lastPanelRot, 5, 1 / 60);
+                groupRef.current.rotation.y = smoothedRot.current;
 
-            // 4. Recombine
-            const stickyIndex = rawIndex >= totalItems - 1 ? totalItems - 1 : index + frac;
-            const stickyRot = 0.2 + (stickyIndex * angleStep);
+                dissolveProgressRef.current = 1;
+                dissolveProgressRef2.current = 0.4;
+                camera.position.set(CAM_POS_END.x, CAM_POS_END.y, 35);
 
-            // "High-Friction Easing" / Inertia
-            // damp(current, target, lambda, delta)
-            // lambda: 1-2 = heavy. 5 = snappy. Increased to 5 for tighter snap feel.
-            smoothedRot.current = THREE.MathUtils.damp(smoothedRot.current, stickyRot, 5, 1 / 60);
-
-            groupRef.current.rotation.y = smoothedRot.current;
-
-            // PARALLAX: Rotate background at 25% speed of foreground
-            if (backgroundRef.current) {
-                backgroundRef.current.rotation.y = smoothedRot.current * 0.25;
-            }
-
-            // === AMBIENT COLOR UPDATE ===
-            // Use the same clamped rawIndex for color (matches visible panel)
-            const colorIndex = Math.max(0, Math.min(Math.round(rawIndex), totalItems - 1));
-
-            const targetColor = galleryColors[colorIndex];
-            if (targetColor) {
-                // Smooth exponential decay color interpolation (frame-rate independent)
-                const dampFactor = 1 - Math.exp(-2.5 * (1 / 60));
-                currentAmbientColor.current.lerp(targetColor, dampFactor);
-
-                // Update pointLight to the ambient color
-                if (pointLightRef.current) {
-                    pointLightRef.current.color.copy(currentAmbientColor.current);
-                }
-
-                // Update secondary ambient light (softer, wider spread)
-                if (ambientLightRef.current) {
-                    ambientLightRef.current.color.copy(currentAmbientColor.current);
-                }
-
-                // Update fog with a very dark tinted version
-                if (scene.fog && scene.fog instanceof THREE.FogExp2) {
-                    const targetFog = tintFogColor(currentAmbientColor.current, 0.12);
-                    currentFogColor.current.lerp(targetFog, dampFactor);
-                    scene.fog.color.copy(currentFogColor.current);
-                }
-
-                // Update ambient glow mesh
-                if (glowMaterialRef.current) {
-                    glowMaterialRef.current.color.copy(currentAmbientColor.current);
-                }
+                updateAmbientColors(totalItems - 1, totalItems);
             }
         }
 
         camera.lookAt(0, 0, 0);
     });
 
+    const lastIndex = GALLERY_CONTENT.length - 1;
+    const secondLastIndex = GALLERY_CONTENT.length - 2;
+
     return (
         <>
             <group ref={groupRef} position={[0, 0, 0]}>
-                {/* Always render content geometry, just control visibility via useFrame */}
-                {GALLERY_CONTENT.map((item, i) => (
-                    <ThickPanel
-                        key={i}
-                        url={item.url}
-                        index={i}
-                        total={GALLERY_CONTENT.length}
-                        radius={SCENE_CONFIG.CYLINDER_RADIUS}
-                        gap={0.008} // Gap between panels in radians
-                        thickness={2} // Thickness of the panel
-                    />
-                ))}
+                {GALLERY_CONTENT.map((item, i) => {
+                    // Determine which dissolve ref to pass
+                    let panelDissolveRef: React.RefObject<number> | undefined;
+                    if (i === lastIndex) panelDissolveRef = dissolveProgressRef;
+                    else if (i === secondLastIndex) panelDissolveRef = dissolveProgressRef2;
+
+                    return (
+                        <ThickPanel
+                            key={i}
+                            url={item.url}
+                            index={i}
+                            total={GALLERY_CONTENT.length}
+                            radius={SCENE_CONFIG.CYLINDER_RADIUS}
+                            gap={0.008}
+                            thickness={2}
+                            dissolveProgressRef={panelDissolveRef}
+                        />
+                    );
+                })}
 
                 {/* Inner Glow - Dynamic ambient color from focused image */}
                 <pointLight ref={pointLightRef} position={[0, 0, 0]} intensity={3} color="#6666ff" distance={25} />

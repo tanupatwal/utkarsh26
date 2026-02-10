@@ -3,6 +3,7 @@ import { ScrollControls, Scroll } from '@react-three/drei';
 import { SCROLL_CONFIG } from '../../config';
 
 import GalleryOverlay from '../sections/gallery/GalleryOverlay';
+import HighlightsSection from '../sections/gallery/HighlightsSection';
 
 // Canvas components
 import SceneSetup from './SceneSetup';
@@ -40,6 +41,9 @@ const Experience: React.FC = () => {
                     <HeroOverlay />
 
                     <GalleryOverlay />
+
+                    {/* Floating bento highlights — fades in during gallery dissolve */}
+                    <HighlightsSection />
                 </Scroll>
             </ScrollControls>
         </>
