@@ -58,7 +58,7 @@ const AnimatedBackground: React.FC = () => {
 
     containerRef.current.style.opacity = opacity.toString();
     containerRef.current.style.transform = `translate3d(0, ${compensateY}px, 0) scale(${scale})`;
-    containerRef.current.style.display = opacity <= 0.01 ? 'none' : 'block';
+    containerRef.current.style.visibility = opacity <= 0.01 ? 'hidden' : 'visible';
   });
 
   return (
@@ -68,6 +68,7 @@ const AnimatedBackground: React.FC = () => {
       style={{
         backgroundColor: '#0B0F1A',
         transformOrigin: 'center center',
+        willChange: 'transform, opacity, visibility',
       }}
     >
       {/*

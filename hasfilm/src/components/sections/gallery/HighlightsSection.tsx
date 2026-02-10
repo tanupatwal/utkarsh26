@@ -325,6 +325,9 @@ const HighlightsSection: React.FC = () => {
     const GALLERY_FADE_START = 2.0;   // gallery starts appearing at 2.0s
     const GALLERY_FADE_END = 3.2;     // gallery fully visible by 3.2s
 
+    // fast DOM lookup
+    const domMapRef = useRef<Map<number, HTMLDivElement>>(new Map());
+
     useFrame((_state, delta) => {
         if (!containerRef.current) return;
 
@@ -435,6 +438,8 @@ const HighlightsSection: React.FC = () => {
 
             // Only cull if it has been on screen at least once and is now off
             if (age > 2 && isOffScreen) {
+                // remove from DOM map
+                domMapRef.current.delete(img.id);
                 continue; // don't add to surviving
             }
 
@@ -442,52 +447,47 @@ const HighlightsSection: React.FC = () => {
             img.opacity = Math.min(1, age / FADE_IN_DURATION);
 
             surviving.push(img);
+
+            // ── Update DOM elements directly for performance ──
+            const el = domMapRef.current.get(img.id);
+            if (el) {
+                const layerCfg = LAYER_CONFIG[img.layer];
+
+                // Mouse parallax
+                const mouseOffX = mouseSmoothed.current.x * layerCfg.mouseRange;
+                const mouseOffY = mouseSmoothed.current.y * layerCfg.mouseRange * 0.7;
+
+                const finalX = cx + mouseOffX;
+                const finalY = cy + mouseOffY;
+
+                // ── Distance-from-center scale ──
+                // Normalize position to 0..1 where 0 = center, 1 = edge
+                const centerX = vw / 2;
+                const centerY = vh / 2;
+                const dx = (finalX - centerX) / centerX;  // -1 to 1
+                const dy = (finalY - centerY) / centerY;  // -1 to 1
+                const distFromCenter = Math.min(1, Math.sqrt(dx * dx + dy * dy)); // 0 at center, 1 at edges
+                // Smooth bell curve: scale peaks at center, drops at edges
+                const centerScale = 1 + CENTER_SCALE_BOOST * (1 - distFromCenter * distFromCenter);
+
+                el.style.transform = `translate(-50%, -50%) translate(${finalX}px, ${finalY}px) scale(${centerScale.toFixed(3)})`;
+                el.style.opacity = img.opacity.toString();
+            }
         }
 
         activeImagesRef.current = surviving;
 
-        // ── Update DOM elements directly for performance ──
-        const imgEls = galleryRef.current?.querySelectorAll<HTMLElement>('[data-spawn-img]');
-        if (!imgEls) return;
-
-        imgEls.forEach((el) => {
-            const imgId = parseInt(el.dataset.spawnId || '-1');
-            const img = activeImagesRef.current.find(i => i.id === imgId);
-            if (!img) return;
-
-            const age = t - img.spawnTime;
-            const layerCfg = LAYER_CONFIG[img.layer];
-
-            // Current position
-            const cx = img.startX + img.vx * age;
-            const cy = img.startY + img.vy * age;
-
-            // Mouse parallax
-            const mouseOffX = mouseSmoothed.current.x * layerCfg.mouseRange;
-            const mouseOffY = mouseSmoothed.current.y * layerCfg.mouseRange * 0.7;
-
-            const finalX = cx + mouseOffX;
-            const finalY = cy + mouseOffY;
-
-            // ── Distance-from-center scale ──
-            // Normalize position to 0..1 where 0 = center, 1 = edge
-            const centerX = vw / 2;
-            const centerY = vh / 2;
-            const dx = (finalX - centerX) / centerX;  // -1 to 1
-            const dy = (finalY - centerY) / centerY;  // -1 to 1
-            const distFromCenter = Math.min(1, Math.sqrt(dx * dx + dy * dy)); // 0 at center, 1 at edges
-            // Smooth bell curve: scale peaks at center, drops at edges
-            const centerScale = 1 + CENTER_SCALE_BOOST * (1 - distFromCenter * distFromCenter);
-
-            el.style.transform = `translate(-50%, -50%) translate(${finalX}px, ${finalY}px) scale(${centerScale.toFixed(3)})`;
-            el.style.opacity = img.opacity.toString();
-        });
-
         // ── Sync React state periodically (for adding/removing DOM nodes) ──
         renderUpdateTimerRef.current += delta;
-        if (renderUpdateTimerRef.current > 0.1) { // sync every 100ms
+        if (renderUpdateTimerRef.current > 0.5) { // sync every 500ms instead of 100ms
             renderUpdateTimerRef.current = 0;
-            setRenderImages([...activeImagesRef.current]);
+            // setRenderImages([...activeImagesRef.current]); // This causes re-renders even if no change
+            setRenderImages(prev => {
+                if (prev.length !== activeImagesRef.current.length || prev[prev.length - 1]?.id !== activeImagesRef.current[activeImagesRef.current.length - 1]?.id) {
+                    return [...activeImagesRef.current];
+                }
+                return prev;
+            });
         }
     });
 
@@ -599,6 +599,10 @@ const HighlightsSection: React.FC = () => {
                     return (
                         <div
                             key={img.id}
+                            ref={(el) => {
+                                if (el) domMapRef.current.set(img.id, el);
+                                else domMapRef.current.delete(img.id);
+                            }}
                             data-spawn-img
                             data-spawn-id={img.id}
                             onMouseEnter={() => handleMouseEnter(img.id)}
@@ -632,6 +636,8 @@ const HighlightsSection: React.FC = () => {
                                 src={content.url}
                                 alt={content.title}
                                 draggable={false}
+                                loading="lazy"
+                                decoding="async"
                                 style={{
                                     width: '100%',
                                     height: '100%',
