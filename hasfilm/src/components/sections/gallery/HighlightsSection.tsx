@@ -73,10 +73,10 @@ const HighlightsSection: React.FC = () => {
     }, []);
 
     // ── Phase boundaries ──
-    // Dark backdrop:   0.94 → 0.97 (fades in during dissolve, completely dark by 0.97)
-    // Section title:   0.97 → 0.99 (appears at 0.97, auto-fades by ~0.99)
+    // Dark backdrop:   0.96 → 0.97 (fades in late during dissolve, fully dark by end)
+    // Section title:   0.97 → 0.99 (appears, auto-fades)
     // Bento cards:     0.99 → 1.0  (fade in)
-    const DARK_START = 0.94;
+    const DARK_START = 0.96;
     const DARK_FULL = 0.97;
     const TITLE_START = 0.97;
     const TITLE_END = 0.99;

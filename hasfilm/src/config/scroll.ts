@@ -3,6 +3,6 @@
  */
 export const SCROLL_CONFIG = {
     /** Total virtual pages used by ScrollControls */
-    PAGES: 11
+    PAGES: 14
 } as const;
 
