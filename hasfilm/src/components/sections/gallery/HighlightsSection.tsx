@@ -10,119 +10,248 @@ import { HIGHLIGHTS_CONTENT } from '../../../data';
 // ════════════════════════════════════════════════
 
 type DepthLayer = 'foreground' | 'middle' | 'background';
-type SizeClass = 'hero' | 'medium' | 'small';
+type SizeClass = 'hero' | 'medium' | 'small' | 'tiny';
 
-interface FloatingImage {
-    url: string;
-    title: string;
-    description: string;
-    size: SizeClass;
-    layer: DepthLayer;
-    zDepth: number;
-    startX: number; // initial position (% of viewport, relative to center)
-    startY: number;
-    aspect: 'landscape' | 'portrait' | 'square';
-}
-
-// Seeded random for deterministic layout
-function seeded(seed: number) {
-    const x = Math.sin(seed * 127.1 + 311.7) * 43758.5453;
-    return x - Math.floor(x);
-}
-
-// ── Layer Config — visual treatment only, speed is uniform ──
+// Layer visual config
 const LAYER_CONFIG = {
-    foreground: { mouseRange: 15, blur: 0, baseBrightness: 0.92 },
-    middle: { mouseRange: 12, blur: 0, baseBrightness: 0.8 },
-    background: { mouseRange: 8, blur: 2, baseBrightness: 0.62 },
+    foreground: { mouseRange: 15, blur: 0, baseBrightness: 0.92, speed: 1.0 },
+    middle: { mouseRange: 12, blur: 0, baseBrightness: 0.8, speed: 0.7 },
+    background: { mouseRange: 8, blur: 2, baseBrightness: 0.62, speed: 0.45 },
 } as const;
 
-// ── Global flow — one direction, all images ──
-const GLOBAL_FLOW_ANGLE = seeded(42) * Math.PI * 2;
-const GLOBAL_FLOW_SPEED = 6; // px/s — gentle
-const GLOBAL_FLOW_DX = Math.cos(GLOBAL_FLOW_ANGLE);
-const GLOBAL_FLOW_DY = Math.sin(GLOBAL_FLOW_ANGLE);
+// Size config — dimensions in vw/vh
+const SIZE_CONFIG: Record<SizeClass, { minW: number; maxW: number; aspect: [number, number][] }> = {
+    hero: { minW: 22, maxW: 30, aspect: [[16, 10], [4, 3], [3, 2]] },
+    medium: { minW: 14, maxW: 20, aspect: [[16, 9], [4, 3], [3, 4]] },
+    small: { minW: 8, maxW: 13, aspect: [[16, 9], [1, 1], [3, 4]] },
+    tiny: { minW: 5, maxW: 8, aspect: [[1, 1], [4, 3], [16, 9]] },
+};
 
-// Build the 12-image layout with deliberate size hierarchy & depth layers
-function buildLayout(): FloatingImage[] {
-    const sizes: SizeClass[] = [
-        'hero', 'small', 'medium', 'small',
-        'hero', 'small', 'medium', 'small',
-        'medium', 'hero', 'small', 'medium',
-    ];
+// Size distribution weights
+const SIZE_WEIGHTS: { size: SizeClass; weight: number }[] = [
+    { size: 'hero', weight: 0.08 },
+    { size: 'medium', weight: 0.25 },
+    { size: 'small', weight: 0.40 },
+    { size: 'tiny', weight: 0.27 },
+];
 
-    const layers: DepthLayer[] = [
-        'foreground', 'background', 'middle', 'background',
-        'foreground', 'background', 'middle', 'background',
-        'middle', 'foreground', 'background', 'middle',
-    ];
+// Layer distribution weights
+const LAYER_WEIGHTS: { layer: DepthLayer; weight: number }[] = [
+    { layer: 'foreground', weight: 0.25 },
+    { layer: 'middle', weight: 0.40 },
+    { layer: 'background', weight: 0.35 },
+];
 
-    const aspects: ('landscape' | 'portrait' | 'square')[] = [
-        'landscape', 'portrait', 'landscape', 'square',
-        'landscape', 'landscape', 'portrait', 'landscape',
-        'square', 'portrait', 'landscape', 'landscape',
-    ];
+// Spawning config
+const MAX_ACTIVE_IMAGES = 35;          // max on screen at once
+const SPAWN_INTERVAL_MIN = 0.4;        // seconds between spawns (fastest)
+const SPAWN_INTERVAL_MAX = 1.0;        // seconds between spawns (slowest)
+const BASE_TRAVEL_SPEED = 22;          // px/s base speed — gentle drift
+const FADE_IN_DURATION = 1.2;          // seconds to fade in
+const CENTER_SCALE_BOOST = 0.35;       // max extra scale at center (1.0 + this)
 
-    return HIGHLIGHTS_CONTENT.map((item, i) => {
-        const s = seeded(i * 7 + 3);
-        const s2 = seeded(i * 13 + 7);
 
-        const sizeClass = sizes[i % sizes.length]!;
-        const layer = layers[i % layers.length]!;
+// Movement direction — slight diagonal drift
+const FLOW_ANGLE = -0.3; // radians, roughly upper-left to lower-right
+const FLOW_DX = Math.cos(FLOW_ANGLE);
+const FLOW_DY = Math.sin(FLOW_ANGLE);
 
-        // Fixed z-depth per layer (no cycling)
-        const zDepth = layer === 'foreground' ? -20 : layer === 'middle' ? -60 : -120;
+// ════════════════════════════════════════════════
+//  SPAWNED IMAGE STATE
+// ════════════════════════════════════════════════
 
-        // Grid-based placement: fill viewport evenly
-        // 4 columns x 3 rows with jitter
-        const cols = 4;
-        const col = i % cols;
-        const row = Math.floor(i / cols);
-        const rows = Math.ceil(HIGHLIGHTS_CONTENT.length / cols);
-
-        // Position in viewport percentage (5-95% range to avoid edges)
-        const cellW = 90 / cols;  // ~22.5% per column
-        const cellH = 90 / rows;  // ~30% per row
-        const jitterX = (s - 0.5) * cellW * 0.5;  // small random offset within cell
-        const jitterY = (s2 - 0.5) * cellH * 0.5;
-
-        const startX = 5 + col * cellW + cellW / 2 + jitterX;  // 0-100% of viewport
-        const startY = 5 + row * cellH + cellH / 2 + jitterY;
-
-        return {
-            url: item.url,
-            title: item.title,
-            description: item.description,
-            size: sizeClass,
-            layer,
-            zDepth,
-            startX,
-            startY,
-            aspect: aspects[i % aspects.length]!,
-        };
-    });
+interface SpawnedImage {
+    id: number;
+    imageIndex: number;  // index into HIGHLIGHTS_CONTENT
+    sizeClass: SizeClass;
+    layer: DepthLayer;
+    widthVw: number;
+    heightUnit: string;  // 'vw' or 'vh'
+    heightVal: number;
+    // Spawn position (px)
+    startX: number;
+    startY: number;
+    // Velocity (px/s)
+    vx: number;
+    vy: number;
+    // Timing
+    spawnTime: number;
+    opacity: number;
+    // Z sorting
+    zIndex: number;
 }
 
-const FLOATING_IMAGES = buildLayout();
-
-// Size dimensions — reduced heroes, balanced layout like reference
-function getDimensions(img: FloatingImage): { width: number; height: number } {
-    if (img.size === 'hero') {
-        if (img.aspect === 'portrait') return { width: 20, height: 32 };
-        if (img.aspect === 'square') return { width: 24, height: 24 };
-        return { width: 28, height: 22 };
+function pickWeighted<T>(items: { weight: number }[] & T[]): T {
+    const total = items.reduce((s, i) => s + i.weight, 0);
+    let r = Math.random() * total;
+    for (const item of items) {
+        r -= item.weight;
+        if (r <= 0) return item;
     }
-    if (img.size === 'medium') {
-        if (img.aspect === 'portrait') return { width: 14, height: 22 };
-        if (img.aspect === 'square') return { width: 16, height: 16 };
-        return { width: 20, height: 14 };
-    }
-    // small — accent images
-    if (img.aspect === 'portrait') return { width: 8, height: 12 };
-    if (img.aspect === 'square') return { width: 8, height: 8 };
-    return { width: 11, height: 8 };
+    return items[items.length - 1]!;
 }
 
+function createSpawnedImage(
+    id: number, time: number, vw: number, vh: number,
+    usedIndices?: Set<number>,
+    activeImages?: SpawnedImage[],
+): SpawnedImage {
+    // Pick random image not already on screen
+    let imageIndex: number;
+    if (usedIndices && usedIndices.size < HIGHLIGHTS_CONTENT.length) {
+        const available: number[] = [];
+        for (let i = 0; i < HIGHLIGHTS_CONTENT.length; i++) {
+            if (!usedIndices.has(i)) available.push(i);
+        }
+        imageIndex = available[Math.floor(Math.random() * available.length)]!;
+    } else {
+        imageIndex = Math.floor(Math.random() * HIGHLIGHTS_CONTENT.length);
+    }
+
+    // Pick size & layer with weighted distribution
+    const sizeEntry = pickWeighted(SIZE_WEIGHTS as any) as typeof SIZE_WEIGHTS[number];
+    const layerEntry = pickWeighted(LAYER_WEIGHTS as any) as typeof LAYER_WEIGHTS[number];
+    const sizeClass = sizeEntry.size;
+    const layer = layerEntry.layer;
+
+    // Calculate dimensions
+    const cfg = SIZE_CONFIG[sizeClass];
+    const widthVw = cfg.minW + Math.random() * (cfg.maxW - cfg.minW);
+    const aspectPair = cfg.aspect[Math.floor(Math.random() * cfg.aspect.length)]!;
+    const aspectRatio = aspectPair[0] / aspectPair[1];
+
+    // Height relative to width
+    const widthPx = (widthVw / 100) * vw;
+    const heightPx = widthPx / aspectRatio;
+    const heightVal = (heightPx / vh) * 100;
+
+    // Speed varies by layer
+    const layerCfg = LAYER_CONFIG[layer];
+    const speed = BASE_TRAVEL_SPEED * layerCfg.speed * (0.7 + Math.random() * 0.6);
+
+    // ── Density-aware edge selection ──
+    // Count images near each edge to find sparse areas
+    // 0=left, 1=right, 2=top, 3=bottom
+    const edgeCounts = [0, 0, 0, 0]; // how many images are near each edge
+    if (activeImages && activeImages.length > 0) {
+        const edgeZone = 0.3; // 30% from each edge counts as "near that edge"
+        for (const img of activeImages) {
+            const age = time - img.spawnTime;
+            const ix = img.startX + img.vx * age;
+            const iy = img.startY + img.vy * age;
+            const nx = ix / (vw || 1); // normalize 0..1
+            const ny = iy / (vh || 1);
+            if (nx < edgeZone) edgeCounts[0] = (edgeCounts[0] ?? 0) + 1;
+            if (nx > 1 - edgeZone) edgeCounts[1] = (edgeCounts[1] ?? 0) + 1;
+            if (ny < edgeZone) edgeCounts[2] = (edgeCounts[2] ?? 0) + 1;
+            if (ny > 1 - edgeZone) edgeCounts[3] = (edgeCounts[3] ?? 0) + 1;
+        }
+    }
+    // Weight: fewer images near an edge = higher weight (inverse density)
+    const baseWeight = 1;
+    const edgeWeights = edgeCounts.map(c => baseWeight + Math.max(0, 5 - c)); // sparse edges get up to 5 extra weight
+    const totalWeight = edgeWeights.reduce((a, b) => a + b, 0);
+    let roll = Math.random() * totalWeight;
+    let edge = 0;
+    for (let i = 0; i < edgeWeights.length; i++) {
+        roll -= edgeWeights[i]!;
+        if (roll <= 0) { edge = i; break; }
+    }
+
+    let startX: number, startY: number, vx: number, vy: number;
+    const margin = Math.max(widthPx, heightPx) + 50;
+
+    switch (edge) {
+        case 0: // Enter from left
+            startX = -margin;
+            startY = Math.random() * vh;
+            vx = speed * (0.8 + Math.random() * 0.4);
+            vy = speed * (Math.random() - 0.5) * 0.3;
+            break;
+        case 1: // Enter from right
+            startX = vw + margin;
+            startY = Math.random() * vh;
+            vx = -speed * (0.8 + Math.random() * 0.4);
+            vy = speed * (Math.random() - 0.5) * 0.3;
+            break;
+        case 2: // Enter from top
+            startX = Math.random() * vw;
+            startY = -margin;
+            vx = speed * (Math.random() - 0.5) * 0.3;
+            vy = speed * (0.8 + Math.random() * 0.4);
+            break;
+        default: // Enter from bottom
+            startX = Math.random() * vw;
+            startY = vh + margin;
+            vx = speed * (Math.random() - 0.5) * 0.3;
+            vy = -speed * (0.8 + Math.random() * 0.4);
+            break;
+    }
+
+    // Add global drift bias
+    vx += FLOW_DX * speed * 0.2;
+    vy += FLOW_DY * speed * 0.2;
+
+    // Z-index by layer
+    const baseZ = layer === 'foreground' ? 10 : layer === 'middle' ? 5 : 2;
+    const zIndex = baseZ + Math.floor(Math.random() * 3);
+
+    return {
+        id,
+        imageIndex,
+        sizeClass,
+        layer,
+        widthVw,
+        heightUnit: 'vh',
+        heightVal,
+        startX,
+        startY,
+        vx,
+        vy,
+        spawnTime: time,
+        opacity: 0,
+        zIndex,
+    };
+}
+
+// Pre-populate images near the edges — as if they just entered
+const INITIAL_IMAGE_COUNT = 18;
+function createInitialImages(): SpawnedImage[] {
+    const vw = typeof window !== 'undefined' ? window.innerWidth : 1920;
+    const vh = typeof window !== 'undefined' ? window.innerHeight : 1080;
+    const images: SpawnedImage[] = [];
+
+    for (let i = 0; i < INITIAL_IMAGE_COUNT; i++) {
+        const usedIndices = new Set(images.map(img => img.imageIndex));
+        const img = createSpawnedImage(i, 0, vw, vh, usedIndices);
+        // Place near edges (10-30% inward from whichever edge they spawned from)
+        const edgeBias = 0.05 + Math.random() * 0.10; // 5-15% inward
+        const edge = Math.floor(Math.random() * 4);
+        switch (edge) {
+            case 0: // Near left edge
+                img.startX = vw * edgeBias;
+                img.startY = Math.random() * vh;
+                break;
+            case 1: // Near right edge
+                img.startX = vw * (1 - edgeBias);
+                img.startY = Math.random() * vh;
+                break;
+            case 2: // Near top edge
+                img.startX = Math.random() * vw;
+                img.startY = vh * edgeBias;
+                break;
+            default: // Near bottom edge
+                img.startX = Math.random() * vw;
+                img.startY = vh * (1 - edgeBias);
+                break;
+        }
+        // Already faded in
+        img.spawnTime = -(FADE_IN_DURATION + 1);
+        img.opacity = 1;
+        images.push(img);
+    }
+    return images;
+}
 
 // ════════════════════════════════════════════════
 //  COMPONENT
@@ -138,16 +267,32 @@ const HighlightsSection: React.FC = () => {
     const titleOpacityRef = useRef(0);
     const galleryOpacityRef = useRef(0);
 
+    // Auto-sink timer: starts counting once dark backdrop is fully visible
+    const autoSinkTimerRef = useRef(0);
+    const autoSinkActiveRef = useRef(false);
+
     // Mouse position (normalized -1 to 1, lerped)
     const mouseTarget = useRef({ x: 0, y: 0 });
     const mouseSmoothed = useRef({ x: 0, y: 0 });
 
-    // Hovered image index
-    const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+    // Hovered image id
+    const [hoveredId, setHoveredId] = useState<number | null>(null);
     const hoveredRef = useRef<number | null>(null);
 
-    // Elapsed time for noise
+    // Elapsed time
     const timeRef = useRef(0);
+
+    // Spawning state — pre-populated with images already on screen
+    const nextIdRef = useRef(INITIAL_IMAGE_COUNT);
+    const spawnTimerRef = useRef(0);
+    const nextSpawnDelayRef = useRef(0.3);
+    const [initialImages] = useState(() => createInitialImages());
+    const activeImagesRef = useRef<SpawnedImage[]>(initialImages);
+    const [renderImages, setRenderImages] = useState<SpawnedImage[]>(initialImages);
+    const renderUpdateTimerRef = useRef(0);
+
+    // Track if gallery is visible
+    const isVisibleRef = useRef(false);
 
     // Mouse tracking
     useEffect(() => {
@@ -159,22 +304,26 @@ const HighlightsSection: React.FC = () => {
         return () => window.removeEventListener('mousemove', handleMouse);
     }, []);
 
-    const handleMouseEnter = useCallback((i: number) => {
-        setHoveredIdx(i);
-        hoveredRef.current = i;
+    const handleMouseEnter = useCallback((id: number) => {
+        setHoveredId(id);
+        hoveredRef.current = id;
     }, []);
 
     const handleMouseLeave = useCallback(() => {
-        setHoveredIdx(null);
+        setHoveredId(null);
         hoveredRef.current = null;
     }, []);
 
     // Phase boundaries
     const DARK_START = 0.96;
     const DARK_FULL = 0.97;
-    const TITLE_START = 0.97;
-    const TITLE_END = 0.99;
-    const CARDS_START = 0.99;
+
+    // Auto-sink timing (seconds after backdrop is full)
+    const TITLE_FADE_IN_END = 0.8;    // title fully visible at 0.8s
+    const TITLE_HOLD_END = 2.2;       // title stays visible until 2.2s
+    const TITLE_FADE_OUT_END = 3.0;   // title fully gone by 3.0s
+    const GALLERY_FADE_START = 2.0;   // gallery starts appearing at 2.0s
+    const GALLERY_FADE_END = 3.2;     // gallery fully visible by 3.2s
 
     useFrame((_state, delta) => {
         if (!containerRef.current) return;
@@ -196,32 +345,59 @@ const HighlightsSection: React.FC = () => {
         bgOpacityRef.current = THREE.MathUtils.damp(bgOpacityRef.current, bgTarget, 4, delta);
         containerRef.current.style.opacity = bgOpacityRef.current.toString();
 
-        if (bgOpacityRef.current < 0.01) return;
+        if (bgOpacityRef.current < 0.01) {
+            isVisibleRef.current = false;
+            autoSinkTimerRef.current = 0;
+            autoSinkActiveRef.current = false;
+            return;
+        }
 
-        // ── Title ──
+        // ── Auto-sink timer: starts when backdrop is fully visible ──
+        if (r >= DARK_FULL) {
+            if (!autoSinkActiveRef.current) {
+                autoSinkActiveRef.current = true;
+                autoSinkTimerRef.current = 0;
+            }
+            autoSinkTimerRef.current += delta;
+        }
+        const ast = autoSinkTimerRef.current;
+
+        // ── Title (time-based auto fade) ──
         if (titleRef.current) {
             let titleTarget = 0;
-            if (r >= TITLE_START && r < TITLE_END) {
-                const t = (r - TITLE_START) / (TITLE_END - TITLE_START);
-                titleTarget = t < 0.4 ? t / 0.4 : 1 - ((t - 0.4) / 0.6);
+            if (ast < TITLE_FADE_IN_END) {
+                titleTarget = ast / TITLE_FADE_IN_END; // fade in
+            } else if (ast < TITLE_HOLD_END) {
+                titleTarget = 1; // hold
+            } else if (ast < TITLE_FADE_OUT_END) {
+                titleTarget = 1 - (ast - TITLE_HOLD_END) / (TITLE_FADE_OUT_END - TITLE_HOLD_END); // fade out
             }
             titleOpacityRef.current = THREE.MathUtils.damp(titleOpacityRef.current, titleTarget, 5, delta);
             titleRef.current.style.opacity = titleOpacityRef.current.toString();
         }
 
-        // ── Gallery ──
+        // ── Gallery visibility (time-based, overlaps with title fade-out) ──
         if (galleryRef.current) {
             let galTarget = 0;
-            if (r >= CARDS_START) {
-                galTarget = Math.min(1, (r - CARDS_START) / (1.0 - CARDS_START));
+            if (ast >= GALLERY_FADE_START) {
+                galTarget = Math.min(1, (ast - GALLERY_FADE_START) / (GALLERY_FADE_END - GALLERY_FADE_START));
             }
             galleryOpacityRef.current = THREE.MathUtils.damp(galleryOpacityRef.current, galTarget, 3, delta);
             galleryRef.current.style.opacity = galleryOpacityRef.current.toString();
         }
 
-        if (galleryOpacityRef.current < 0.01) return;
+        if (galleryOpacityRef.current < 0.01) {
+            isVisibleRef.current = false;
+            return;
+        }
 
-        // ── Lerp-based mouse smoothing — heavy, "expensive" feel ──
+        isVisibleRef.current = true;
+
+        // ── Accumulate time ──
+        timeRef.current += delta;
+        const t = timeRef.current;
+
+        // ── Lerp mouse ──
         mouseSmoothed.current.x = THREE.MathUtils.damp(
             mouseSmoothed.current.x, mouseTarget.current.x, 0.6, delta
         );
@@ -229,45 +405,97 @@ const HighlightsSection: React.FC = () => {
             mouseSmoothed.current.y, mouseTarget.current.y, 0.6, delta
         );
 
-        // Accumulate time for sine-wave noise
-        timeRef.current += delta;
-        const t = timeRef.current;
+        // ── Spawn new images ──
+        spawnTimerRef.current += delta;
+        if (spawnTimerRef.current >= nextSpawnDelayRef.current && activeImagesRef.current.length < MAX_ACTIVE_IMAGES) {
+            spawnTimerRef.current = 0;
+            nextSpawnDelayRef.current = SPAWN_INTERVAL_MIN + Math.random() * (SPAWN_INTERVAL_MAX - SPAWN_INTERVAL_MIN);
 
+            const usedIndices = new Set(activeImagesRef.current.map(img => img.imageIndex));
+            const newImg = createSpawnedImage(nextIdRef.current++, t, vw, vh, usedIndices, activeImagesRef.current);
+            activeImagesRef.current.push(newImg);
+        }
 
-        // ── Update per-image transforms ──
-        const imgEls = galleryRef.current?.querySelectorAll<HTMLElement>('[data-float-img]');
+        // ── Update active images & cull dead ones ──
+        const surviving: SpawnedImage[] = [];
+
+        for (const img of activeImagesRef.current) {
+            const age = t - img.spawnTime;
+
+            // Calculate current position
+            const cx = img.startX + img.vx * age;
+            const cy = img.startY + img.vy * age;
+
+            // Check if image has left the viewport entirely
+            const imgWidthPx = (img.widthVw / 100) * vw;
+            const imgHeightPx = (img.heightVal / 100) * vh;
+            const margin = Math.max(imgWidthPx, imgHeightPx) + 100;
+
+            const isOffScreen = cx < -margin || cx > vw + margin || cy < -margin || cy > vh + margin;
+
+            // Only cull if it has been on screen at least once and is now off
+            if (age > 2 && isOffScreen) {
+                continue; // don't add to surviving
+            }
+
+            // Fade in
+            img.opacity = Math.min(1, age / FADE_IN_DURATION);
+
+            surviving.push(img);
+        }
+
+        activeImagesRef.current = surviving;
+
+        // ── Update DOM elements directly for performance ──
+        const imgEls = galleryRef.current?.querySelectorAll<HTMLElement>('[data-spawn-img]');
         if (!imgEls) return;
 
-        imgEls.forEach((el, i) => {
-            const img = FLOATING_IMAGES[i];
+        imgEls.forEach((el) => {
+            const imgId = parseInt(el.dataset.spawnId || '-1');
+            const img = activeImagesRef.current.find(i => i.id === imgId);
             if (!img) return;
 
+            const age = t - img.spawnTime;
             const layerCfg = LAYER_CONFIG[img.layer];
 
-            // ── Pure smooth linear drift ──
-            const driftX = GLOBAL_FLOW_DX * GLOBAL_FLOW_SPEED * t;
-            const driftY = GLOBAL_FLOW_DY * GLOBAL_FLOW_SPEED * t;
-
-            // Starting position in pixels (percentage of viewport)
-            const baseX = (img.startX / 100) * vw + driftX;
-            const baseY = (img.startY / 100) * vh + driftY;
-
-            // Seamless wrap: use double-modulo for negative safety
-            const finalBaseX = ((baseX % vw) + vw) % vw;
-            const finalBaseY = ((baseY % vh) + vh) % vh;
+            // Current position
+            const cx = img.startX + img.vx * age;
+            const cy = img.startY + img.vy * age;
 
             // Mouse parallax
             const mouseOffX = mouseSmoothed.current.x * layerCfg.mouseRange;
             const mouseOffY = mouseSmoothed.current.y * layerCfg.mouseRange * 0.7;
 
-            const finalX = finalBaseX + mouseOffX;
-            const finalY = finalBaseY + mouseOffY;
+            const finalX = cx + mouseOffX;
+            const finalY = cy + mouseOffY;
 
-            // Pure translate — centered on grid point, smooth drift
-            el.style.transform =
-                `translate(-50%, -50%) translate3d(${finalX}px, ${finalY}px, ${img.zDepth}px)`;
+            // ── Distance-from-center scale ──
+            // Normalize position to 0..1 where 0 = center, 1 = edge
+            const centerX = vw / 2;
+            const centerY = vh / 2;
+            const dx = (finalX - centerX) / centerX;  // -1 to 1
+            const dy = (finalY - centerY) / centerY;  // -1 to 1
+            const distFromCenter = Math.min(1, Math.sqrt(dx * dx + dy * dy)); // 0 at center, 1 at edges
+            // Smooth bell curve: scale peaks at center, drops at edges
+            const centerScale = 1 + CENTER_SCALE_BOOST * (1 - distFromCenter * distFromCenter);
+
+            el.style.transform = `translate(-50%, -50%) translate(${finalX}px, ${finalY}px) scale(${centerScale.toFixed(3)})`;
+            el.style.opacity = img.opacity.toString();
         });
+
+        // ── Sync React state periodically (for adding/removing DOM nodes) ──
+        renderUpdateTimerRef.current += delta;
+        if (renderUpdateTimerRef.current > 0.1) { // sync every 100ms
+            renderUpdateTimerRef.current = 0;
+            setRenderImages([...activeImagesRef.current]);
+        }
     });
+
+    // Find hovered image data for overlay
+    const hoveredImage = hoveredId !== null
+        ? activeImagesRef.current.find(img => img.id === hoveredId)
+        : null;
+    const hoveredContent = hoveredImage ? HIGHLIGHTS_CONTENT[hoveredImage.imageIndex] : null;
 
     return (
         <div
@@ -282,6 +510,7 @@ const HighlightsSection: React.FC = () => {
                 zIndex: 20,
                 overflow: 'hidden',
                 background: 'radial-gradient(ellipse at center, #0a0a1a 0%, #050510 60%, #020208 100%)',
+                isolation: 'isolate',
             }}
         >
             {/* ── Static Centered Typography (Section Title Reveal) ── */}
@@ -322,7 +551,7 @@ const HighlightsSection: React.FC = () => {
                 </p>
             </div>
 
-            {/* ── Floating Gallery with CSS Perspective ── */}
+            {/* ── Infinite Floating Gallery ── */}
             <div
                 ref={galleryRef}
                 style={{
@@ -332,33 +561,23 @@ const HighlightsSection: React.FC = () => {
                     width: '100%',
                     height: '100%',
                     opacity: 0,
-                    perspective: '800px',
-                    perspectiveOrigin: '50% 50%',
                 }}
             >
-
-                {/* ── Floating Images ── */}
-                {FLOATING_IMAGES.map((img, i) => {
-                    const dims = getDimensions(img);
-                    const isHovered = hoveredIdx === i;
-                    const anyHovered = hoveredIdx !== null;
+                {renderImages.map((img) => {
+                    const content = HIGHLIGHTS_CONTENT[img.imageIndex]!;
+                    const isHovered = hoveredId === img.id;
+                    const anyHovered = hoveredId !== null;
                     const layerCfg = LAYER_CONFIG[img.layer];
 
-                    // Calm hover scale
-                    const hoverScale = img.size === 'small' ? 2.0 : img.size === 'medium' ? 1.5 : 1.2;
+                    // Hover scale — smaller images scale more
+                    const hoverScale = img.sizeClass === 'tiny' ? 2.5
+                        : img.sizeClass === 'small' ? 2.0
+                            : img.sizeClass === 'medium' ? 1.5
+                                : 1.2;
                     const hoverDuration = '1s';
 
-                    // Z-index by layer, hovered on top
-                    let zIndex: number;
-                    if (isHovered) {
-                        zIndex = 50;
-                    } else if (img.layer === 'foreground') {
-                        zIndex = 10;
-                    } else if (img.layer === 'middle') {
-                        zIndex = 5;
-                    } else {
-                        zIndex = 2;
-                    }
+                    // Z-index
+                    const zIndex = isHovered ? 50 : img.zIndex;
 
                     // Filters
                     const filters: string[] = [];
@@ -374,16 +593,15 @@ const HighlightsSection: React.FC = () => {
                         filters.push(`brightness(${layerCfg.baseBrightness})`);
                     }
 
-                    const currentW = isHovered ? `${dims.width * hoverScale}vw` : `${dims.width}vw`;
-                    const currentH = isHovered
-                        ? (img.aspect === 'square' ? `${dims.height * hoverScale}vw` : `${dims.height * hoverScale}vh`)
-                        : (img.aspect === 'square' ? `${dims.height}vw` : `${dims.height}vh`);
+                    const currentW = isHovered ? `${img.widthVw * hoverScale}vw` : `${img.widthVw}vw`;
+                    const currentH = isHovered ? `${img.heightVal * hoverScale}${img.heightUnit}` : `${img.heightVal}${img.heightUnit}`;
 
                     return (
                         <div
-                            key={i}
-                            data-float-img
-                            onMouseEnter={() => handleMouseEnter(i)}
+                            key={img.id}
+                            data-spawn-img
+                            data-spawn-id={img.id}
+                            onMouseEnter={() => handleMouseEnter(img.id)}
                             onMouseLeave={() => handleMouseLeave()}
                             style={{
                                 position: 'absolute',
@@ -393,8 +611,9 @@ const HighlightsSection: React.FC = () => {
                                 height: currentH,
                                 zIndex,
                                 cursor: 'pointer',
-                                willChange: 'transform, width, height',
+                                willChange: 'transform, opacity',
                                 pointerEvents: 'auto',
+                                opacity: 0,
                                 transition: [
                                     `width ${hoverDuration} cubic-bezier(0.23, 1, 0.32, 1)`,
                                     `height ${hoverDuration} cubic-bezier(0.23, 1, 0.32, 1)`,
@@ -410,8 +629,8 @@ const HighlightsSection: React.FC = () => {
                             }}
                         >
                             <img
-                                src={img.url}
-                                alt={img.title}
+                                src={content.url}
+                                alt={content.title}
                                 draggable={false}
                                 style={{
                                     width: '100%',
@@ -426,7 +645,7 @@ const HighlightsSection: React.FC = () => {
             </div>
 
             {/* ── Centered Screen Text — appears on hover ── */}
-            {hoveredIdx !== null && FLOATING_IMAGES[hoveredIdx] && (
+            {hoveredContent && (
                 <div
                     style={{
                         position: 'absolute',
@@ -437,33 +656,32 @@ const HighlightsSection: React.FC = () => {
                         textAlign: 'center',
                         pointerEvents: 'none',
                         maxWidth: '70vw',
+                        mixBlendMode: 'difference',
                         animation: 'fadeSlideIn 0.45s cubic-bezier(0.23, 1, 0.32, 1) forwards',
                     }}
                 >
                     <h3 style={{
                         fontFamily: "'Inter', 'Outfit', sans-serif",
                         fontSize: 'clamp(2rem, 5vw, 4.5rem)',
-                        fontWeight: 200,
+                        fontWeight: 400,
                         color: '#ffffff',
                         letterSpacing: '0.12em',
                         textTransform: 'uppercase',
                         margin: 0,
                         lineHeight: 1.2,
-                        textShadow: '0 4px 40px rgba(0,0,0,0.7)',
                     }}>
-                        {FLOATING_IMAGES[hoveredIdx]!.title}
+                        {hoveredContent.title}
                     </h3>
                     <p style={{
                         fontFamily: "'Inter', 'Outfit', sans-serif",
                         fontSize: 'clamp(0.85rem, 1.6vw, 1.2rem)',
-                        fontWeight: 300,
-                        color: 'rgba(255,255,255,0.55)',
+                        fontWeight: 500,
+                        color: '#ffffff',
                         letterSpacing: '0.06em',
                         marginTop: '0.8rem',
                         lineHeight: 1.5,
-                        textShadow: '0 2px 20px rgba(0,0,0,0.5)',
                     }}>
-                        {FLOATING_IMAGES[hoveredIdx]!.description}
+                        {hoveredContent.description}
                     </p>
                 </div>
             )}
