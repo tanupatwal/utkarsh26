@@ -1,68 +1,155 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { useScroll } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { SCROLL_CONFIG } from '../../../config';
 import { HIGHLIGHTS_CONTENT } from '../../../data';
 
-// ── Card configs ──
-const CARD_CONFIGS = [
-    { w: 260, h: 180, depth: 0.8, speed: 0.4 },
-    { w: 200, h: 150, depth: 0.4, speed: 0.6 },
-    { w: 180, h: 260, depth: 1.0, speed: 0.3 },
-    { w: 240, h: 170, depth: 0.6, speed: 0.5 },
-    { w: 220, h: 160, depth: 0.3, speed: 0.7 },
-    { w: 190, h: 230, depth: 0.9, speed: 0.35 },
-    { w: 210, h: 150, depth: 0.5, speed: 0.55 },
-];
+// ════════════════════════════════════════════════
+//  CONFIGURATION
+// ════════════════════════════════════════════════
 
-function seededRandom(seed: number) {
+type DepthLayer = 'foreground' | 'middle' | 'background';
+type SizeClass = 'hero' | 'medium' | 'small';
+
+interface FloatingImage {
+    url: string;
+    title: string;
+    description: string;
+    size: SizeClass;
+    layer: DepthLayer;
+    zDepth: number;
+    startX: number; // initial position (% of viewport, relative to center)
+    startY: number;
+    aspect: 'landscape' | 'portrait' | 'square';
+}
+
+// Seeded random for deterministic layout
+function seeded(seed: number) {
     const x = Math.sin(seed * 127.1 + 311.7) * 43758.5453;
     return x - Math.floor(x);
 }
 
-interface CardState {
-    x: number;
-    y: number;
-    vx: number;
-    vy: number;
+// ── Layer Config — visual treatment only, speed is uniform ──
+const LAYER_CONFIG = {
+    foreground: { mouseRange: 15, blur: 0, baseBrightness: 0.92 },
+    middle: { mouseRange: 12, blur: 0, baseBrightness: 0.8 },
+    background: { mouseRange: 8, blur: 2, baseBrightness: 0.62 },
+} as const;
+
+// ── Global flow — one direction, all images ──
+const GLOBAL_FLOW_ANGLE = seeded(42) * Math.PI * 2;
+const GLOBAL_FLOW_SPEED = 6; // px/s — gentle
+const GLOBAL_FLOW_DX = Math.cos(GLOBAL_FLOW_ANGLE);
+const GLOBAL_FLOW_DY = Math.sin(GLOBAL_FLOW_ANGLE);
+
+// Build the 12-image layout with deliberate size hierarchy & depth layers
+function buildLayout(): FloatingImage[] {
+    const sizes: SizeClass[] = [
+        'hero', 'small', 'medium', 'small',
+        'hero', 'small', 'medium', 'small',
+        'medium', 'hero', 'small', 'medium',
+    ];
+
+    const layers: DepthLayer[] = [
+        'foreground', 'background', 'middle', 'background',
+        'foreground', 'background', 'middle', 'background',
+        'middle', 'foreground', 'background', 'middle',
+    ];
+
+    const aspects: ('landscape' | 'portrait' | 'square')[] = [
+        'landscape', 'portrait', 'landscape', 'square',
+        'landscape', 'landscape', 'portrait', 'landscape',
+        'square', 'portrait', 'landscape', 'landscape',
+    ];
+
+    return HIGHLIGHTS_CONTENT.map((item, i) => {
+        const s = seeded(i * 7 + 3);
+        const s2 = seeded(i * 13 + 7);
+
+        const sizeClass = sizes[i % sizes.length]!;
+        const layer = layers[i % layers.length]!;
+
+        // Fixed z-depth per layer (no cycling)
+        const zDepth = layer === 'foreground' ? -20 : layer === 'middle' ? -60 : -120;
+
+        // Grid-based placement: fill viewport evenly
+        // 4 columns x 3 rows with jitter
+        const cols = 4;
+        const col = i % cols;
+        const row = Math.floor(i / cols);
+        const rows = Math.ceil(HIGHLIGHTS_CONTENT.length / cols);
+
+        // Position in viewport percentage (5-95% range to avoid edges)
+        const cellW = 90 / cols;  // ~22.5% per column
+        const cellH = 90 / rows;  // ~30% per row
+        const jitterX = (s - 0.5) * cellW * 0.5;  // small random offset within cell
+        const jitterY = (s2 - 0.5) * cellH * 0.5;
+
+        const startX = 5 + col * cellW + cellW / 2 + jitterX;  // 0-100% of viewport
+        const startY = 5 + row * cellH + cellH / 2 + jitterY;
+
+        return {
+            url: item.url,
+            title: item.title,
+            description: item.description,
+            size: sizeClass,
+            layer,
+            zDepth,
+            startX,
+            startY,
+            aspect: aspects[i % aspects.length]!,
+        };
+    });
 }
 
-/**
- * HighlightsSection — Full sequence:
- * 1. Dark backdrop fades in during dissolve (hides 3D)
- * 2. Section title appears and auto-fades
- * 3. Floating bento cards drift in
- */
+const FLOATING_IMAGES = buildLayout();
+
+// Size dimensions — reduced heroes, balanced layout like reference
+function getDimensions(img: FloatingImage): { width: number; height: number } {
+    if (img.size === 'hero') {
+        if (img.aspect === 'portrait') return { width: 20, height: 32 };
+        if (img.aspect === 'square') return { width: 24, height: 24 };
+        return { width: 28, height: 22 };
+    }
+    if (img.size === 'medium') {
+        if (img.aspect === 'portrait') return { width: 14, height: 22 };
+        if (img.aspect === 'square') return { width: 16, height: 16 };
+        return { width: 20, height: 14 };
+    }
+    // small — accent images
+    if (img.aspect === 'portrait') return { width: 8, height: 12 };
+    if (img.aspect === 'square') return { width: 8, height: 8 };
+    return { width: 11, height: 8 };
+}
+
+
+// ════════════════════════════════════════════════
+//  COMPONENT
+// ════════════════════════════════════════════════
+
 const HighlightsSection: React.FC = () => {
     const scroll = useScroll();
     const containerRef = useRef<HTMLDivElement>(null);
     const titleRef = useRef<HTMLDivElement>(null);
-    const cardsContainerRef = useRef<HTMLDivElement>(null);
+    const galleryRef = useRef<HTMLDivElement>(null);
 
     const bgOpacityRef = useRef(0);
     const titleOpacityRef = useRef(0);
-    const cardsOpacityRef = useRef(0);
+    const galleryOpacityRef = useRef(0);
 
-    // Mouse tracking
+    // Mouse position (normalized -1 to 1, lerped)
     const mouseTarget = useRef({ x: 0, y: 0 });
     const mouseSmoothed = useRef({ x: 0, y: 0 });
 
-    // Per-card physics
-    const cardStates = useRef<CardState[]>(
-        CARD_CONFIGS.map((cfg, i) => {
-            const x = (seededRandom(i * 3 + 0) - 0.5) * (typeof window !== 'undefined' ? window.innerWidth : 1200) * 0.7;
-            const y = (seededRandom(i * 3 + 1) - 0.5) * (typeof window !== 'undefined' ? window.innerHeight : 800) * 0.6;
-            const angle = seededRandom(i * 3 + 2) * Math.PI * 2;
-            const baseSpeed = 20 + cfg.speed * 40;
-            return {
-                x, y,
-                vx: Math.cos(angle) * baseSpeed,
-                vy: Math.sin(angle) * baseSpeed,
-            };
-        })
-    );
+    // Hovered image index
+    const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
+    const hoveredRef = useRef<number | null>(null);
 
+    // Elapsed time for noise
+    const timeRef = useRef(0);
+
+    // Mouse tracking
     useEffect(() => {
         const handleMouse = (e: MouseEvent) => {
             mouseTarget.current.x = (e.clientX / window.innerWidth) * 2 - 1;
@@ -72,10 +159,17 @@ const HighlightsSection: React.FC = () => {
         return () => window.removeEventListener('mousemove', handleMouse);
     }, []);
 
-    // ── Phase boundaries ──
-    // Dark backdrop:   0.96 → 0.97 (fades in late during dissolve, fully dark by end)
-    // Section title:   0.97 → 0.99 (appears, auto-fades)
-    // Bento cards:     0.99 → 1.0  (fade in)
+    const handleMouseEnter = useCallback((i: number) => {
+        setHoveredIdx(i);
+        hoveredRef.current = i;
+    }, []);
+
+    const handleMouseLeave = useCallback(() => {
+        setHoveredIdx(null);
+        hoveredRef.current = null;
+    }, []);
+
+    // Phase boundaries
     const DARK_START = 0.96;
     const DARK_FULL = 0.97;
     const TITLE_START = 0.97;
@@ -86,13 +180,13 @@ const HighlightsSection: React.FC = () => {
         if (!containerRef.current) return;
 
         const r = scroll.offset;
-        const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 0;
-        const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 0;
-        const targetY = viewportHeight * (SCROLL_CONFIG.PAGES - 1) * r;
+        const vw = typeof window !== 'undefined' ? window.innerWidth : 0;
+        const vh = typeof window !== 'undefined' ? window.innerHeight : 0;
+        const targetY = vh * (SCROLL_CONFIG.PAGES - 1) * r;
 
         containerRef.current.style.transform = `translate3d(0, ${targetY}px, 0)`;
 
-        // ── 1. Dark backdrop opacity ──
+        // ── Dark backdrop ──
         let bgTarget = 0;
         if (r >= DARK_START && r < DARK_FULL) {
             bgTarget = (r - DARK_START) / (DARK_FULL - DARK_START);
@@ -104,81 +198,74 @@ const HighlightsSection: React.FC = () => {
 
         if (bgOpacityRef.current < 0.01) return;
 
-        // ── 2. Section title ──
+        // ── Title ──
         if (titleRef.current) {
             let titleTarget = 0;
             if (r >= TITLE_START && r < TITLE_END) {
-                // Fade in during first half, fade out during second half
-                const titleT = (r - TITLE_START) / (TITLE_END - TITLE_START);
-                if (titleT < 0.4) {
-                    titleTarget = titleT / 0.4; // fade in
-                } else {
-                    titleTarget = 1 - ((titleT - 0.4) / 0.6); // fade out
-                }
+                const t = (r - TITLE_START) / (TITLE_END - TITLE_START);
+                titleTarget = t < 0.4 ? t / 0.4 : 1 - ((t - 0.4) / 0.6);
             }
             titleOpacityRef.current = THREE.MathUtils.damp(titleOpacityRef.current, titleTarget, 5, delta);
             titleRef.current.style.opacity = titleOpacityRef.current.toString();
         }
 
-        // ── 3. Bento cards ──
-        if (cardsContainerRef.current) {
-            let cardsTarget = 0;
+        // ── Gallery ──
+        if (galleryRef.current) {
+            let galTarget = 0;
             if (r >= CARDS_START) {
-                cardsTarget = Math.min(1, (r - CARDS_START) / (1.0 - CARDS_START));
+                galTarget = Math.min(1, (r - CARDS_START) / (1.0 - CARDS_START));
             }
-            cardsOpacityRef.current = THREE.MathUtils.damp(cardsOpacityRef.current, cardsTarget, 3, delta);
-            cardsContainerRef.current.style.opacity = cardsOpacityRef.current.toString();
+            galleryOpacityRef.current = THREE.MathUtils.damp(galleryOpacityRef.current, galTarget, 3, delta);
+            galleryRef.current.style.opacity = galleryOpacityRef.current.toString();
         }
 
-        // Skip card physics if cards not visible
-        if (cardsOpacityRef.current < 0.01) return;
+        if (galleryOpacityRef.current < 0.01) return;
 
-        // Smooth mouse
-        mouseSmoothed.current.x = THREE.MathUtils.damp(mouseSmoothed.current.x, mouseTarget.current.x, 1.2, delta);
-        mouseSmoothed.current.y = THREE.MathUtils.damp(mouseSmoothed.current.y, mouseTarget.current.y, 1.2, delta);
+        // ── Lerp-based mouse smoothing — heavy, "expensive" feel ──
+        mouseSmoothed.current.x = THREE.MathUtils.damp(
+            mouseSmoothed.current.x, mouseTarget.current.x, 0.6, delta
+        );
+        mouseSmoothed.current.y = THREE.MathUtils.damp(
+            mouseSmoothed.current.y, mouseTarget.current.y, 0.6, delta
+        );
 
-        // Update card physics
-        const cards = cardsContainerRef.current?.querySelectorAll<HTMLElement>('[data-highlight-card]');
-        if (!cards) return;
+        // Accumulate time for sine-wave noise
+        timeRef.current += delta;
+        const t = timeRef.current;
 
-        const halfW = viewportWidth / 2;
-        const halfH = viewportHeight / 2;
 
-        cards.forEach((cardEl, i) => {
-            const state = cardStates.current[i];
-            const cfg = CARD_CONFIGS[i % CARD_CONFIGS.length];
-            if (!state || !cfg) return;
+        // ── Update per-image transforms ──
+        const imgEls = galleryRef.current?.querySelectorAll<HTMLElement>('[data-float-img]');
+        if (!imgEls) return;
 
-            // Mouse steers velocity direction
-            const mouseInfluence = 8 * cfg.depth;
-            state.vx += mouseSmoothed.current.x * mouseInfluence * delta;
-            state.vy += mouseSmoothed.current.y * mouseInfluence * delta;
+        imgEls.forEach((el, i) => {
+            const img = FLOATING_IMAGES[i];
+            if (!img) return;
 
-            // Clamp speed
-            const speed = Math.sqrt(state.vx * state.vx + state.vy * state.vy);
-            const maxSpeed = 20 + cfg.speed * 50;
-            if (speed > maxSpeed) {
-                state.vx = (state.vx / speed) * maxSpeed;
-                state.vy = (state.vy / speed) * maxSpeed;
-            }
+            const layerCfg = LAYER_CONFIG[img.layer];
 
-            // Integrate
-            state.x += state.vx * delta;
-            state.y += state.vy * delta;
+            // ── Pure smooth linear drift ──
+            const driftX = GLOBAL_FLOW_DX * GLOBAL_FLOW_SPEED * t;
+            const driftY = GLOBAL_FLOW_DY * GLOBAL_FLOW_SPEED * t;
 
-            // Wrap around
-            const marginX = cfg.w / 2 + 50;
-            const marginY = cfg.h / 2 + 50;
-            if (state.x > halfW + marginX) state.x = -halfW - marginX + 20;
-            if (state.x < -halfW - marginX) state.x = halfW + marginX - 20;
-            if (state.y > halfH + marginY) state.y = -halfH - marginY + 20;
-            if (state.y < -halfH - marginY) state.y = halfH + marginY - 20;
+            // Starting position in pixels (percentage of viewport)
+            const baseX = (img.startX / 100) * vw + driftX;
+            const baseY = (img.startY / 100) * vh + driftY;
 
-            // Bob
-            const bobPhase = Date.now() * 0.001 * (0.3 + cfg.depth * 0.2) + i * 1.5;
-            const bobY = Math.sin(bobPhase) * 2 * cfg.depth;
+            // Seamless wrap: use double-modulo for negative safety
+            const finalBaseX = ((baseX % vw) + vw) % vw;
+            const finalBaseY = ((baseY % vh) + vh) % vh;
 
-            cardEl.style.transform = `translate(-50%, -50%) translate(${state.x}px, ${state.y + bobY}px)`;
+            // Mouse parallax
+            const mouseOffX = mouseSmoothed.current.x * layerCfg.mouseRange;
+            const mouseOffY = mouseSmoothed.current.y * layerCfg.mouseRange * 0.7;
+
+            const finalX = finalBaseX + mouseOffX;
+            const finalY = finalBaseY + mouseOffY;
+
+            // Pure translate — centered on grid point, smooth drift
+            el.style.transform =
+                `translate(-50%, -50%) translate3d(${finalX}px, ${finalY}px, ${img.zDepth}px)`;
         });
     });
 
@@ -192,13 +279,12 @@ const HighlightsSection: React.FC = () => {
                 width: '100vw',
                 height: '100vh',
                 opacity: 0,
-                pointerEvents: 'none',
                 zIndex: 20,
                 overflow: 'hidden',
                 background: 'radial-gradient(ellipse at center, #0a0a1a 0%, #050510 60%, #020208 100%)',
             }}
         >
-            {/* Section Title — fades in then auto-fades out */}
+            {/* ── Static Centered Typography (Section Title Reveal) ── */}
             <div
                 ref={titleRef}
                 style={{
@@ -209,6 +295,7 @@ const HighlightsSection: React.FC = () => {
                     textAlign: 'center',
                     opacity: 0,
                     zIndex: 5,
+                    pointerEvents: 'none',
                 }}
             >
                 <h2 style={{
@@ -227,7 +314,7 @@ const HighlightsSection: React.FC = () => {
                     fontFamily: "'Inter', 'Outfit', sans-serif",
                     fontSize: 'clamp(0.85rem, 1.5vw, 1.1rem)',
                     fontWeight: 300,
-                    color: 'rgba(255,255,255,0.5)',
+                    color: 'rgba(255,255,255,0.45)',
                     letterSpacing: '0.08em',
                     marginTop: '1rem',
                 }}>
@@ -235,41 +322,165 @@ const HighlightsSection: React.FC = () => {
                 </p>
             </div>
 
-            {/* Bento Cards Container */}
-            <div ref={cardsContainerRef} style={{ opacity: 0, width: '100%', height: '100%' }}>
-                {HIGHLIGHTS_CONTENT.map((item, i) => {
-                    const cfg = CARD_CONFIGS[i % CARD_CONFIGS.length]!;
+            {/* ── Floating Gallery with CSS Perspective ── */}
+            <div
+                ref={galleryRef}
+                style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    opacity: 0,
+                    perspective: '800px',
+                    perspectiveOrigin: '50% 50%',
+                }}
+            >
+
+                {/* ── Floating Images ── */}
+                {FLOATING_IMAGES.map((img, i) => {
+                    const dims = getDimensions(img);
+                    const isHovered = hoveredIdx === i;
+                    const anyHovered = hoveredIdx !== null;
+                    const layerCfg = LAYER_CONFIG[img.layer];
+
+                    // Calm hover scale
+                    const hoverScale = img.size === 'small' ? 2.0 : img.size === 'medium' ? 1.5 : 1.2;
+                    const hoverDuration = '1s';
+
+                    // Z-index by layer, hovered on top
+                    let zIndex: number;
+                    if (isHovered) {
+                        zIndex = 50;
+                    } else if (img.layer === 'foreground') {
+                        zIndex = 10;
+                    } else if (img.layer === 'middle') {
+                        zIndex = 5;
+                    } else {
+                        zIndex = 2;
+                    }
+
+                    // Filters
+                    const filters: string[] = [];
+                    if (img.layer === 'background' && !isHovered) {
+                        filters.push(`blur(${layerCfg.blur}px)`);
+                    }
+                    if (isHovered) {
+                        filters.push('brightness(1.15)');
+                    } else if (anyHovered) {
+                        filters.push('brightness(0.45)');
+                        filters.push('blur(1.5px)');
+                    } else {
+                        filters.push(`brightness(${layerCfg.baseBrightness})`);
+                    }
+
+                    const currentW = isHovered ? `${dims.width * hoverScale}vw` : `${dims.width}vw`;
+                    const currentH = isHovered
+                        ? (img.aspect === 'square' ? `${dims.height * hoverScale}vw` : `${dims.height * hoverScale}vh`)
+                        : (img.aspect === 'square' ? `${dims.height}vw` : `${dims.height}vh`);
 
                     return (
                         <div
                             key={i}
-                            data-highlight-card
+                            data-float-img
+                            onMouseEnter={() => handleMouseEnter(i)}
+                            onMouseLeave={() => handleMouseLeave()}
                             style={{
                                 position: 'absolute',
-                                left: '50%',
-                                top: '50%',
-                                width: cfg.w,
-                                height: cfg.h,
+                                left: 0,
+                                top: 0,
+                                width: currentW,
+                                height: currentH,
+                                zIndex,
+                                cursor: 'pointer',
+                                willChange: 'transform, width, height',
+                                pointerEvents: 'auto',
+                                transition: [
+                                    `width ${hoverDuration} cubic-bezier(0.23, 1, 0.32, 1)`,
+                                    `height ${hoverDuration} cubic-bezier(0.23, 1, 0.32, 1)`,
+                                    'box-shadow 0.5s cubic-bezier(0.23, 1, 0.32, 1)',
+                                    'filter 0.5s cubic-bezier(0.23, 1, 0.32, 1)',
+                                    'z-index 0s',
+                                ].join(', '),
+                                boxShadow: isHovered
+                                    ? '0 20px 80px rgba(120,120,255,0.3), 0 0 120px rgba(100,100,255,0.12), inset 0 0 0 1px rgba(255,255,255,0.1)'
+                                    : '0 4px 30px rgba(0,0,0,0.5)',
+                                filter: filters.join(' '),
                                 overflow: 'hidden',
-                                boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
-                                willChange: 'transform',
                             }}
                         >
                             <img
-                                src={item.url}
-                                alt={item.title}
+                                src={img.url}
+                                alt={img.title}
+                                draggable={false}
                                 style={{
                                     width: '100%',
                                     height: '100%',
                                     objectFit: 'cover',
                                     display: 'block',
-                                    pointerEvents: 'none',
                                 }}
                             />
                         </div>
                     );
                 })}
             </div>
+
+            {/* ── Centered Screen Text — appears on hover ── */}
+            {hoveredIdx !== null && FLOATING_IMAGES[hoveredIdx] && (
+                <div
+                    style={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        zIndex: 100,
+                        textAlign: 'center',
+                        pointerEvents: 'none',
+                        maxWidth: '70vw',
+                        animation: 'fadeSlideIn 0.45s cubic-bezier(0.23, 1, 0.32, 1) forwards',
+                    }}
+                >
+                    <h3 style={{
+                        fontFamily: "'Inter', 'Outfit', sans-serif",
+                        fontSize: 'clamp(2rem, 5vw, 4.5rem)',
+                        fontWeight: 200,
+                        color: '#ffffff',
+                        letterSpacing: '0.12em',
+                        textTransform: 'uppercase',
+                        margin: 0,
+                        lineHeight: 1.2,
+                        textShadow: '0 4px 40px rgba(0,0,0,0.7)',
+                    }}>
+                        {FLOATING_IMAGES[hoveredIdx]!.title}
+                    </h3>
+                    <p style={{
+                        fontFamily: "'Inter', 'Outfit', sans-serif",
+                        fontSize: 'clamp(0.85rem, 1.6vw, 1.2rem)',
+                        fontWeight: 300,
+                        color: 'rgba(255,255,255,0.55)',
+                        letterSpacing: '0.06em',
+                        marginTop: '0.8rem',
+                        lineHeight: 1.5,
+                        textShadow: '0 2px 20px rgba(0,0,0,0.5)',
+                    }}>
+                        {FLOATING_IMAGES[hoveredIdx]!.description}
+                    </p>
+                </div>
+            )}
+
+            {/* Inline keyframes for the centered text animation */}
+            <style>{`
+                @keyframes fadeSlideIn {
+                    from {
+                        opacity: 0;
+                        transform: translate(-50%, -45%);
+                    }
+                    to {
+                        opacity: 1;
+                        transform: translate(-50%, -50%);
+                    }
+                }
+            `}</style>
         </div>
     );
 };

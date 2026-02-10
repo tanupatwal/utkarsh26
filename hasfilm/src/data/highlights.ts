@@ -2,8 +2,8 @@
 import { ImageData } from '../types';
 
 /**
- * Event Highlights content — high-energy photos of crowds, stages, winners.
- * Used in the floating state after the gallery cylinder shatters.
+ * Event Highlights content — 12 high-energy photos for the floating gallery.
+ * Each has a title and short description shown on hover.
  */
 export const HIGHLIGHTS_CONTENT: ImageData[] = [
     {
@@ -13,48 +13,71 @@ export const HIGHLIGHTS_CONTENT: ImageData[] = [
     },
     {
         url: "/assets/highlights/2.jpg",
-        title: "Night of a Thousand Stars",
-        description: "The main stage lit up with electrifying performances that echoed through the campus."
+        title: "Night of Stars",
+        description: "Electrifying performances that echoed through the campus long after the lights went down."
     },
     {
         url: "/assets/highlights/3.jpg",
-        title: "The Creative Pulse",
-        description: "Art, code, and culture collide in the most unexpected ways."
+        title: "Behind the Curtain",
+        description: "The chaos, the laughter, the last-minute magic that made it all come together."
     },
     {
         url: "/assets/highlights/4.jpg",
-        title: "Rise of Champions",
-        description: "Winners emerge from a battlefield of innovation and raw talent."
+        title: "Creative Minds",
+        description: "Art installations that transformed empty halls into worlds of wonder."
     },
     {
         url: "/assets/highlights/5.jpg",
-        title: "The Crowd Roars",
-        description: "A sea of energy, passion, and unity — the heartbeat of the festival."
+        title: "Victory Roar",
+        description: "The moment of triumph — where hard work met glory under the spotlight."
     },
     {
         url: "/assets/highlights/6.jpg",
-        title: "Behind the Curtain",
-        description: "The unsung moments that make the magic happen — preparation meets perfection."
+        title: "The Crowd",
+        description: "A sea of faces, each carrying their own story of Utkarsh."
     },
     {
         url: "/assets/highlights/7.jpg",
-        title: "Dawn of VIKAS",
-        description: "From Virasat to VIKAS — every ending is a new beginning."
-    }
+        title: "First Light",
+        description: "Dawn breaking over a campus still buzzing from the night before."
+    },
+    {
+        url: "/assets/highlights/8.jpg",
+        title: "Innovation Hub",
+        description: "Where ideas became prototypes and prototypes became possibilities."
+    },
+    {
+        url: "/assets/highlights/9.jpg",
+        title: "Street Vibes",
+        description: "The open grounds turned festival — food, music, and spontaneous dance."
+    },
+    {
+        url: "/assets/highlights/10.jpg",
+        title: "Rhythm & Soul",
+        description: "Bodies in motion, telling stories that words never could."
+    },
+    {
+        url: "/assets/highlights/11.jpg",
+        title: "Acoustic Evenings",
+        description: "Melodies that carried through the corridors and stayed in our hearts."
+    },
+    {
+        url: "/assets/highlights/12.jpg",
+        title: "Our Campus",
+        description: "The backdrop to it all — where memories were made and friendships forged."
+    },
 ];
 
 /**
- * Get a highlight image URL at any index, wrapping around if index exceeds content length.
- * This ensures we always have enough images regardless of panel count.
+ * Get a highlight by index (loops if out of bounds).
  */
 export function getHighlightAtIndex(index: number): ImageData {
     return HIGHLIGHTS_CONTENT[index % HIGHLIGHTS_CONTENT.length]!;
 }
 
 /**
- * Generate N highlight items with looping/wrapping.
- * If N > HIGHLIGHTS_CONTENT.length, images repeat.
+ * Get all highlight image URLs.
  */
-export function getHighlightImages(count: number): ImageData[] {
-    return Array.from({ length: count }, (_, i) => getHighlightAtIndex(i));
+export function getHighlightImages(): string[] {
+    return HIGHLIGHTS_CONTENT.map(h => h.url);
 }
