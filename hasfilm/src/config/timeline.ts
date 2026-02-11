@@ -19,6 +19,12 @@ export const TIMELINE = {
     TRANSITION: 0.86,
     /** Gallery section begins */
     GALLERY_START: 0.86,
+    /** Highlights floating gallery begins */
+    HIGHLIGHTS_START: 0.93,
+    /** Highlights images begin dissolving into schedule */
+    HIGHLIGHTS_DISSOLVE: 0.97,
+    /** Schedule section fully visible */
+    SCHEDULE_START: 0.99,
     /** End of scroll experience */
     END: 1.0
 } as const;

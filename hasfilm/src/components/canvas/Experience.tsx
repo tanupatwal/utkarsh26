@@ -4,6 +4,7 @@ import { SCROLL_CONFIG } from '../../config';
 
 import GalleryOverlay from '../sections/gallery/GalleryOverlay';
 import HighlightsSection from '../sections/gallery/HighlightsSection';
+import ScheduleSection from '../sections/schedule/ScheduleSection';
 
 // Canvas components
 import SceneSetup from './SceneSetup';
@@ -44,6 +45,9 @@ const Experience: React.FC = () => {
 
                     {/* Floating bento highlights — fades in during gallery dissolve */}
                     <HighlightsSection />
+
+                    {/* Schedule section — fades in as highlights dissolve */}
+                    <ScheduleSection />
                 </Scroll>
             </ScrollControls>
         </>

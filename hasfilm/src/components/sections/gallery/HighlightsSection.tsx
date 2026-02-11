@@ -315,8 +315,22 @@ const HighlightsSection: React.FC = () => {
     }, []);
 
     // Phase boundaries
-    const DARK_START = 0.96;
-    const DARK_FULL = 0.97;
+    const DARK_START = 0.93;
+    const DARK_FULL = 0.94;
+
+    // Dissolve phase — images morph into schedule
+    const DISSOLVE_START = 0.97;
+    const DISSOLVE_END = 0.99;
+
+    // Per-layer dissolve delay (background dissolves first)
+    const LAYER_DISSOLVE_DELAY: Record<DepthLayer, number> = {
+        background: 0.0,   // starts immediately
+        middle: 0.15,      // delayed by 15% of dissolve range
+        foreground: 0.30,  // delayed by 30% of dissolve range
+    };
+
+    // Dissolve progress ref — other components can read this
+    const dissolveProgressRef = useRef(0);
 
     // Auto-sink timing (seconds after backdrop is full)
     const TITLE_FADE_IN_END = 0.8;    // title fully visible at 0.8s
@@ -408,15 +422,27 @@ const HighlightsSection: React.FC = () => {
             mouseSmoothed.current.y, mouseTarget.current.y, 0.6, delta
         );
 
-        // ── Spawn new images ──
-        spawnTimerRef.current += delta;
-        if (spawnTimerRef.current >= nextSpawnDelayRef.current && activeImagesRef.current.length < MAX_ACTIVE_IMAGES) {
-            spawnTimerRef.current = 0;
-            nextSpawnDelayRef.current = SPAWN_INTERVAL_MIN + Math.random() * (SPAWN_INTERVAL_MAX - SPAWN_INTERVAL_MIN);
+        // ── Dissolve phase calculation ──
+        const isDissolving = r >= DISSOLVE_START;
+        let globalDissolveT = 0;
+        if (r >= DISSOLVE_START && r <= DISSOLVE_END) {
+            globalDissolveT = (r - DISSOLVE_START) / (DISSOLVE_END - DISSOLVE_START);
+        } else if (r > DISSOLVE_END) {
+            globalDissolveT = 1;
+        }
+        dissolveProgressRef.current = globalDissolveT;
 
-            const usedIndices = new Set(activeImagesRef.current.map(img => img.imageIndex));
-            const newImg = createSpawnedImage(nextIdRef.current++, t, vw, vh, usedIndices, activeImagesRef.current);
-            activeImagesRef.current.push(newImg);
+        // ── Spawn new images (stop during dissolve) ──
+        if (!isDissolving) {
+            spawnTimerRef.current += delta;
+            if (spawnTimerRef.current >= nextSpawnDelayRef.current && activeImagesRef.current.length < MAX_ACTIVE_IMAGES) {
+                spawnTimerRef.current = 0;
+                nextSpawnDelayRef.current = SPAWN_INTERVAL_MIN + Math.random() * (SPAWN_INTERVAL_MAX - SPAWN_INTERVAL_MIN);
+
+                const usedIndices = new Set(activeImagesRef.current.map(img => img.imageIndex));
+                const newImg = createSpawnedImage(nextIdRef.current++, t, vw, vh, usedIndices, activeImagesRef.current);
+                activeImagesRef.current.push(newImg);
+            }
         }
 
         // ── Update active images & cull dead ones ──
@@ -425,9 +451,12 @@ const HighlightsSection: React.FC = () => {
         for (const img of activeImagesRef.current) {
             const age = t - img.spawnTime;
 
+            // During dissolve: slow images to a crawl
+            const speedMult = isDissolving ? Math.max(0, 1 - globalDissolveT * 3) : 1;
+
             // Calculate current position
-            const cx = img.startX + img.vx * age;
-            const cy = img.startY + img.vy * age;
+            const cx = img.startX + img.vx * age * speedMult + (isDissolving ? img.vx * age * (1 - speedMult) : 0);
+            const cy = img.startY + img.vy * age * speedMult + (isDissolving ? img.vy * age * (1 - speedMult) : 0);
 
             // Check if image has left the viewport entirely
             const imgWidthPx = (img.widthVw / 100) * vw;
@@ -437,13 +466,13 @@ const HighlightsSection: React.FC = () => {
             const isOffScreen = cx < -margin || cx > vw + margin || cy < -margin || cy > vh + margin;
 
             // Only cull if it has been on screen at least once and is now off
-            if (age > 2 && isOffScreen) {
-                // remove from DOM map
+            // Don't cull during dissolve — we want all images to dissolve in place
+            if (!isDissolving && age > 2 && isOffScreen) {
                 domMapRef.current.delete(img.id);
-                continue; // don't add to surviving
+                continue;
             }
 
-            // Fade in
+            // Fade in (normal phase)
             img.opacity = Math.min(1, age / FADE_IN_DURATION);
 
             surviving.push(img);
@@ -453,25 +482,50 @@ const HighlightsSection: React.FC = () => {
             if (el) {
                 const layerCfg = LAYER_CONFIG[img.layer];
 
-                // Mouse parallax
-                const mouseOffX = mouseSmoothed.current.x * layerCfg.mouseRange;
-                const mouseOffY = mouseSmoothed.current.y * layerCfg.mouseRange * 0.7;
+                // Mouse parallax (reduce during dissolve)
+                const parallaxMult = isDissolving ? Math.max(0, 1 - globalDissolveT * 2) : 1;
+                const mouseOffX = mouseSmoothed.current.x * layerCfg.mouseRange * parallaxMult;
+                const mouseOffY = mouseSmoothed.current.y * layerCfg.mouseRange * 0.7 * parallaxMult;
 
                 const finalX = cx + mouseOffX;
                 const finalY = cy + mouseOffY;
 
                 // ── Distance-from-center scale ──
-                // Normalize position to 0..1 where 0 = center, 1 = edge
                 const centerX = vw / 2;
                 const centerY = vh / 2;
-                const dx = (finalX - centerX) / centerX;  // -1 to 1
-                const dy = (finalY - centerY) / centerY;  // -1 to 1
-                const distFromCenter = Math.min(1, Math.sqrt(dx * dx + dy * dy)); // 0 at center, 1 at edges
-                // Smooth bell curve: scale peaks at center, drops at edges
+                const dx = (finalX - centerX) / centerX;
+                const dy = (finalY - centerY) / centerY;
+                const distFromCenter = Math.min(1, Math.sqrt(dx * dx + dy * dy));
                 const centerScale = 1 + CENTER_SCALE_BOOST * (1 - distFromCenter * distFromCenter);
 
-                el.style.transform = `translate(-50%, -50%) translate(${finalX}px, ${finalY}px) scale(${centerScale.toFixed(3)})`;
-                el.style.opacity = img.opacity.toString();
+                // ── Per-image dissolve ──
+                if (isDissolving) {
+                    const layerDelay = LAYER_DISSOLVE_DELAY[img.layer];
+                    const imgDissolveRaw = (globalDissolveT - layerDelay) / (1 - layerDelay);
+                    const imgDissolveT = Math.max(0, Math.min(1, imgDissolveRaw));
+
+                    // Eased dissolve (accelerates)
+                    const eased = imgDissolveT * imgDissolveT;
+
+                    // Scale shrinks
+                    const dissolveScale = centerScale * (1 - eased * 0.4);
+
+                    // Radial mask — shrinking circle from edges inward
+                    const maskRadius = Math.max(0, (1 - eased) * 100);
+                    const maskEdge = Math.min(100, maskRadius + 8);
+
+                    el.style.transform = `translate(-50%, -50%) translate(${finalX}px, ${finalY}px) scale(${dissolveScale.toFixed(3)})`;
+                    el.style.opacity = (img.opacity * (1 - eased)).toFixed(3);
+                    el.style.filter = `blur(${eased * 10}px) brightness(${1 + eased * 0.6})`;
+                    (el.style as any).webkitMaskImage = `radial-gradient(circle, black ${maskRadius.toFixed(1)}%, transparent ${maskEdge.toFixed(1)}%)`;
+                    (el.style as any).maskImage = `radial-gradient(circle, black ${maskRadius.toFixed(1)}%, transparent ${maskEdge.toFixed(1)}%)`;
+                } else {
+                    el.style.transform = `translate(-50%, -50%) translate(${finalX}px, ${finalY}px) scale(${centerScale.toFixed(3)})`;
+                    el.style.opacity = img.opacity.toString();
+                    el.style.filter = '';
+                    (el.style as any).webkitMaskImage = '';
+                    (el.style as any).maskImage = '';
+                }
             }
         }
 
