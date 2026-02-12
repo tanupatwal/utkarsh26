@@ -17,7 +17,6 @@ const ACCENT = '#38bdf8'; // sky-400
 const ACCENT_DIM = 'rgba(56,189,248,0.15)';
 const ACCENT_MED = 'rgba(56,189,248,0.3)';
 const ACCENT_GLOW = 'rgba(56,189,248,0.5)';
-const ACCENT_BRIGHT = 'rgba(56,189,248,0.8)';
 
 const CLS = 'sch';
 
@@ -65,7 +64,7 @@ const STYLES = `
 }
 .${CLS}-card.revealed { opacity: 1; }
 .${CLS}-card:hover {
-  transform: translateZ(60px) scale(1.06) !important;
+  transform: rotateX(-18deg) translateZ(60px) scale(1.06) !important;
   z-index: 50;
 }
 
@@ -203,6 +202,7 @@ const STYLES = `
               cx 0.5s cubic-bezier(0.23,1,0.32,1);
 }
 
+
 /* Metadata row */
 .${CLS}-meta {
   display: flex; align-items: center; gap: 0.5rem;
@@ -256,6 +256,7 @@ const ScheduleSection: React.FC = () => {
         return { pathD: `M ${sx} 0 L ${fx} 0 L ${dx} 40 L 1000 40`, fx, dx };
     }, [activeDay]);
 
+
     // ── Scroll entrance ──
     useFrame((_state, delta) => {
         if (!containerRef.current) return;
@@ -291,7 +292,9 @@ const ScheduleSection: React.FC = () => {
             style={{
                 position: 'fixed', top: 0, left: 0,
                 width: '100vw', height: '100vh',
-                opacity: 0, zIndex: 25, overflow: 'hidden',
+                opacity: 0, zIndex: 25, overflow: 'hidden auto',
+                scrollBehavior: 'smooth',
+                WebkitOverflowScrolling: 'touch',
                 background: 'radial-gradient(ellipse at 50% 30%, #020617 0%, #000 100%)',
                 fontFamily: "'Space Grotesk', 'Inter', sans-serif",
                 color: '#fff',
@@ -320,15 +323,6 @@ const ScheduleSection: React.FC = () => {
                     transformOrigin: 'bottom center',
                     maskImage: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 70%)',
                     WebkitMaskImage: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 70%)',
-                }} />
-                {/* Horizon glow */}
-                <div style={{
-                    position: 'absolute',
-                    left: '10%', right: '10%', top: '35%',
-                    height: '2px',
-                    background: `linear-gradient(to right, transparent, ${ACCENT_MED}, ${ACCENT_GLOW}, ${ACCENT_MED}, transparent)`,
-                    boxShadow: `0 0 60px 20px rgba(56,189,248,0.08)`,
-                    opacity: 0.6,
                 }} />
                 {/* Top-left glow orb */}
                 <div style={{
@@ -378,7 +372,7 @@ const ScheduleSection: React.FC = () => {
                 {/* ── Day tabs ── */}
                 <nav style={{
                     position: 'relative', zIndex: 50,
-                    marginBottom: 0, marginTop: '3rem',
+                    marginBottom: '1.5rem', marginTop: '3rem',
                     width: '100%', maxWidth: '900px', padding: '0 1rem',
                 }}>
                     <div style={{
@@ -459,14 +453,13 @@ const ScheduleSection: React.FC = () => {
                     </div>
                 </nav>
 
-                {/* ── 3D Tilted Card Grid ── */}
+                {/* ── Card Grid ── */}
                 <div style={{
-                    flexGrow: 1, width: '100%', maxWidth: '1400px',
-                    padding: '0 2rem',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    width: '100%', maxWidth: '1400px',
+                    padding: '0 2rem 4rem',
                     transform: 'rotateX(18deg) scale(0.95)',
                     transformStyle: 'preserve-3d',
-                    paddingBottom: '4rem',
+                    perspective: '1200px',
                 }}>
                     <div key={activeDay} className={`${CLS}-grid`}>
                         {dayEvents.map((event, i) => {

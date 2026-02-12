@@ -318,19 +318,22 @@ const HighlightsSection: React.FC = () => {
     const DARK_START = 0.93;
     const DARK_FULL = 0.94;
 
-    // Dissolve phase — images morph into schedule
-    const DISSOLVE_START = 0.97;
-    const DISSOLVE_END = 0.99;
+    // Gravity drain phase — images fall downward
+    const GRAVITY_START = 0.97;
+    const GRAVITY_END = 0.99;
 
-    // Per-layer dissolve delay (background dissolves first)
-    const LAYER_DISSOLVE_DELAY: Record<DepthLayer, number> = {
-        background: 0.0,   // starts immediately
-        middle: 0.15,      // delayed by 15% of dissolve range
-        foreground: 0.30,  // delayed by 30% of dissolve range
+    // Per-layer gravity delay (foreground falls first — closest/heaviest)
+    const LAYER_GRAVITY_DELAY: Record<DepthLayer, number> = {
+        foreground: 0.0,
+        middle: 0.12,
+        background: 0.25,
     };
 
-    // Dissolve progress ref — other components can read this
-    const dissolveProgressRef = useRef(0);
+    // Gravity progress ref
+    const gravityProgressRef = useRef(0);
+
+    // Per-image gravity offset (accumulated downward pull)
+    const gravityPosRef = useRef<Map<number, { dy: number; vy: number }>>(new Map());
 
     // Auto-sink timing (seconds after backdrop is full)
     const TITLE_FADE_IN_END = 0.8;    // title fully visible at 0.8s
@@ -422,18 +425,18 @@ const HighlightsSection: React.FC = () => {
             mouseSmoothed.current.y, mouseTarget.current.y, 0.6, delta
         );
 
-        // ── Dissolve phase calculation ──
-        const isDissolving = r >= DISSOLVE_START;
-        let globalDissolveT = 0;
-        if (r >= DISSOLVE_START && r <= DISSOLVE_END) {
-            globalDissolveT = (r - DISSOLVE_START) / (DISSOLVE_END - DISSOLVE_START);
-        } else if (r > DISSOLVE_END) {
-            globalDissolveT = 1;
+        // ── Gravity drain phase calculation ──
+        const isDraining = r >= GRAVITY_START;
+        let globalGravityT = 0;
+        if (r >= GRAVITY_START && r <= GRAVITY_END) {
+            globalGravityT = (r - GRAVITY_START) / (GRAVITY_END - GRAVITY_START);
+        } else if (r > GRAVITY_END) {
+            globalGravityT = 1;
         }
-        dissolveProgressRef.current = globalDissolveT;
+        gravityProgressRef.current = globalGravityT;
 
-        // ── Spawn new images (stop during dissolve) ──
-        if (!isDissolving) {
+        // ── Spawn new images (stop during gravity drain) ──
+        if (!isDraining) {
             spawnTimerRef.current += delta;
             if (spawnTimerRef.current >= nextSpawnDelayRef.current && activeImagesRef.current.length < MAX_ACTIVE_IMAGES) {
                 spawnTimerRef.current = 0;
@@ -451,24 +454,21 @@ const HighlightsSection: React.FC = () => {
         for (const img of activeImagesRef.current) {
             const age = t - img.spawnTime;
 
-            // During dissolve: slow images to a crawl
-            const speedMult = isDissolving ? Math.max(0, 1 - globalDissolveT * 3) : 1;
-
-            // Calculate current position
-            const cx = img.startX + img.vx * age * speedMult + (isDissolving ? img.vx * age * (1 - speedMult) : 0);
-            const cy = img.startY + img.vy * age * speedMult + (isDissolving ? img.vy * age * (1 - speedMult) : 0);
+            // Normal position
+            const baseX = img.startX + img.vx * age;
+            const baseY = img.startY + img.vy * age;
 
             // Check if image has left the viewport entirely
             const imgWidthPx = (img.widthVw / 100) * vw;
             const imgHeightPx = (img.heightVal / 100) * vh;
             const margin = Math.max(imgWidthPx, imgHeightPx) + 100;
 
-            const isOffScreen = cx < -margin || cx > vw + margin || cy < -margin || cy > vh + margin;
+            const isOffScreen = baseX < -margin || baseX > vw + margin || baseY < -margin || baseY > vh + margin;
 
-            // Only cull if it has been on screen at least once and is now off
-            // Don't cull during dissolve — we want all images to dissolve in place
-            if (!isDissolving && age > 2 && isOffScreen) {
+            // Don't cull during gravity drain
+            if (!isDraining && age > 2 && isOffScreen) {
                 domMapRef.current.delete(img.id);
+                gravityPosRef.current.delete(img.id);
                 continue;
             }
 
@@ -482,47 +482,95 @@ const HighlightsSection: React.FC = () => {
             if (el) {
                 const layerCfg = LAYER_CONFIG[img.layer];
 
-                // Mouse parallax (reduce during dissolve)
-                const parallaxMult = isDissolving ? Math.max(0, 1 - globalDissolveT * 2) : 1;
+                // Mouse parallax (reduce during gravity)
+                const parallaxMult = isDraining ? Math.max(0, 1 - globalGravityT * 2) : 1;
                 const mouseOffX = mouseSmoothed.current.x * layerCfg.mouseRange * parallaxMult;
                 const mouseOffY = mouseSmoothed.current.y * layerCfg.mouseRange * 0.7 * parallaxMult;
 
-                const finalX = cx + mouseOffX;
-                const finalY = cy + mouseOffY;
+                let finalX = baseX + mouseOffX;
+                let finalY = baseY + mouseOffY;
 
-                // ── Distance-from-center scale ──
+                // ── Distance-from-center scale (normal) ──
                 const centerX = vw / 2;
                 const centerY = vh / 2;
                 const dx = (finalX - centerX) / centerX;
                 const dy = (finalY - centerY) / centerY;
                 const distFromCenter = Math.min(1, Math.sqrt(dx * dx + dy * dy));
-                const centerScale = 1 + CENTER_SCALE_BOOST * (1 - distFromCenter * distFromCenter);
+                let scaleX = 1 + CENTER_SCALE_BOOST * (1 - distFromCenter * distFromCenter);
+                let scaleY = scaleX;
 
-                // ── Per-image dissolve ──
-                if (isDissolving) {
-                    const layerDelay = LAYER_DISSOLVE_DELAY[img.layer];
-                    const imgDissolveRaw = (globalDissolveT - layerDelay) / (1 - layerDelay);
-                    const imgDissolveT = Math.max(0, Math.min(1, imgDissolveRaw));
+                // ── Gravity drain: images fall downward ──
+                if (isDraining) {
+                    const layerDelay = LAYER_GRAVITY_DELAY[img.layer];
+                    const imgGravityRaw = (globalGravityT - layerDelay) / (1 - layerDelay);
+                    const imgGravityT = Math.max(0, Math.min(1, imgGravityRaw));
 
-                    // Eased dissolve (accelerates)
-                    const eased = imgDissolveT * imgDissolveT;
+                    // Quadratic acceleration (like real gravity: d = ½ g t²)
+                    const fallStrength = imgGravityT * imgGravityT;
 
-                    // Scale shrinks
-                    const dissolveScale = centerScale * (1 - eased * 0.4);
+                    // Get or init gravity state
+                    if (!gravityPosRef.current.has(img.id)) {
+                        gravityPosRef.current.set(img.id, { dy: 0, vy: 0 });
+                    }
+                    const gpos = gravityPosRef.current.get(img.id)!;
 
-                    // Radial mask — shrinking circle from edges inward
-                    const maskRadius = Math.max(0, (1 - eased) * 100);
-                    const maskEdge = Math.min(100, maskRadius + 8);
+                    // Gravity acceleration (pixels)
+                    const gravity = vh * 2.5; // 2.5x viewport height acceleration
+                    gpos.vy += gravity * fallStrength * delta;
+                    gpos.dy += gpos.vy * delta;
 
-                    el.style.transform = `translate(-50%, -50%) translate(${finalX}px, ${finalY}px) scale(${dissolveScale.toFixed(3)})`;
-                    el.style.opacity = (img.opacity * (1 - eased)).toFixed(3);
-                    el.style.filter = `blur(${eased * 10}px) brightness(${1 + eased * 0.6})`;
-                    (el.style as any).webkitMaskImage = `radial-gradient(circle, black ${maskRadius.toFixed(1)}%, transparent ${maskEdge.toFixed(1)}%)`;
-                    (el.style as any).maskImage = `radial-gradient(circle, black ${maskRadius.toFixed(1)}%, transparent ${maskEdge.toFixed(1)}%)`;
+                    finalY += gpos.dy;
+
+                    // Slight horizontal drift toward center as images fall
+                    const toCenterX = (centerX - finalX) * fallStrength * 0.05;
+                    finalX += toCenterX;
+
+                    // Vertical stretch (motion blur illusion)
+                    const stretchAmount = Math.min(0.4, fallStrength * 0.3);
+                    scaleY *= (1 + stretchAmount);
+                    scaleX *= Math.max(0.7, 1 - stretchAmount * 0.5);
+
+                    // Opacity: fade as image drops below viewport
+                    const fallRatio = Math.max(0, (finalY - vh * 0.6) / (vh * 0.6));
+                    const gravityOpacity = img.opacity * Math.max(0, 1 - fallRatio);
+
+                    // Slight blur as speed increases
+                    const motionBlur = Math.min(6, fallStrength * 5);
+
+                    el.style.transform = `translate(-50%, -50%) translate(${finalX.toFixed(1)}px, ${finalY.toFixed(1)}px) scale(${scaleX.toFixed(3)}, ${scaleY.toFixed(3)})`;
+                    el.style.opacity = gravityOpacity.toFixed(3);
+                    el.style.filter = motionBlur > 0.5 ? `blur(${motionBlur.toFixed(1)}px)` : '';
+                    (el.style as any).webkitMaskImage = '';
+                    (el.style as any).maskImage = '';
                 } else {
-                    el.style.transform = `translate(-50%, -50%) translate(${finalX}px, ${finalY}px) scale(${centerScale.toFixed(3)})`;
+                    // Normal rendering — gradually decay gravity offsets for smooth return
+                    const gpos = gravityPosRef.current.get(img.id);
+                    if (gpos) {
+                        // Exponential decay
+                        gpos.dy *= 0.90;
+                        gpos.vy *= 0.85;
+                        finalY += gpos.dy;
+
+                        // Vertical stretch decays too
+                        const residualStretch = Math.min(0.3, Math.abs(gpos.dy) / vh);
+                        scaleY *= (1 + residualStretch * 0.2);
+                        scaleX *= Math.max(0.85, 1 - residualStretch * 0.1);
+
+                        // Motion blur decays
+                        const residualBlur = Math.min(3, Math.abs(gpos.vy) / 200);
+                        el.style.filter = residualBlur > 0.3 ? `blur(${residualBlur.toFixed(1)}px)` : '';
+
+                        // Clean up once offset is negligible
+                        if (Math.abs(gpos.dy) < 0.5 && Math.abs(gpos.vy) < 0.5) {
+                            gravityPosRef.current.delete(img.id);
+                            el.style.filter = '';
+                        }
+                    } else {
+                        el.style.filter = '';
+                    }
+
+                    el.style.transform = `translate(-50%, -50%) translate(${finalX.toFixed(1)}px, ${finalY.toFixed(1)}px) scale(${scaleX.toFixed(3)}, ${scaleY.toFixed(3)})`;
                     el.style.opacity = img.opacity.toString();
-                    el.style.filter = '';
                     (el.style as any).webkitMaskImage = '';
                     (el.style as any).maskImage = '';
                 }
