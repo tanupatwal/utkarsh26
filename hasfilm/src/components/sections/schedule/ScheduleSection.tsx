@@ -1,9 +1,11 @@
-import React, { useRef, useState, useCallback, useMemo } from 'react';
+import React, { useRef, useState, useCallback, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useScroll } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { SCROLL_CONFIG } from '../../../config';
 import { SCHEDULE_DAYS, getEventsForDay, CATEGORY_COLORS } from '../../../data/schedule';
+import type { ScheduleEvent } from '../../../data/schedule';
 
 // ════════════════════════════════════════════════
 //  CONFIGURATION
@@ -55,7 +57,7 @@ const STYLES = `
   width: 100%;
   cursor: pointer;
   transform-style: preserve-3d;
-  transform: translateZ(0) scale(1);
+  transform: translateZ(0) rotateX(18deg) scale(0.95);
   opacity: 0;
   transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94),
               opacity 0.4s ease;
@@ -64,7 +66,7 @@ const STYLES = `
 }
 .${CLS}-card.revealed { opacity: 1; }
 .${CLS}-card:hover {
-  transform: rotateX(-18deg) translateZ(60px) scale(1.06) !important;
+  transform: rotateX(0deg) translateZ(20px) scale(1.02) !important;
   z-index: 50;
 }
 
@@ -118,27 +120,44 @@ const STYLES = `
   opacity: 1;
 }
 
-/* Cyber-tinted image */
+/* Event thumbnail — vibrant, clean */
 .${CLS}-img {
   width: 100%; height: 100%;
   object-fit: cover;
-  opacity: 0.35;
-  filter: grayscale(100%) brightness(0.7) sepia(100%) hue-rotate(180deg) saturate(1.5);
-  transform: scale(1);
-  transition: opacity 0.35s ease, filter 0.35s ease, transform 0.35s ease;
+  opacity: 0.85;
+  filter: brightness(0.88) saturate(1.1);
+  transform: scale(1.01);
+  transition: opacity 0.4s ease, filter 0.4s ease, transform 0.5s cubic-bezier(0.25,0.46,0.45,0.94);
   will-change: opacity, filter, transform;
 }
 .${CLS}-card:hover .${CLS}-img {
-  opacity: 0.7;
-  filter: grayscale(40%) brightness(0.85) sepia(60%) hue-rotate(180deg) saturate(1.8);
-  transform: scale(1.06);
+  opacity: 1;
+  filter: brightness(1.05) saturate(1.2);
+  transform: scale(1.08);
 }
 
-/* Bottom gradient on card */
+/* Subtle bottom gradient — text readability only */
 .${CLS}-grad {
   position: absolute; inset: 0;
-  background: linear-gradient(to top, rgba(2,6,23,0.95) 0%, rgba(2,6,23,0.3) 40%, transparent 100%);
+  background: linear-gradient(to top, rgba(2,6,23,0.75) 0%, rgba(2,6,23,0.25) 35%, transparent 60%);
   pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+.${CLS}-card:hover .${CLS}-grad {
+  opacity: 0.6;
+}
+
+/* Category-colored top accent strip */
+.${CLS}-cat-strip {
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 3px;
+  z-index: 10;
+  opacity: 0.85;
+  transition: opacity 0.3s ease, box-shadow 0.3s ease;
+}
+.${CLS}-card:hover .${CLS}-cat-strip {
+  opacity: 1;
+  box-shadow: 0 0 12px var(--cat-color), 0 0 24px var(--cat-color);
 }
 
 /* Card title — hides on hover */
@@ -185,9 +204,11 @@ const STYLES = `
 /* Grid crossfade */
 .${CLS}-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
   gap: 1.5rem;
   width: 100%;
+  transform-style: preserve-3d;
+  perspective: 1000px;
   animation: ${CLS}FadeIn 0.35s ease both;
 }
 @keyframes ${CLS}FadeIn {
@@ -223,6 +244,165 @@ const STYLES = `
   letter-spacing: 0.12em; text-transform: uppercase;
   flex-shrink: 0;
 }
+
+/* ═══ MODAL OVERLAY ═══ */
+.${CLS}-modal-backdrop {
+  position: fixed; inset: 0;
+  z-index: 200;
+  background: rgba(0, 2, 10, 0.82);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0;
+  transition: opacity 0.35s cubic-bezier(0.23,1,0.32,1);
+  pointer-events: none;
+  cursor: pointer;
+}
+.${CLS}-modal-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.${CLS}-modal-content {
+  display: flex; align-items: stretch; gap: 0;
+  max-width: 900px; width: 90vw;
+  max-height: 80vh;
+  transform: scale(0.92) translateY(20px);
+  transition: transform 0.4s cubic-bezier(0.23,1,0.32,1);
+  cursor: default;
+}
+.${CLS}-modal-backdrop.open .${CLS}-modal-content {
+  transform: scale(1) translateY(0);
+}
+
+/* Left: Image */
+.${CLS}-modal-img-wrap {
+  position: relative;
+  flex: 0 0 42%;
+  min-height: 380px;
+  border: 2px solid ${ACCENT_MED};
+  box-shadow: 0 0 20px rgba(56,189,248,0.2),
+              0 0 60px rgba(56,189,248,0.08),
+              inset 0 0 30px rgba(56,189,248,0.05);
+  overflow: hidden;
+  clip-path: polygon(6% 0, 100% 0, 100% 94%, 94% 100%, 0 100%, 0 6%);
+}
+.${CLS}-modal-img-wrap::before {
+  content: '';
+  position: absolute; inset: 0; z-index: 2;
+  background: linear-gradient(to top, rgba(2,6,23,0.85) 0%, rgba(2,6,23,0.15) 35%, transparent 60%);
+  pointer-events: none;
+}
+.${CLS}-modal-img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.${CLS}-modal-img-title {
+  position: absolute; bottom: 1.2rem; left: 1.2rem; right: 1.2rem;
+  z-index: 3;
+  font-family: 'Space Grotesk', 'Orbitron', sans-serif;
+  font-size: clamp(1.1rem, 2vw, 1.5rem);
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #e2e8f0;
+  text-shadow: 0 0 15px rgba(56,189,248,0.4);
+}
+
+/* Corner brackets on image */
+.${CLS}-modal-img-wrap::after {
+  content: '';
+  position: absolute; top: 8px; left: 8px;
+  width: 20px; height: 20px;
+  border-top: 1px solid ${ACCENT};
+  border-left: 1px solid ${ACCENT};
+  z-index: 3;
+}
+
+/* Right: Details panel */
+.${CLS}-modal-details {
+  flex: 1;
+  background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 100%),
+              rgba(2, 6, 23, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  clip-path: polygon(0 0, 100% 0, 100% 92%, 96% 100%, 0 100%);
+  padding: 2.5rem 2rem;
+  display: flex; flex-direction: column; gap: 1.2rem;
+  overflow-y: auto;
+  box-shadow: 0 0 0 1px ${ACCENT_DIM},
+              inset 0 1px 0 rgba(56,189,248,0.08);
+  border-left: 1px solid rgba(56,189,248,0.08);
+}
+.${CLS}-modal-details h2 {
+  font-family: 'Space Grotesk', 'Orbitron', sans-serif;
+  font-size: clamp(1.4rem, 2.5vw, 1.8rem);
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  margin: 0;
+  color: #fff;
+  text-shadow: 0 0 10px rgba(56,189,248,0.2);
+}
+.${CLS}-modal-desc {
+  font-size: 0.88rem;
+  font-weight: 300;
+  color: rgba(203,213,225,0.85);
+  line-height: 1.7;
+  margin: 0;
+  letter-spacing: 0.01em;
+}
+
+/* Detail rows */
+.${CLS}-modal-row {
+  display: flex; align-items: center; gap: 1rem;
+  padding: 0.7rem 0;
+  border-bottom: 1px solid rgba(56,189,248,0.08);
+}
+.${CLS}-modal-row:last-child { border-bottom: none; }
+.${CLS}-modal-row-icon {
+  width: 20px; height: 20px;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+.${CLS}-modal-row-label {
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(148,163,184,0.9);
+  min-width: 100px;
+}
+.${CLS}-modal-row-value {
+  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 500;
+  color: #e2e8f0;
+  letter-spacing: 0.02em;
+}
+
+/* Close button */
+.${CLS}-modal-close {
+  position: absolute; top: 1.2rem; right: 1.2rem;
+  width: 36px; height: 36px;
+  border: 1px solid ${ACCENT_MED};
+  background: rgba(2,6,23,0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: ${ACCENT};
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  clip-path: polygon(15% 0, 100% 0, 100% 85%, 85% 100%, 0 100%, 0 15%);
+  transition: background 0.2s, box-shadow 0.2s;
+  z-index: 210;
+}
+.${CLS}-modal-close:hover {
+  background: rgba(56,189,248,0.15);
+  box-shadow: 0 0 15px rgba(56,189,248,0.3);
+}
 `;
 
 // ════════════════════════════════════════════════
@@ -236,7 +416,17 @@ const ScheduleSection: React.FC = () => {
 
     const [activeDay, setActiveDay] = useState(1);
     const [cardsRevealed, setCardsRevealed] = useState(false);
+    const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(null);
     const revealTimerRef = useRef(0);
+
+    // Close modal on Escape
+    useEffect(() => {
+        const handleKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') setSelectedEvent(null);
+        };
+        window.addEventListener('keydown', handleKey);
+        return () => window.removeEventListener('keydown', handleKey);
+    }, []);
 
     const handleDayClick = useCallback((dayId: number) => {
         setActiveDay(dayId);
@@ -457,9 +647,6 @@ const ScheduleSection: React.FC = () => {
                 <div style={{
                     width: '100%', maxWidth: '1400px',
                     padding: '0 2rem 4rem',
-                    transform: 'rotateX(18deg) scale(0.95)',
-                    transformStyle: 'preserve-3d',
-                    perspective: '1200px',
                 }}>
                     <div key={activeDay} className={`${CLS}-grid`}>
                         {dayEvents.map((event, i) => {
@@ -470,9 +657,11 @@ const ScheduleSection: React.FC = () => {
                                     key={event.title}
                                     className={`${CLS}-card ${cardsRevealed ? 'revealed' : ''}`}
                                     style={{ transitionDelay: `${i * CARD_STAGGER_MS}ms` }}
+                                    onClick={() => setSelectedEvent(event)}
                                 >
                                     {/* Card body */}
                                     <div className={`${CLS}-body`}>
+                                        <div className={`${CLS}-cat-strip`} style={{ background: catColor, ['--cat-color' as any]: catColor }} />
                                         <img className={`${CLS}-img`} src={event.image} alt={event.title} loading="lazy" />
                                         <div className={`${CLS}-grad`} />
                                         {/* Title bar at bottom */}
@@ -570,6 +759,120 @@ const ScheduleSection: React.FC = () => {
                     </div>
                 </div>
             </main>
+
+            {/* ── EVENT DETAIL MODAL (portal to body) ── */}
+            {createPortal(
+                <div
+                    className={`${CLS}-modal-backdrop ${selectedEvent ? 'open' : ''}`}
+                    onClick={() => setSelectedEvent(null)}
+                >
+                    <style>{STYLES}</style>
+                    {selectedEvent && (() => {
+                        const ev = selectedEvent;
+                        const catColor = ev.category ? CATEGORY_COLORS[ev.category] || ACCENT : ACCENT;
+                        return (
+                            <div
+                                className={`${CLS}-modal-content`}
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                {/* Close button */}
+                                <button
+                                    className={`${CLS}-modal-close`}
+                                    onClick={() => setSelectedEvent(null)}
+                                    aria-label="Close"
+                                >✕</button>
+
+                                {/* Left: Image */}
+                                <div className={`${CLS}-modal-img-wrap`} style={{
+                                    borderColor: catColor,
+                                    boxShadow: `0 0 20px ${catColor}33, 0 0 60px ${catColor}14, inset 0 0 30px ${catColor}0d`,
+                                }}>
+                                    <img className={`${CLS}-modal-img`} src={ev.image} alt={ev.title} />
+                                    <span className={`${CLS}-modal-img-title`}>{ev.title}</span>
+                                </div>
+
+                                {/* Right: Details */}
+                                <div className={`${CLS}-modal-details`}>
+                                    <h2>{ev.title}</h2>
+                                    {ev.description && (
+                                        <p className={`${CLS}-modal-desc`}>{ev.description}</p>
+                                    )}
+
+                                    <div style={{ marginTop: '0.5rem' }}>
+                                        {/* Time */}
+                                        <div className={`${CLS}-modal-row`}>
+                                            <svg className={`${CLS}-modal-row-icon`} viewBox="0 0 24 24" fill="none" stroke={catColor} strokeWidth="1.5">
+                                                <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
+                                            </svg>
+                                            <span className={`${CLS}-modal-row-label`}>Time:</span>
+                                            <span className={`${CLS}-modal-row-value`}>
+                                                {ev.time}{ev.endTime ? ` – ${ev.endTime}` : ''}
+                                            </span>
+                                        </div>
+
+                                        {/* Venue */}
+                                        <div className={`${CLS}-modal-row`}>
+                                            <svg className={`${CLS}-modal-row-icon`} viewBox="0 0 24 24" fill="none" stroke={catColor} strokeWidth="1.5">
+                                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
+                                                <circle cx="12" cy="9" r="2.5" />
+                                            </svg>
+                                            <span className={`${CLS}-modal-row-label`}>Venue:</span>
+                                            <span className={`${CLS}-modal-row-value`}>{ev.venue}</span>
+                                        </div>
+
+                                        {/* Prize Pool */}
+                                        {ev.prizePool && (
+                                            <div className={`${CLS}-modal-row`}>
+                                                <svg className={`${CLS}-modal-row-icon`} viewBox="0 0 24 24" fill="none" stroke={catColor} strokeWidth="1.5">
+                                                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+                                                    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                                                    <path d="M4 22h16" />
+                                                    <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+                                                    <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+                                                    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+                                                </svg>
+                                                <span className={`${CLS}-modal-row-label`}>Prize Pool:</span>
+                                                <span className={`${CLS}-modal-row-value`} style={{ color: catColor, fontWeight: 700 }}>
+                                                    {ev.prizePool}
+                                                </span>
+                                            </div>
+                                        )}
+
+                                        {/* Team Size */}
+                                        {ev.teamSize && (
+                                            <div className={`${CLS}-modal-row`}>
+                                                <svg className={`${CLS}-modal-row-icon`} viewBox="0 0 24 24" fill="none" stroke={catColor} strokeWidth="1.5">
+                                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                                    <circle cx="9" cy="7" r="4" />
+                                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                                                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                                </svg>
+                                                <span className={`${CLS}-modal-row-label`}>Team Size:</span>
+                                                <span className={`${CLS}-modal-row-value`}>{ev.teamSize}</span>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Category badge */}
+                                    <div style={{ marginTop: 'auto', paddingTop: '1rem' }}>
+                                        <span style={{
+                                            fontSize: '0.65rem', fontWeight: 700,
+                                            padding: '0.25rem 0.8rem',
+                                            letterSpacing: '0.14em', textTransform: 'uppercase' as const,
+                                            background: `${catColor}20`, color: catColor,
+                                            border: `1px solid ${catColor}40`,
+                                            clipPath: 'polygon(8% 0, 100% 0, 92% 100%, 0 100%)',
+                                        }}>
+                                            {ev.category?.toUpperCase() || 'EVENT'}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })()}
+                </div>,
+                document.body
+            )}
 
             {/* ── Bottom indicator ── */}
             <div style={{
