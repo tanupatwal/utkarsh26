@@ -403,6 +403,46 @@ const STYLES = `
   background: rgba(56,189,248,0.15);
   box-shadow: 0 0 15px rgba(56,189,248,0.3);
 }
+
+/* Navigation arrows */
+.${CLS}-modal-nav {
+  position: absolute; top: 50%; z-index: 220;
+  transform: translateY(-50%);
+  width: 44px; height: 44px;
+  border: 1px solid ${ACCENT_MED};
+  background: rgba(2,6,23,0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  color: ${ACCENT};
+  font-size: 1.3rem; line-height: 1;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  clip-path: polygon(15% 0, 100% 0, 100% 85%, 85% 100%, 0 100%, 0 15%);
+  transition: background 0.2s, box-shadow 0.2s, transform 0.25s;
+}
+.${CLS}-modal-nav:hover {
+  background: rgba(56,189,248,0.15);
+  box-shadow: 0 0 20px rgba(56,189,248,0.3);
+  transform: translateY(-50%) scale(1.1);
+}
+.${CLS}-modal-nav:active {
+  transform: translateY(-50%) scale(0.95);
+}
+.${CLS}-modal-nav.prev { left: -60px; }
+.${CLS}-modal-nav.next { right: -60px; }
+@media (max-width: 900px) {
+  .${CLS}-modal-nav.prev { left: 0.5rem; }
+  .${CLS}-modal-nav.next { right: 0.5rem; }
+}
+
+/* Event counter */
+.${CLS}-modal-counter {
+  position: absolute; bottom: -2rem; left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.7rem; letter-spacing: 0.2em;
+  color: ${ACCENT_MED};
+  white-space: nowrap;
+}
 `;
 
 // ════════════════════════════════════════════════
@@ -419,14 +459,28 @@ const ScheduleSection: React.FC = () => {
     const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(null);
     const revealTimerRef = useRef(0);
 
-    // Close modal on Escape
+    // Navigate events from modal with arrow keys / Escape
+    const navigateEvent = useCallback((dir: -1 | 1) => {
+        setSelectedEvent((prev): ScheduleEvent | null => {
+            if (!prev) return null;
+            const events = getEventsForDay(prev.dayId);
+            const idx = events.findIndex(e => e.title === prev.title);
+            if (idx < 0) return prev;
+            const next = idx + dir;
+            if (next < 0 || next >= events.length) return prev;
+            return events[next] ?? prev;
+        });
+    }, []);
+
     useEffect(() => {
         const handleKey = (e: KeyboardEvent) => {
             if (e.key === 'Escape') setSelectedEvent(null);
+            if (e.key === 'ArrowLeft') navigateEvent(-1);
+            if (e.key === 'ArrowRight') navigateEvent(1);
         };
         window.addEventListener('keydown', handleKey);
         return () => window.removeEventListener('keydown', handleKey);
-    }, []);
+    }, [navigateEvent]);
 
     const handleDayClick = useCallback((dayId: number) => {
         setActiveDay(dayId);
@@ -770,10 +824,15 @@ const ScheduleSection: React.FC = () => {
                     {selectedEvent && (() => {
                         const ev = selectedEvent;
                         const catColor = ev.category ? CATEGORY_COLORS[ev.category] || ACCENT : ACCENT;
+                        const eventsForDay = getEventsForDay(ev.dayId);
+                        const currentIdx = eventsForDay.findIndex(e => e.title === ev.title);
+                        const isFirst = currentIdx <= 0;
+                        const isLast = currentIdx >= eventsForDay.length - 1;
                         return (
                             <div
                                 className={`${CLS}-modal-content`}
                                 onClick={(e) => e.stopPropagation()}
+                                style={{ position: 'relative' }}
                             >
                                 {/* Close button */}
                                 <button
@@ -781,6 +840,33 @@ const ScheduleSection: React.FC = () => {
                                     onClick={() => setSelectedEvent(null)}
                                     aria-label="Close"
                                 >✕</button>
+
+                                {/* Prev arrow */}
+                                {!isFirst && (
+                                    <button
+                                        className={`${CLS}-modal-nav prev`}
+                                        onClick={(e) => { e.stopPropagation(); navigateEvent(-1); }}
+                                        aria-label="Previous event"
+                                    >
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 19l-7-7 7-7" /></svg>
+                                    </button>
+                                )}
+
+                                {/* Next arrow */}
+                                {!isLast && (
+                                    <button
+                                        className={`${CLS}-modal-nav next`}
+                                        onClick={(e) => { e.stopPropagation(); navigateEvent(1); }}
+                                        aria-label="Next event"
+                                    >
+                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 5l7 7-7 7" /></svg>
+                                    </button>
+                                )}
+
+                                {/* Event counter */}
+                                <span className={`${CLS}-modal-counter`}>
+                                    {currentIdx + 1} / {eventsForDay.length}
+                                </span>
 
                                 {/* Left: Image */}
                                 <div className={`${CLS}-modal-img-wrap`} style={{
