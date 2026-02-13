@@ -9,13 +9,16 @@ import { TEAM_MEMBERS, TEAM_BG_IMAGES } from '../../../data/team';
 //  CONFIGURATION
 // ════════════════════════════════════════════════
 
-/** Scroll range where the team section fades in */
-const TEAM_FADE_START = 0.98;
-const TEAM_FADE_FULL = 0.99;
+/** Scroll range where the team section fades in — starts AFTER schedule fades out (0.975) */
+const TEAM_FADE_START = 0.975;
+const TEAM_FADE_FULL = 0.985;
 
-/** How much of the remaining scroll (0.99→1.0) drives the name focus */
-const FOCUS_SCROLL_START = 0.99;
+/** Member cycling scroll range — 1.5% of 40 pages with damped kinetics */
+const FOCUS_SCROLL_START = 0.985;
 const FOCUS_SCROLL_END = 1.0;
+
+/** Low damping = very smooth, gradual glide between names */
+const INDEX_DAMP = 2.5;
 
 const CLS = 'tm';
 
@@ -61,10 +64,10 @@ const STYLES = `
 }
 .${CLS}-drift-col {
   position: absolute;
-  width: 22vw;
+  width: 20vw;
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: 1.5rem;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
 }
@@ -72,9 +75,10 @@ const STYLES = `
   width: 100%;
   height: auto;
   object-fit: cover;
-  opacity: 0.12;
-  filter: brightness(0.5) saturate(0.4) blur(1px);
+  opacity: 0.16;
+  filter: brightness(0.55) saturate(0.45) blur(0.5px);
   border-radius: 4px;
+  transition: opacity 0.6s ease;
 }
 
 @keyframes ${CLS}DriftUp {
@@ -94,22 +98,25 @@ const STYLES = `
   align-items: center;
 }
 
-/* ─── Left: Names column ─── */
+/* ─── Left: Names column — CENTERED ─── */
 .${CLS}-left {
   flex: 0 0 50%;
   height: 100%;
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: center;
-  padding-left: clamp(3rem, 8vw, 8rem);
   position: relative;
 }
 
+/* "Our Team" label */
 .${CLS}-label {
-  font-size: clamp(0.9rem, 1.2vw, 1.1rem);
-  margin-bottom: 1.5rem;
-  letter-spacing: 0.05em;
-  opacity: 0.7;
+  font-size: clamp(0.85rem, 1.1vw, 1.05rem);
+  margin-bottom: 2rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  opacity: 0.5;
+  text-align: center;
 }
 .${CLS}-label em {
   font-style: italic;
@@ -122,6 +129,34 @@ const STYLES = `
   font-family: 'Space Grotesk', sans-serif;
 }
 
+/* ─── Names window container ─── */
+.${CLS}-names-window {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  padding: 1rem 0;
+}
+
+/* Top/bottom fade masks */
+.${CLS}-names-window::before,
+.${CLS}-names-window::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  height: 3rem;
+  pointer-events: none;
+  z-index: 5;
+}
+.${CLS}-names-window::before {
+  top: 0;
+  background: linear-gradient(to bottom, #000 0%, transparent 100%);
+}
+.${CLS}-names-window::after {
+  bottom: 0;
+  background: linear-gradient(to top, #000 0%, transparent 100%);
+}
+
 /* ─── Name item ─── */
 .${CLS}-name {
   cursor: pointer;
@@ -131,42 +166,43 @@ const STYLES = `
   letter-spacing: 0.08em;
   line-height: 1.15;
   white-space: nowrap;
-  transition: all 0.35s cubic-bezier(0.23, 1, 0.32, 1);
-  transform-origin: left center;
-  padding: 0.15em 0;
+  text-align: center;
+  transition: all 0.45s cubic-bezier(0.23, 1, 0.32, 1);
+  transform-origin: center center;
+  padding: 0.2em 0;
   user-select: none;
 }
 .${CLS}-name.inactive {
-  font-size: clamp(1.2rem, 2.2vw, 2rem);
+  font-size: clamp(1.1rem, 2vw, 1.8rem);
   color: #444;
   transform: scale(1);
 }
 .${CLS}-name.active {
   font-size: clamp(1.8rem, 3.5vw, 3.2rem);
   color: #fff;
-  transform: scale(1.05);
-  text-shadow: 0 0 30px rgba(255,255,255,0.15);
+  transform: scale(1.08);
+  text-shadow:
+    0 0 40px rgba(255,255,255,0.2),
+    0 0 80px rgba(255,255,255,0.08);
 }
+/* Distance-based dimming for names further from active */
+.${CLS}-name.dist-1 { color: #666; }
+.${CLS}-name.dist-2 { color: #444; }
+.${CLS}-name.dist-3 { color: #2a2a2a; }
 
-/* Scroll indicator line on left edge */
-.${CLS}-scroll-track {
-  position: absolute;
-  left: clamp(1.5rem, 4vw, 4rem);
-  top: 15%;
-  bottom: 15%;
-  width: 2px;
-  background: rgba(255,255,255,0.06);
-  z-index: 5;
+/* ─── Page counter ─── */
+.${CLS}-counter {
+  margin-top: 2rem;
+  font-size: clamp(0.7rem, 0.85vw, 0.85rem);
+  font-weight: 300;
+  letter-spacing: 0.25em;
+  color: rgba(255,255,255,0.3);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
 }
-.${CLS}-scroll-thumb {
-  position: absolute;
-  left: 0; top: 0;
-  width: 2px;
-  height: 20px;
-  background: #fff;
-  border-radius: 1px;
-  transition: top 0.35s cubic-bezier(0.23, 1, 0.32, 1);
-  box-shadow: 0 0 8px rgba(255,255,255,0.3);
+.${CLS}-counter .current {
+  color: rgba(255,255,255,0.8);
+  font-weight: 600;
 }
 
 /* ─── Right: Image display ─── */
@@ -193,7 +229,7 @@ const STYLES = `
   width: 100%; height: 100%;
   object-fit: cover;
   filter: grayscale(0.85) contrast(1.1);
-  transition: opacity 0.25s ease;
+  transition: opacity 0.4s cubic-bezier(0.23, 1, 0.32, 1);
 }
 
 .${CLS}-role {
@@ -206,7 +242,7 @@ const STYLES = `
   display: flex;
   align-items: center;
   gap: 0.5em;
-  transition: opacity 0.25s ease;
+  transition: opacity 0.4s cubic-bezier(0.23, 1, 0.32, 1);
 }
 .${CLS}-role::before {
   content: '▸';
@@ -246,13 +282,6 @@ const STYLES = `
 .${CLS}-visit-btn:hover {
   background: rgba(76, 140, 90, 1);
 }
-
-/* Visible names window — show ~7 names centered around active */
-.${CLS}-names-window {
-  display: flex;
-  flex-direction: column;
-  transition: transform 0.4s cubic-bezier(0.23, 1, 0.32, 1);
-}
 `;
 
 // ════════════════════════════════════════════════
@@ -261,6 +290,13 @@ const STYLES = `
 
 /** How many names are visible above/below the active one */
 const VISIBLE_RADIUS = 3;
+
+/** Get distance-based CSS class for inactive names */
+function distClass(dist: number): string {
+  if (dist <= 1) return `dist-1`;
+  if (dist === 2) return `dist-2`;
+  return `dist-3`;
+}
 
 // ════════════════════════════════════════════════
 //  COMPONENT
@@ -271,6 +307,9 @@ const TeamSection: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const opacityRef = useRef(0);
   const mouseRef = useRef({ x: 0, y: 0 });
+
+  // Smooth (damped) floating-point index for kinetic feel
+  const smoothIndexRef = useRef(0);
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
@@ -305,18 +344,20 @@ const TeamSection: React.FC = () => {
     setHoverIndex(null);
   }, []);
 
-  // Precompute drift columns (duplicate images for seamless loop)
+  // Precompute drift columns — 3 columns, faster speeds
   const driftColumns = useMemo(() => {
-    const half = Math.ceil(TEAM_BG_IMAGES.length / 2);
-    const col1 = TEAM_BG_IMAGES.slice(0, half);
-    const col2 = TEAM_BG_IMAGES.slice(half);
+    const third = Math.ceil(TEAM_BG_IMAGES.length / 3);
+    const col1 = TEAM_BG_IMAGES.slice(0, third);
+    const col2 = TEAM_BG_IMAGES.slice(third, third * 2);
+    const col3 = TEAM_BG_IMAGES.slice(third * 2);
     return [
-      { images: [...col1, ...col1], left: '2%', duration: 45, direction: 'up' as const },
-      { images: [...col2, ...col2], right: '3%', duration: 55, direction: 'down' as const },
+      { images: [...col1, ...col1], left: '1%', duration: 18, direction: 'up' as const },
+      { images: [...col2, ...col2], left: '38%', duration: 14, direction: 'down' as const },
+      { images: [...col3, ...col3], right: '2%', duration: 22, direction: 'up' as const },
     ];
   }, []);
 
-  // ── Scroll-driven logic ──
+  // ── Scroll-driven logic with damped kinetics ──
   useFrame((_state, delta) => {
     if (!containerRef.current) return;
     const r = scroll.offset;
@@ -340,11 +381,27 @@ const TeamSection: React.FC = () => {
     if (opacityRef.current > 0.3 && !isVisible) setIsVisible(true);
     if (opacityRef.current < 0.1 && isVisible) setIsVisible(false);
 
-    // Scroll-driven focus: map scroll within the focus range to member index
+    // Scroll-driven focus with DAMPED index (kinetic feel)
     if (hoverIndex === null && r >= FOCUS_SCROLL_START) {
       const focusT = Math.min(1, (r - FOCUS_SCROLL_START) / (FOCUS_SCROLL_END - FOCUS_SCROLL_START));
-      const newIdx = Math.min(totalMembers - 1, Math.floor(focusT * totalMembers));
+      const rawTargetIndex = focusT * (totalMembers - 1);
+
+      // Damp the smooth index toward the raw target — this is the kinetics magic
+      smoothIndexRef.current = THREE.MathUtils.damp(
+        smoothIndexRef.current,
+        rawTargetIndex,
+        INDEX_DAMP,
+        delta
+      );
+
+      const newIdx = Math.round(
+        Math.min(totalMembers - 1, Math.max(0, smoothIndexRef.current))
+      );
       if (newIdx !== activeIndex) setActiveIndex(newIdx);
+    } else if (hoverIndex === null) {
+      // Scrolled back out — reset to first member so re-entry starts clean
+      smoothIndexRef.current = THREE.MathUtils.damp(smoothIndexRef.current, 0, INDEX_DAMP, delta);
+      if (activeIndex !== 0 && smoothIndexRef.current < 0.5) setActiveIndex(0);
     }
 
     // Apply parallax
@@ -358,15 +415,16 @@ const TeamSection: React.FC = () => {
     }
   });
 
-  // Compute scroll track thumb position
-  const thumbTop = `${(effectiveIndex / (totalMembers - 1)) * 100}%`;
-
   // Determine which names to show (window of ~7 around active)
   const windowStart = Math.max(0, effectiveIndex - VISIBLE_RADIUS);
   const windowEnd = Math.min(totalMembers - 1, effectiveIndex + VISIBLE_RADIUS);
   const visibleMembers = TEAM_MEMBERS.slice(windowStart, windowEnd + 1);
 
   const currentMember = TEAM_MEMBERS[effectiveIndex];
+
+  // Format counter: "03 / 24"
+  const counterCurrent = String(effectiveIndex + 1).padStart(2, '0');
+  const counterTotal = String(totalMembers).padStart(2, '0');
 
   return (
     <div
@@ -395,7 +453,7 @@ const TeamSection: React.FC = () => {
         </svg>
       </div>
 
-      {/* ── Drifting background photos ── */}
+      {/* ── Drifting background photos — 3 faster columns ── */}
       <div className={`${CLS}-drift-wrap`}>
         {driftColumns.map((col, ci) => (
           <div
@@ -403,8 +461,8 @@ const TeamSection: React.FC = () => {
             className={`${CLS}-drift-col`}
             style={{
               ...(col.left ? { left: col.left } : {}),
-              ...(col.right ? { right: col.right } : {}),
-              ...(col.left ? {} : { left: 'auto' }),
+              ...('right' in col && col.right ? { right: col.right } : {}),
+              ...(!col.left && !('right' in col && col.right) ? {} : col.left ? {} : { left: 'auto' }),
               animationName: col.direction === 'up' ? `${CLS}DriftUp` : `${CLS}DriftDown`,
               animationDuration: `${col.duration}s`,
             }}
@@ -418,43 +476,23 @@ const TeamSection: React.FC = () => {
 
       {/* ── Main layout ── */}
       <div className={`${CLS}-layout`}>
-        {/* Left: Names */}
+        {/* Left: Names — CENTERED in left half */}
         <div className={`${CLS}-left`}>
           {/* "Our Team" label */}
           <div className={`${CLS}-label`}>
             <em>Our</em> <strong>Team</strong>
           </div>
 
-          {/* Scroll track */}
-          <div className={`${CLS}-scroll-track`}>
-            <div
-              className={`${CLS}-scroll-thumb`}
-              style={{ top: thumbTop }}
-            />
-          </div>
-
-          {/* Names window */}
+          {/* Names window with fade masks */}
           <div className={`${CLS}-names-window`}>
-            {/* Show fade-out indicator above if there are hidden names */}
-            {windowStart > 0 && (
-              <div style={{
-                fontSize: '0.7rem',
-                color: '#333',
-                letterSpacing: '0.2em',
-                marginBottom: '0.3rem',
-                opacity: 0.5,
-              }}>
-                ↑ {windowStart} more
-              </div>
-            )}
-
             {visibleMembers.map((member, vi) => {
               const realIdx = windowStart + vi;
               const isActive = realIdx === effectiveIndex;
+              const distance = Math.abs(realIdx - effectiveIndex);
               return (
                 <div
                   key={realIdx}
-                  className={`${CLS}-name ${isActive ? 'active' : 'inactive'}`}
+                  className={`${CLS}-name ${isActive ? 'active' : `inactive ${distClass(distance)}`}`}
                   onMouseEnter={() => handleNameEnter(realIdx)}
                   onMouseLeave={handleNameLeave}
                 >
@@ -462,19 +500,13 @@ const TeamSection: React.FC = () => {
                 </div>
               );
             })}
+          </div>
 
-            {/* Show fade-out indicator below if there are hidden names */}
-            {windowEnd < totalMembers - 1 && (
-              <div style={{
-                fontSize: '0.7rem',
-                color: '#333',
-                letterSpacing: '0.2em',
-                marginTop: '0.3rem',
-                opacity: 0.5,
-              }}>
-                ↓ {totalMembers - 1 - windowEnd} more
-              </div>
-            )}
+          {/* Page counter */}
+          <div className={`${CLS}-counter`}>
+            <span className="current">{counterCurrent}</span>
+            {' / '}
+            {counterTotal}
           </div>
         </div>
 

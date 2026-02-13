@@ -18,8 +18,8 @@
  *   0.945→ 0.965 Schedule dwell (browse events)
  *   0.965→ 0.975 Schedule fade-out
  *   0.975→ 0.98  Gap (black pause)
- *   0.98 → 0.99  Team fade-in
- *   0.99 → 1.0   Team dwell (scroll through members)
+ *   0.975→ 0.985 Team fade-in
+ *   0.985→ 1.0   Team dwell (scroll through members)
  */
 export const TIMELINE = {
     /** Hero handoff is complete by this point */
@@ -49,9 +49,9 @@ export const TIMELINE = {
     /** Schedule fades out */
     SCHEDULE_END: 0.975,
     /** Team section begins fading in */
-    TEAM_START: 0.98,
+    TEAM_START: 0.975,
     /** Team section fully visible */
-    TEAM_FULL: 0.99,
+    TEAM_FULL: 0.985,
     /** End of scroll experience */
     END: 1.0
 } as const;
