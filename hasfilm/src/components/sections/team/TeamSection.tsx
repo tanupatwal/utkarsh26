@@ -18,7 +18,7 @@ const FOCUS_SCROLL_START = 0.985;
 const FOCUS_SCROLL_END = 1.0;
 
 /** Low damping = very smooth, gradual glide between names */
-const INDEX_DAMP = 2.5;
+const INDEX_DAMP = 1.5;
 
 const CLS = 'tm';
 
@@ -167,28 +167,35 @@ const STYLES = `
   line-height: 1.15;
   white-space: nowrap;
   text-align: center;
-  transition: all 0.45s cubic-bezier(0.23, 1, 0.32, 1);
+  transition:
+    color 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    font-size 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    text-shadow 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.5s ease;
   transform-origin: center center;
-  padding: 0.2em 0;
+  padding: 0.25em 0;
   user-select: none;
+  will-change: transform, color, font-size;
 }
 .${CLS}-name.inactive {
   font-size: clamp(1.1rem, 2vw, 1.8rem);
   color: #444;
-  transform: scale(1);
+  transform: scale(1) translateY(0);
 }
 .${CLS}-name.active {
   font-size: clamp(1.8rem, 3.5vw, 3.2rem);
   color: #fff;
-  transform: scale(1.08);
+  transform: scale(1.08) translateY(0);
   text-shadow:
-    0 0 40px rgba(255,255,255,0.2),
-    0 0 80px rgba(255,255,255,0.08);
+    0 0 40px rgba(255,255,255,0.25),
+    0 0 80px rgba(255,255,255,0.1);
 }
 /* Distance-based dimming for names further from active */
-.${CLS}-name.dist-1 { color: #666; }
-.${CLS}-name.dist-2 { color: #444; }
-.${CLS}-name.dist-3 { color: #2a2a2a; }
+.${CLS}-name.dist-1 { color: #555; opacity: 0.85; }
+.${CLS}-name.dist-2 { color: #3a3a3a; opacity: 0.6; }
+.${CLS}-name.dist-3 { color: #2a2a2a; opacity: 0.35; }
+.${CLS}-name.dist-4 { color: #1a1a1a; opacity: 0.18; }
 
 /* ─── Page counter ─── */
 .${CLS}-counter {
@@ -224,14 +231,37 @@ const STYLES = `
   background: #111;
 }
 
+/* ─── Image transition: clip-path wipe + scale reveal ─── */
 .${CLS}-img {
   position: absolute; inset: 0;
   width: 100%; height: 100%;
   object-fit: cover;
   filter: grayscale(0.85) contrast(1.1);
-  transition: opacity 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  opacity: 0;
+  transform: scale(1.12);
+  clip-path: inset(100% 0 0 0);
+  transition:
+    opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.9s cubic-bezier(0.16, 1, 0.3, 1),
+    clip-path 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.6s ease;
+  will-change: opacity, transform, clip-path;
+}
+.${CLS}-img.img-active {
+  opacity: 1;
+  transform: scale(1);
+  clip-path: inset(0 0 0 0);
+  z-index: 2;
+}
+.${CLS}-img.img-prev {
+  opacity: 0.4;
+  transform: scale(1.04);
+  clip-path: inset(0 0 0 0);
+  filter: grayscale(1) contrast(0.8) blur(2px);
+  z-index: 1;
 }
 
+/* ─── Role label with slide-fade ─── */
 .${CLS}-role {
   margin-top: 1rem;
   font-size: clamp(0.75rem, 0.9vw, 0.9rem);
@@ -242,7 +272,7 @@ const STYLES = `
   display: flex;
   align-items: center;
   gap: 0.5em;
-  transition: opacity 0.4s cubic-bezier(0.23, 1, 0.32, 1);
+  animation: ${CLS}RoleFade 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 .${CLS}-role::before {
   content: '▸';
@@ -250,38 +280,17 @@ const STYLES = `
   color: rgba(255,255,255,0.4);
 }
 
-/* ─── Bottom bar (accent) ─── */
-.${CLS}-bottom {
-  position: absolute;
-  bottom: 2rem;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  z-index: 20;
+@keyframes ${CLS}RoleFade {
+  0% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-.${CLS}-logo {
-  font-weight: 800;
-  font-size: 1.1rem;
-  color: #fff;
-  letter-spacing: -0.02em;
-}
-.${CLS}-visit-btn {
-  padding: 0.5rem 1.2rem;
-  background: rgba(76, 140, 90, 0.85);
-  color: #fff;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  border: none;
-  cursor: pointer;
-  transition: background 0.3s ease;
-}
-.${CLS}-visit-btn:hover {
-  background: rgba(76, 140, 90, 1);
-}
+
 `;
 
 // ════════════════════════════════════════════════
@@ -289,13 +298,14 @@ const STYLES = `
 // ════════════════════════════════════════════════
 
 /** How many names are visible above/below the active one */
-const VISIBLE_RADIUS = 3;
+const VISIBLE_RADIUS = 4;
 
 /** Get distance-based CSS class for inactive names */
 function distClass(dist: number): string {
   if (dist <= 1) return `dist-1`;
   if (dist === 2) return `dist-2`;
-  return `dist-3`;
+  if (dist === 3) return `dist-3`;
+  return `dist-4`;
 }
 
 // ════════════════════════════════════════════════
@@ -312,13 +322,23 @@ const TeamSection: React.FC = () => {
   const smoothIndexRef = useRef(0);
 
   const [activeIndex, setActiveIndex] = useState(0);
+  const [prevActiveIndex, setPrevActiveIndex] = useState(0);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
   const [isVisible, setIsVisible] = useState(false);
+  const prevEffectiveRef = useRef(0);
 
   const totalMembers = TEAM_MEMBERS.length;
 
   // Effective active index (hover overrides scroll)
   const effectiveIndex = hoverIndex !== null ? hoverIndex : activeIndex;
+
+  // Track previous effective index for exit animation
+  useEffect(() => {
+    if (effectiveIndex !== prevEffectiveRef.current) {
+      setPrevActiveIndex(prevEffectiveRef.current);
+      prevEffectiveRef.current = effectiveIndex;
+    }
+  }, [effectiveIndex]);
 
   // Track mouse for parallax
   useEffect(() => {
@@ -513,17 +533,20 @@ const TeamSection: React.FC = () => {
         {/* Right: Image */}
         <div className={`${CLS}-right`}>
           <div ref={imgFrameRef} className={`${CLS}-img-frame`}>
-            {/* Stack all images, only active one is visible */}
-            {TEAM_MEMBERS.map((member, i) => (
-              <img
-                key={i}
-                className={`${CLS}-img`}
-                src={member.image}
-                alt={member.name}
-                loading="lazy"
-                style={{ opacity: i === effectiveIndex ? 1 : 0 }}
-              />
-            ))}
+            {/* Stack all images — active gets wipe-in, previous gets blur-out */}
+            {TEAM_MEMBERS.map((member, i) => {
+              const isActive = i === effectiveIndex;
+              const isPrev = i === prevActiveIndex && i !== effectiveIndex;
+              return (
+                <img
+                  key={i}
+                  className={`${CLS}-img${isActive ? ' img-active' : ''}${isPrev ? ' img-prev' : ''}`}
+                  src={member.image}
+                  alt={member.name}
+                  loading="lazy"
+                />
+              );
+            })}
           </div>
 
           {/* Role label */}
@@ -533,11 +556,7 @@ const TeamSection: React.FC = () => {
         </div>
       </div>
 
-      {/* ── Bottom bar ── */}
-      <div className={`${CLS}-bottom`}>
-        <span className={`${CLS}-logo`}>w.</span>
-        <button className={`${CLS}-visit-btn`}>Visit Resource</button>
-      </div>
+
     </div>
   );
 };
