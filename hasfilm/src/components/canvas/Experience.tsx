@@ -5,6 +5,7 @@ import { SCROLL_CONFIG } from '../../config';
 import GalleryOverlay from '../sections/gallery/GalleryOverlay';
 import HighlightsSection from '../sections/gallery/HighlightsSection';
 import ScheduleSection from '../sections/schedule/ScheduleSection';
+import TeamSection from '../sections/team/TeamSection';
 
 // Canvas components
 import SceneSetup from './SceneSetup';
@@ -48,6 +49,9 @@ const Experience: React.FC = () => {
 
                     {/* Schedule section — fades in as highlights dissolve */}
                     <ScheduleSection />
+
+                    {/* Team section — fades in after schedule */}
+                    <TeamSection />
                 </Scroll>
             </ScrollControls>
         </>

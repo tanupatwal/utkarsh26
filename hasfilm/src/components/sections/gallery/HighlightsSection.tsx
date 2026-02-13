@@ -314,13 +314,13 @@ const HighlightsSection: React.FC = () => {
         hoveredRef.current = null;
     }, []);
 
-    // Phase boundaries
-    const DARK_START = 0.93;
-    const DARK_FULL = 0.94;
+    // Phase boundaries (spread for Pin-Dwell-Release pattern)
+    const DARK_START = 0.88;
+    const DARK_FULL = 0.895;
 
     // Gravity drain phase — images fall downward
-    const GRAVITY_START = 0.97;
-    const GRAVITY_END = 0.99;
+    const GRAVITY_START = 0.92;
+    const GRAVITY_END = 0.935;
 
     // Per-layer gravity delay (foreground falls first — closest/heaviest)
     const LAYER_GRAVITY_DELAY: Record<DepthLayer, number> = {
@@ -335,12 +335,21 @@ const HighlightsSection: React.FC = () => {
     // Per-image gravity offset (accumulated downward pull)
     const gravityPosRef = useRef<Map<number, { dy: number; vy: number }>>(new Map());
 
-    // Auto-sink timing (seconds after backdrop is full)
+    // Auto-sink timing (seconds after backdrop is full) — used as FALLBACK
+    // but scroll position is PRIMARY driver now
     const TITLE_FADE_IN_END = 0.8;    // title fully visible at 0.8s
     const TITLE_HOLD_END = 2.2;       // title stays visible until 2.2s
     const TITLE_FADE_OUT_END = 3.0;   // title fully gone by 3.0s
     const GALLERY_FADE_START = 2.0;   // gallery starts appearing at 2.0s
     const GALLERY_FADE_END = 3.2;     // gallery fully visible by 3.2s
+
+    // Scroll-based sub-phases within 0.895→0.92 (wider arcs)
+    const SCROLL_TITLE_IN_START = 0.895;    // title starts fading in
+    const SCROLL_TITLE_IN_END = 0.900;      // title fully visible
+    const SCROLL_TITLE_HOLD_END = 0.907;    // title holds
+    const SCROLL_TITLE_OUT_END = 0.913;     // title fully faded out
+    const SCROLL_GALLERY_START = 0.905;     // gallery starts appearing
+    const SCROLL_GALLERY_FULL = 0.912;      // gallery fully visible
 
     // fast DOM lookup
     const domMapRef = useRef<Map<number, HTMLDivElement>>(new Map());
@@ -355,12 +364,19 @@ const HighlightsSection: React.FC = () => {
 
         containerRef.current.style.transform = `translate3d(0, ${targetY}px, 0)`;
 
-        // ── Dark backdrop ──
+        // ── Dark backdrop ── (fades in during 0.88→0.895, fades out during 0.925→0.935)
+        const BG_FADE_OUT_START = 0.925;
+        const BG_FADE_OUT_END = 0.935;
+
         let bgTarget = 0;
         if (r >= DARK_START && r < DARK_FULL) {
             bgTarget = (r - DARK_START) / (DARK_FULL - DARK_START);
-        } else if (r >= DARK_FULL) {
+        } else if (r >= DARK_FULL && r < BG_FADE_OUT_START) {
             bgTarget = 1;
+        } else if (r >= BG_FADE_OUT_START && r < BG_FADE_OUT_END) {
+            bgTarget = 1 - (r - BG_FADE_OUT_START) / (BG_FADE_OUT_END - BG_FADE_OUT_START);
+        } else if (r >= BG_FADE_OUT_END) {
+            bgTarget = 0;
         }
         bgOpacityRef.current = THREE.MathUtils.damp(bgOpacityRef.current, bgTarget, 4, delta);
         containerRef.current.style.opacity = bgOpacityRef.current.toString();
@@ -372,7 +388,7 @@ const HighlightsSection: React.FC = () => {
             return;
         }
 
-        // ── Auto-sink timer: starts when backdrop is fully visible ──
+        // ── Auto-sink timer: still counts for time-based fallback ──
         if (r >= DARK_FULL) {
             if (!autoSinkActiveRef.current) {
                 autoSinkActiveRef.current = true;
@@ -382,31 +398,58 @@ const HighlightsSection: React.FC = () => {
         }
         const ast = autoSinkTimerRef.current;
 
-        // ── Title (time-based auto fade) ──
+        // ── Title — SCROLL-BASED with time-based fallback (use max for smooth result) ──
         if (titleRef.current) {
-            let titleTarget = 0;
-            if (ast < TITLE_FADE_IN_END) {
-                titleTarget = ast / TITLE_FADE_IN_END; // fade in
-            } else if (ast < TITLE_HOLD_END) {
-                titleTarget = 1; // hold
-            } else if (ast < TITLE_FADE_OUT_END) {
-                titleTarget = 1 - (ast - TITLE_HOLD_END) / (TITLE_FADE_OUT_END - TITLE_HOLD_END); // fade out
+            // Scroll-based title opacity
+            let scrollTitleTarget = 0;
+            if (r >= SCROLL_TITLE_IN_START && r < SCROLL_TITLE_IN_END) {
+                scrollTitleTarget = (r - SCROLL_TITLE_IN_START) / (SCROLL_TITLE_IN_END - SCROLL_TITLE_IN_START);
+            } else if (r >= SCROLL_TITLE_IN_END && r < SCROLL_TITLE_HOLD_END) {
+                scrollTitleTarget = 1;
+            } else if (r >= SCROLL_TITLE_HOLD_END && r < SCROLL_TITLE_OUT_END) {
+                scrollTitleTarget = 1 - (r - SCROLL_TITLE_HOLD_END) / (SCROLL_TITLE_OUT_END - SCROLL_TITLE_HOLD_END);
             }
+
+            // Time-based fallback
+            let timeTitleTarget = 0;
+            if (ast < TITLE_FADE_IN_END) {
+                timeTitleTarget = ast / TITLE_FADE_IN_END;
+            } else if (ast < TITLE_HOLD_END) {
+                timeTitleTarget = 1;
+            } else if (ast < TITLE_FADE_OUT_END) {
+                timeTitleTarget = 1 - (ast - TITLE_HOLD_END) / (TITLE_FADE_OUT_END - TITLE_HOLD_END);
+            }
+
+            // Use whichever is more "visible" (prevents skipping on fast scroll)
+            const titleTarget = Math.max(scrollTitleTarget, timeTitleTarget);
+
             titleOpacityRef.current = THREE.MathUtils.damp(titleOpacityRef.current, titleTarget, 5, delta);
             titleRef.current.style.opacity = titleOpacityRef.current.toString();
         }
 
-        // ── Gallery visibility (time-based, overlaps with title fade-out) ──
+        // ── Gallery visibility — SCROLL-BASED with time-based fallback ──
         if (galleryRef.current) {
-            let galTarget = 0;
-            if (ast >= GALLERY_FADE_START) {
-                galTarget = Math.min(1, (ast - GALLERY_FADE_START) / (GALLERY_FADE_END - GALLERY_FADE_START));
+            // Scroll-based gallery opacity
+            let scrollGalTarget = 0;
+            if (r >= SCROLL_GALLERY_START && r < SCROLL_GALLERY_FULL) {
+                scrollGalTarget = (r - SCROLL_GALLERY_START) / (SCROLL_GALLERY_FULL - SCROLL_GALLERY_START);
+            } else if (r >= SCROLL_GALLERY_FULL) {
+                scrollGalTarget = 1;
             }
+
+            // Time-based fallback
+            let timeGalTarget = 0;
+            if (ast >= GALLERY_FADE_START) {
+                timeGalTarget = Math.min(1, (ast - GALLERY_FADE_START) / (GALLERY_FADE_END - GALLERY_FADE_START));
+            }
+
+            const galTarget = Math.max(scrollGalTarget, timeGalTarget);
+
             galleryOpacityRef.current = THREE.MathUtils.damp(galleryOpacityRef.current, galTarget, 3, delta);
             galleryRef.current.style.opacity = galleryOpacityRef.current.toString();
         }
 
-        if (galleryOpacityRef.current < 0.01) {
+        if (galleryOpacityRef.current < 0.01 && titleOpacityRef.current < 0.01) {
             isVisibleRef.current = false;
             return;
         }

@@ -11,8 +11,10 @@ import type { ScheduleEvent } from '../../../data/schedule';
 //  CONFIGURATION
 // ════════════════════════════════════════════════
 
-const SCHEDULE_FADE_START = 0.98;
-const SCHEDULE_FADE_FULL = 0.995;
+const SCHEDULE_FADE_START = 0.935;
+const SCHEDULE_FADE_FULL = 0.945;
+const SCHEDULE_FADE_OUT_START = 0.965;
+const SCHEDULE_FADE_OUT_FULL = 0.975;
 const CARD_STAGGER_MS = 50;
 
 const ACCENT = '#38bdf8'; // sky-400
@@ -511,8 +513,12 @@ const ScheduleSection: React.FC = () => {
         let revealT = 0;
         if (r >= SCHEDULE_FADE_START && r < SCHEDULE_FADE_FULL) {
             revealT = (r - SCHEDULE_FADE_START) / (SCHEDULE_FADE_FULL - SCHEDULE_FADE_START);
-        } else if (r >= SCHEDULE_FADE_FULL) {
+        } else if (r >= SCHEDULE_FADE_FULL && r < SCHEDULE_FADE_OUT_START) {
             revealT = 1;
+        } else if (r >= SCHEDULE_FADE_OUT_START && r < SCHEDULE_FADE_OUT_FULL) {
+            revealT = 1 - (r - SCHEDULE_FADE_OUT_START) / (SCHEDULE_FADE_OUT_FULL - SCHEDULE_FADE_OUT_START);
+        } else if (r >= SCHEDULE_FADE_OUT_FULL) {
+            revealT = 0;
         }
 
         opacityRef.current = THREE.MathUtils.damp(opacityRef.current, revealT, 4, delta);

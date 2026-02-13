@@ -126,9 +126,9 @@ const GalleryGroup: React.FC = () => {
             const angleStep = SCENE_CONFIG.CYLINDER_ARC / totalItems;
 
             // ── Sub-phase boundaries ──
-            const GALLERY_VIEW_END = 0.90;   // Gallery sticky scroll ends
-            const DISSOLVE_START = 0.91;     // Dissolve begins (after HUD fade pause)
-            const DISSOLVE_END = 0.93;       // Dissolve complete → screen dark
+            const GALLERY_VIEW_END = 0.85;   // Gallery sticky scroll ends
+            const DISSOLVE_START = 0.855;    // Dissolve begins (after HUD fade pause)
+            const DISSOLVE_END = 0.875;      // Dissolve complete → screen dark
 
             if (r < GALLERY_VIEW_END) {
                 // ── SUB-PHASE A: Sticky scroll through panels ──
