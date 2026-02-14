@@ -398,7 +398,7 @@ const HighlightsSection: React.FC = () => {
         }
         const ast = autoSinkTimerRef.current;
 
-        // ── Title — SCROLL-BASED with time-based fallback (use max for smooth result) ──
+        // ── Title — SCROLL-BASED with time-based fallback ──
         if (titleRef.current) {
             // Scroll-based title opacity
             let scrollTitleTarget = 0;
@@ -409,6 +409,7 @@ const HighlightsSection: React.FC = () => {
             } else if (r >= SCROLL_TITLE_HOLD_END && r < SCROLL_TITLE_OUT_END) {
                 scrollTitleTarget = 1 - (r - SCROLL_TITLE_HOLD_END) / (SCROLL_TITLE_OUT_END - SCROLL_TITLE_HOLD_END);
             }
+            // Past SCROLL_TITLE_OUT_END: scrollTitleTarget stays 0
 
             // Time-based fallback
             let timeTitleTarget = 0;
@@ -420,8 +421,12 @@ const HighlightsSection: React.FC = () => {
                 timeTitleTarget = 1 - (ast - TITLE_HOLD_END) / (TITLE_FADE_OUT_END - TITLE_HOLD_END);
             }
 
-            // Use whichever is more "visible" (prevents skipping on fast scroll)
-            const titleTarget = Math.max(scrollTitleTarget, timeTitleTarget);
+            // When scroll says "fade out" (past hold), scroll position wins.
+            // Time-based only helps during the initial reveal.
+            const pastScrollHold = r >= SCROLL_TITLE_HOLD_END;
+            const titleTarget = pastScrollHold
+                ? scrollTitleTarget  // scroll is authoritative for fade-out
+                : Math.max(scrollTitleTarget, timeTitleTarget);
 
             titleOpacityRef.current = THREE.MathUtils.damp(titleOpacityRef.current, titleTarget, 5, delta);
             titleRef.current.style.opacity = titleOpacityRef.current.toString();
@@ -429,13 +434,19 @@ const HighlightsSection: React.FC = () => {
 
         // ── Gallery visibility — SCROLL-BASED with time-based fallback ──
         if (galleryRef.current) {
-            // Scroll-based gallery opacity
+            // Scroll-based gallery opacity (with fade-out before Schedule)
+            const GAL_FADE_OUT_START = 0.925;
+            const GAL_FADE_OUT_END = 0.935;
+
             let scrollGalTarget = 0;
             if (r >= SCROLL_GALLERY_START && r < SCROLL_GALLERY_FULL) {
                 scrollGalTarget = (r - SCROLL_GALLERY_START) / (SCROLL_GALLERY_FULL - SCROLL_GALLERY_START);
-            } else if (r >= SCROLL_GALLERY_FULL) {
+            } else if (r >= SCROLL_GALLERY_FULL && r < GAL_FADE_OUT_START) {
                 scrollGalTarget = 1;
+            } else if (r >= GAL_FADE_OUT_START && r < GAL_FADE_OUT_END) {
+                scrollGalTarget = 1 - (r - GAL_FADE_OUT_START) / (GAL_FADE_OUT_END - GAL_FADE_OUT_START);
             }
+            // Past GAL_FADE_OUT_END: scrollGalTarget stays 0
 
             // Time-based fallback
             let timeGalTarget = 0;
@@ -443,7 +454,11 @@ const HighlightsSection: React.FC = () => {
                 timeGalTarget = Math.min(1, (ast - GALLERY_FADE_START) / (GALLERY_FADE_END - GALLERY_FADE_START));
             }
 
-            const galTarget = Math.max(scrollGalTarget, timeGalTarget);
+            // When scroll says "fade out", scroll wins
+            const pastGalHold = r >= GAL_FADE_OUT_START;
+            const galTarget = pastGalHold
+                ? scrollGalTarget
+                : Math.max(scrollGalTarget, timeGalTarget);
 
             galleryOpacityRef.current = THREE.MathUtils.damp(galleryOpacityRef.current, galTarget, 3, delta);
             galleryRef.current.style.opacity = galleryOpacityRef.current.toString();
