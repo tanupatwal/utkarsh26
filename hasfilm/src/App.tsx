@@ -1,7 +1,8 @@
 import React, { Suspense } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { Experience } from './components/canvas';
-import { LoadingOverlay, Navbar } from './components/overlays';
+import { Navbar } from './components/overlays';
+import HeroSection from './components/overlays/HeroSection';
 
 
 /**
@@ -11,9 +12,10 @@ const App: React.FC = () => {
     return (
         <div className="w-full h-screen relative bg-black">
 
-            {/* Scroll hint - only shown when hero fades */}
+            {/* Hero - simple video + text, outside Canvas */}
+            <HeroSection />
 
-            {/* 3D Canvas - transparent to show background initially */}
+            {/* 3D Canvas */}
             <Canvas
                 camera={{ position: [0, 0, 0], fov: 75 }}
                 gl={{ antialias: true, alpha: true }}
@@ -27,9 +29,6 @@ const App: React.FC = () => {
 
             {/* Navbar */}
             <Navbar />
-
-            {/* Loading overlay */}
-            <LoadingOverlay />
         </div>
     );
 };

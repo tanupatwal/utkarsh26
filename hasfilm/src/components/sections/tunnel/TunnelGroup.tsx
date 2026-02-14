@@ -19,9 +19,13 @@ const TUNNEL_RADIUS = 12;
 const TUNNEL_LENGTH = 100;
 
 // Auto-scroll configuration
-const AUTO_SCROLL_DURATION = 4.5; // seconds to travel through tunnel
-const AUTO_SCROLL_TRIGGER_OFFSET = TIMELINE.HERO_END + 0.02; // Trigger slightly after hero ends
-const AUTO_SCROLL_TARGET = TIMELINE.ABOUT_START + 0.02; // Scroll just past tunnel end
+const AUTO_SCROLL_DURATION = 3.0; // Reduced from 4.5s for snappier travel
+const AUTO_SCROLL_TRIGGER_OFFSET = TIMELINE.HERO_END + 0.02; // Trigger forward scroll
+const AUTO_SCROLL_TARGET = TIMELINE.ABOUT_START + 0.02; // End of forward scroll
+
+const REVERSE_TRIGGER_OFFSET = TIMELINE.ABOUT_START - 0.05; // Trigger reverse scroll
+const REVERSE_TARGET = TIMELINE.HERO_END + 0.05; // End of reverse scroll
+
 
 const randomIn = (min: number, max: number): number => min + Math.random() * (max - min);
 
@@ -132,13 +136,20 @@ const TunnelGroup: React.FC = () => {
 
     // Auto-scroll state
     const autoScrollActiveRef = useRef(false);
+    const reverseAutoScrollActiveRef = useRef(false);
     const autoScrollStartTimeRef = useRef(0);
     const autoScrollStartOffsetRef = useRef(0);
-    const hasTriggeredRef = useRef(false);
+    const hasTriggeredForwardRef = useRef(false);
+    const hasTriggeredReverseRef = useRef(false);
+
+    useEffect(() => {
+        // Reset triggers on mount
+        hasTriggeredForwardRef.current = false;
+        hasTriggeredReverseRef.current = false;
+    }, []);
 
     const dummy = useMemo(() => {
         const obj = new THREE.Object3D();
-        // Set up vector to Z-axis so lookAt orients the top of the plane along Z
         obj.up.set(0, 0, 1);
         return obj;
     }, []);
@@ -191,32 +202,61 @@ const TunnelGroup: React.FC = () => {
         const r = scroll.offset;
 
         // ============================================================================
-        // AUTO-SCROLL LOGIC
+        // AUTO-SCROLL LOGIC (Bidirectional)
         // ============================================================================
-        // Trigger auto-scroll when user reaches the end of hero section
-        const shouldTrigger = r >= AUTO_SCROLL_TRIGGER_OFFSET && r < AUTO_SCROLL_TARGET && !hasTriggeredRef.current;
 
-        if (shouldTrigger) {
-            hasTriggeredRef.current = true;
+        // 1. FORWARD TRIGGER
+        // Trigger auto-scroll when user reaches the end of hero section
+        if (r >= AUTO_SCROLL_TRIGGER_OFFSET && r < AUTO_SCROLL_TARGET && !hasTriggeredForwardRef.current && !reverseAutoScrollActiveRef.current) {
+            hasTriggeredForwardRef.current = true;
             autoScrollActiveRef.current = true;
             autoScrollStartTimeRef.current = performance.now();
             autoScrollStartOffsetRef.current = r;
+            // Disable reverse trigger temporarily to avoid fighting
+            hasTriggeredReverseRef.current = true;
         }
 
-        // Reset trigger if user scrolls back before tunnel
-        if (r < AUTO_SCROLL_TRIGGER_OFFSET) {
-            hasTriggeredRef.current = false;
+        // 2. REVERSE TRIGGER
+        // Trigger reverse auto-scroll when user comes back from about section
+        if (r <= REVERSE_TRIGGER_OFFSET && r > REVERSE_TARGET && !hasTriggeredReverseRef.current && !autoScrollActiveRef.current) {
+            hasTriggeredReverseRef.current = true;
+            reverseAutoScrollActiveRef.current = true;
+            autoScrollStartTimeRef.current = performance.now();
+            autoScrollStartOffsetRef.current = r;
+            // Disable forward trigger temporarily
+            hasTriggeredForwardRef.current = true;
+        }
+
+        // Reset triggers when strictly out of tunnel zone
+        if (r < TIMELINE.HERO_END) {
+            // Before hero end -> reset forward trigger so we can enter tunnel again
+            hasTriggeredForwardRef.current = false;
+            // Ensure reverse is done
+            reverseAutoScrollActiveRef.current = false;
+        }
+        if (r > TIMELINE.ABOUT_START) {
+            // Past about start -> reset reverse trigger so we can go back
+            hasTriggeredReverseRef.current = false;
+            // Ensure forward is done
             autoScrollActiveRef.current = false;
         }
 
         // Apply auto-scroll if active
-        if (autoScrollActiveRef.current && scroll.el) {
+        if ((autoScrollActiveRef.current || reverseAutoScrollActiveRef.current) && scroll.el) {
             const elapsed = (performance.now() - autoScrollStartTimeRef.current) / 1000;
             const progress = Math.min(elapsed / AUTO_SCROLL_DURATION, 1);
             const easedProgress = easeInOutCubic(progress);
 
-            const targetOffset = autoScrollStartOffsetRef.current +
-                (AUTO_SCROLL_TARGET - autoScrollStartOffsetRef.current) * easedProgress;
+            let targetOffset = 0;
+            if (autoScrollActiveRef.current) {
+                // Forward: Start -> End
+                targetOffset = autoScrollStartOffsetRef.current +
+                    (AUTO_SCROLL_TARGET - autoScrollStartOffsetRef.current) * easedProgress;
+            } else {
+                // Reverse: Start -> End (where Start is high, End is low)
+                targetOffset = autoScrollStartOffsetRef.current +
+                    (REVERSE_TARGET - autoScrollStartOffsetRef.current) * easedProgress;
+            }
 
             // Smoothly scroll to target
             const scrollContainer = scroll.el as HTMLElement;
@@ -226,6 +266,7 @@ const TunnelGroup: React.FC = () => {
             // End auto-scroll when complete
             if (progress >= 1) {
                 autoScrollActiveRef.current = false;
+                reverseAutoScrollActiveRef.current = false;
             }
         }
 
@@ -414,39 +455,39 @@ const TunnelGroup: React.FC = () => {
 
             <group ref={groupRef}>
                 {/* RIBBONS - Neon light beams from hyper-spatial-tunnel */}
-            <instancedMesh ref={ribbonsMeshRef} args={[undefined, undefined, RIBBON_COUNT]}>
-                <planeGeometry args={[0.2, 5]} />
-                <meshBasicMaterial
-                    ref={ribbonMaterialRef}
-                    color="#4deeea"
-                    transparent
-                    opacity={0.8}
-                    blending={THREE.AdditiveBlending}
-                    side={THREE.DoubleSide}
-                    depthWrite={false}
-                    toneMapped={false}
-                />
-            </instancedMesh>
-
-            {/* IMAGE TILES - Trailer frames */}
-            {Array.from({ length: TILE_COUNT }).map((_, i) => (
-                <mesh
-                    key={i}
-                    ref={(mesh) => {
-                        if (mesh) tileMeshesRef.current[i] = mesh;
-                    }}
-                    geometry={tileGeometry}
-                    frustumCulled={false}
-                >
+                <instancedMesh ref={ribbonsMeshRef} args={[undefined, undefined, RIBBON_COUNT]}>
+                    <planeGeometry args={[0.2, 5]} />
                     <meshBasicMaterial
+                        ref={ribbonMaterialRef}
+                        color="#4deeea"
                         transparent
-                        opacity={0}
+                        opacity={0.8}
+                        blending={THREE.AdditiveBlending}
                         side={THREE.DoubleSide}
                         depthWrite={false}
                         toneMapped={false}
                     />
-                </mesh>
-            ))}
+                </instancedMesh>
+
+                {/* IMAGE TILES - Trailer frames */}
+                {Array.from({ length: TILE_COUNT }).map((_, i) => (
+                    <mesh
+                        key={i}
+                        ref={(mesh) => {
+                            if (mesh) tileMeshesRef.current[i] = mesh;
+                        }}
+                        geometry={tileGeometry}
+                        frustumCulled={false}
+                    >
+                        <meshBasicMaterial
+                            transparent
+                            opacity={0}
+                            side={THREE.DoubleSide}
+                            depthWrite={false}
+                            toneMapped={false}
+                        />
+                    </mesh>
+                ))}
             </group>
         </>
     );
