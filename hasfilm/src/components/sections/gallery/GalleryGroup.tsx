@@ -85,8 +85,9 @@ const GalleryGroup: React.FC = () => {
     useFrame(() => {
         const r = scroll.offset;
 
-        // Manage active state for performance
-        const shouldBeActive = r > (TIMELINE.ABOUT_STAY - 0.1);
+        // Manage active state for performance — only render heavy effects
+        // during the actual gallery zone, not before (About section) or after (Highlights)
+        const shouldBeActive = r > TIMELINE.ABOUT_STAY && r <= 0.876;
 
         if (isActive !== shouldBeActive) {
             setIsActive(shouldBeActive);
@@ -94,10 +95,25 @@ const GalleryGroup: React.FC = () => {
 
         if (!groupRef.current) return;
 
-        // Hide during about section
-        if (r < TIMELINE.ABOUT_STAY) {
+        // Hide immediately after dissolve completes (0.875) — no reason to
+        // keep 3D gallery visible after panels are dissolved and camera is
+        // zoomed to z=35. Leaving it on causes the "behind gallery" feeling
+        // as the WebGL canvas shows the back of the cylinder.
+        const POST_DISSOLVE_HIDE = 0.876;
+
+        // Zero out fog once past the gallery to prevent haze over Highlights
+        if (scene.fog && scene.fog instanceof THREE.FogExp2) {
+            if (r > POST_DISSOLVE_HIDE) {
+                scene.fog.density = 0;
+            } else if (r >= TIMELINE.ABOUT_STAY) {
+                // Restore fog during active gallery zone
+                scene.fog.density = 0.012;
+            }
+        }
+
+        if (r < TIMELINE.ABOUT_STAY || r > POST_DISSOLVE_HIDE) {
             groupRef.current.visible = false;
-            if (r < TIMELINE.ABOUT_STAY) return;
+            return;
         }
 
         groupRef.current.visible = true;

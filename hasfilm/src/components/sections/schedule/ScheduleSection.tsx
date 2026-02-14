@@ -14,7 +14,7 @@ import type { ScheduleEvent } from '../../../data/schedule';
 const SCHEDULE_FADE_START = 0.935;
 const SCHEDULE_FADE_FULL = 0.945;
 const SCHEDULE_FADE_OUT_START = 0.965;
-const SCHEDULE_FADE_OUT_FULL = 0.975;
+const SCHEDULE_FADE_OUT_FULL = 0.97;
 const CARD_STAGGER_MS = 50;
 
 const ACCENT = '#38bdf8'; // sky-400
@@ -521,7 +521,13 @@ const ScheduleSection: React.FC = () => {
             revealT = 0;
         }
 
-        opacityRef.current = THREE.MathUtils.damp(opacityRef.current, revealT, 4, delta);
+        // Dynamic damp lambda: when opacity is far from target (e.g. re-entry
+        // after a teleport from Team REWINDING), use a much higher lambda so
+        // the section snaps in quickly instead of slowly ramping through its
+        // narrow 3.5% scroll window.
+        const opacityGap = Math.abs(revealT - opacityRef.current);
+        const dampLambda = opacityGap > 0.4 ? 12 : 4;
+        opacityRef.current = THREE.MathUtils.damp(opacityRef.current, revealT, dampLambda, delta);
         containerRef.current.style.transform = `translate3d(0, ${targetY}px, 0)`;
         containerRef.current.style.opacity = String(opacityRef.current.toFixed(3));
 

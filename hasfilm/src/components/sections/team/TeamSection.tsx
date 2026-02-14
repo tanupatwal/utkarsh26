@@ -595,6 +595,9 @@ const TeamSection: React.FC = () => {
     containerRef.current.style.transform = `translate3d(0, ${targetY}px, 0)`;
     containerRef.current.style.opacity = String(opacityRef.current.toFixed(3));
     containerRef.current.style.pointerEvents = opacityRef.current > 0.1 ? 'auto' : 'none';
+    // Visibility gate: fully remove from paint when transparent so it
+    // doesn't tint or block the Schedule section underneath (z-index 25 vs 26)
+    containerRef.current.style.visibility = opacityRef.current < 0.02 ? 'hidden' : 'visible';
 
     // ── Trap state machine transitions ──
     const wasVisible = isVisible;
@@ -652,12 +655,20 @@ const TeamSection: React.FC = () => {
           trapStateRef.current = 'RELEASED';
           isTrappingRef.current = false;
 
+          // Jump scroll to the Schedule dwell zone so the user sees it
+          // when scrolling up from Team. The dynamic damp lambda on
+          // ScheduleSection (lambda=12 when gap>0.4) ensures opacity
+          // snaps to ~1 within 200ms instead of the old 1s convergence.
           if (scroll.el) {
             const scrollContainer = scroll.el as HTMLElement;
             const scrollHeight = scrollContainer.scrollHeight - scrollContainer.clientHeight;
-            const targetOffset = Math.max(0, TEAM_FADE_START - 0.02);
+            const targetOffset = 0.955; // Schedule dwell zone (0.945-0.965)
             scrollContainer.scrollTop = targetOffset * scrollHeight;
           }
+          // Snap our own opacity to 0 immediately so we don't linger on screen
+          opacityRef.current = 0;
+          containerRef.current.style.opacity = '0';
+          containerRef.current.style.visibility = 'hidden';
         }
       }
     }

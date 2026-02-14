@@ -16,8 +16,8 @@
  *   0.925→ 0.935 Gap (black pause)
  *   0.935→ 0.945 Schedule fade-in
  *   0.945→ 0.965 Schedule dwell (browse events)
- *   0.965→ 0.975 Schedule fade-out
- *   0.975→ 0.98  Gap (black pause)
+ *   0.965→ 0.97  Schedule fade-out
+ *   0.97 → 0.975 Gap (black pause between schedule & team)
  *   0.975→ 0.985 Team fade-in
  *   0.985→ 1.0   Team dwell (scroll through members)
  */
@@ -47,7 +47,7 @@ export const TIMELINE = {
     /** Schedule stays fully visible until */
     SCHEDULE_STAY: 0.965,
     /** Schedule fades out */
-    SCHEDULE_END: 0.975,
+    SCHEDULE_END: 0.97,
     /** Team section begins fading in */
     TEAM_START: 0.975,
     /** Team section fully visible */
