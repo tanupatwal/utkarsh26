@@ -12,7 +12,7 @@ import SceneSetup from './SceneSetup';
 
 // Section components
 import { TunnelGroup } from '../sections/tunnel';
-import { FlatAboutSection } from '../sections/about';
+import { FlatAboutSection, AboutSection } from '../sections/about';
 import { GalleryGroup } from '../sections/gallery';
 
 // Effects
@@ -41,6 +41,9 @@ const Experience: React.FC = () => {
                     <AnimatedBackground />
                     {/* Foreground title overlay */}
                     <HeroOverlay />
+
+                    {/* About section — HTML overlay with staggered reveals */}
+                    <AboutSection />
 
                     <GalleryOverlay />
 
