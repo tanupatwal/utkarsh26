@@ -397,6 +397,7 @@ const TeamSection: React.FC = () => {
   const activeIndexRef = useRef(0);     // ref mirror of activeIndex for wheel handler
   const rewindIndexRef = useRef(0);     // animated index during REWINDING
   const rewindAccumRef = useRef(0);     // sub-frame accumulator for rewind speed
+  const releasedAtRef = useRef(0);      // timestamp of last release (for cooldown)
 
   const totalMembers = TEAM_MEMBERS.length;
 
@@ -452,7 +453,16 @@ const TeamSection: React.FC = () => {
       const state = trapStateRef.current;
 
       // If not trapping, let ScrollControls handle it
-      if (state === 'INACTIVE' || state === 'RELEASED') return;
+      // BUT block events briefly after release to prevent momentum overshoot
+      if (state === 'INACTIVE' || state === 'RELEASED') {
+        const msSinceRelease = Date.now() - releasedAtRef.current;
+        if (msSinceRelease < 600) {
+          // Still in cooldown — eat the event so momentum doesn't overshoot Schedule
+          e.preventDefault();
+          e.stopPropagation();
+        }
+        return;
+      }
 
       // TRAP the event — prevent ScrollControls from receiving it
       e.preventDefault();
@@ -488,13 +498,27 @@ const TeamSection: React.FC = () => {
           exitAccumRef.current = 0;
 
           if (exitDir === 'up') {
-            // Start rewind animation instead of instant release
-            trapStateRef.current = 'REWINDING';
-            rewindIndexRef.current = 0;
-            rewindAccumRef.current = 0;
-          } else {
-            // Exit down: already at scroll=1.0, just release
+            // Exit up: jump to Schedule section
             trapStateRef.current = 'RELEASED';
+            isTrappingRef.current = false;
+            releasedAtRef.current = Date.now(); // start cooldown
+
+            if (scroll.el) {
+              const scrollContainer = scroll.el as HTMLElement;
+              const scrollHeight = scrollContainer.scrollHeight - scrollContainer.clientHeight;
+              const targetOffset = 0.955; // Schedule dwell zone
+              scrollContainer.scrollTop = targetOffset * scrollHeight;
+            }
+            opacityRef.current = 0;
+            if (containerRef.current) {
+              containerRef.current.style.opacity = '0';
+              containerRef.current.style.visibility = 'hidden';
+            }
+          } else {
+            // Exit down: team is the last section, nowhere to go.
+            // Bounce back to BROWSING instead of releasing the trap.
+            trapStateRef.current = 'BROWSING';
+            exitAccumRef.current = 0;
           }
         }
         return;
@@ -517,6 +541,7 @@ const TeamSection: React.FC = () => {
           exitAccumRef.current = absDelta;
           return;
         }
+
         if (direction < 0 && currentIdx <= 0) {
           // At first member, scrolling up → enter EXITING state
           trapStateRef.current = 'EXITING';
@@ -583,28 +608,41 @@ const TeamSection: React.FC = () => {
     const vh = typeof window !== 'undefined' ? window.innerHeight : 0;
     const targetY = vh * (SCROLL_CONFIG.PAGES - 1) * r;
 
-    // Opacity fade-in
-    let revealT = 0;
-    if (r >= TEAM_FADE_START && r < TEAM_FADE_FULL) {
-      revealT = (r - TEAM_FADE_START) / (TEAM_FADE_FULL - TEAM_FADE_START);
-    } else if (r >= TEAM_FADE_FULL) {
-      revealT = 1;
+    // ── Trap state machine transitions ──
+    const trapState = trapStateRef.current;
+    const trapIsActive = trapState === 'ENTERING' || trapState === 'BROWSING' || trapState === 'EXITING' || trapState === 'REWINDING';
+
+    if (trapIsActive) {
+      // Force full opacity while trap is active — don't let damped
+      // scroll.offset drive opacity, because the pin and scroll.offset
+      // race each other, causing premature fade-outs.
+      opacityRef.current = 1;
+      containerRef.current.style.opacity = '1';
+      containerRef.current.style.visibility = 'visible';
+      containerRef.current.style.pointerEvents = 'auto';
+    } else {
+      // Normal opacity based on scroll position (INACTIVE or RELEASED)
+      let revealT = 0;
+      if (r >= TEAM_FADE_START && r < TEAM_FADE_FULL) {
+        revealT = (r - TEAM_FADE_START) / (TEAM_FADE_FULL - TEAM_FADE_START);
+      } else if (r >= TEAM_FADE_FULL) {
+        revealT = 1;
+      }
+
+      opacityRef.current = THREE.MathUtils.damp(opacityRef.current, revealT, 4, delta);
+      containerRef.current.style.opacity = String(opacityRef.current.toFixed(3));
+      containerRef.current.style.pointerEvents = opacityRef.current > 0.1 ? 'auto' : 'none';
+      containerRef.current.style.visibility = opacityRef.current < 0.02 ? 'hidden' : 'visible';
     }
 
-    opacityRef.current = THREE.MathUtils.damp(opacityRef.current, revealT, 4, delta);
     containerRef.current.style.transform = `translate3d(0, ${targetY}px, 0)`;
-    containerRef.current.style.opacity = String(opacityRef.current.toFixed(3));
-    containerRef.current.style.pointerEvents = opacityRef.current > 0.1 ? 'auto' : 'none';
-    // Visibility gate: fully remove from paint when transparent so it
-    // doesn't tint or block the Schedule section underneath (z-index 25 vs 26)
-    containerRef.current.style.visibility = opacityRef.current < 0.02 ? 'hidden' : 'visible';
 
-    // ── Trap state machine transitions ──
+    // ── Visibility-based entry/exit (only when trap is NOT active) ──
     const wasVisible = isVisible;
     const nowVisible = opacityRef.current > 0.3;
     const nowHidden = opacityRef.current < 0.1;
 
-    if (nowVisible && !wasVisible) {
+    if (!trapIsActive && nowVisible && !wasVisible) {
       setIsVisible(true);
       // Entering the section — start entry gate
       trapStateRef.current = 'ENTERING';
@@ -616,7 +654,7 @@ const TeamSection: React.FC = () => {
       activeIndexRef.current = 0;
     }
 
-    if (nowHidden && wasVisible) {
+    if (!trapIsActive && nowHidden && wasVisible) {
       setIsVisible(false);
       // Left the section — deactivate trap
       trapStateRef.current = 'INACTIVE';
@@ -626,7 +664,7 @@ const TeamSection: React.FC = () => {
     }
 
     // If RELEASED and we've scrolled away from the section, go back to INACTIVE
-    if (trapStateRef.current === 'RELEASED' && nowHidden) {
+    if (trapState === 'RELEASED' && nowHidden) {
       trapStateRef.current = 'INACTIVE';
       isTrappingRef.current = false;
     }
@@ -634,31 +672,28 @@ const TeamSection: React.FC = () => {
     // If RELEASED but still visible (scrollTop hasn't moved us away yet), keep released
     // This allows ScrollControls to catch up
 
-    // ── REWINDING animation: rapidly scroll through all names ──
+    // ── REWINDING animation: rapidly scroll backward through all names ──
     if (trapStateRef.current === 'REWINDING') {
       // Force opacity to stay at 1 during rewind
       opacityRef.current = 1;
       containerRef.current.style.opacity = '1';
 
-      // Advance ~3 members per frame for a fast rewind feel
-      rewindAccumRef.current += delta * 72; // ~3 steps at 60fps (72 = 3 * 24-ish scaling)
+      // Decrement ~3 members per frame for a fast rewind feel
+      rewindAccumRef.current += delta * 72; // ~3 steps at 60fps
       const stepsThisFrame = Math.floor(rewindAccumRef.current);
       if (stepsThisFrame > 0) {
         rewindAccumRef.current -= stepsThisFrame;
-        const newIdx = Math.min(totalMembers - 1, rewindIndexRef.current + stepsThisFrame);
+        const newIdx = Math.max(0, rewindIndexRef.current - stepsThisFrame);
         rewindIndexRef.current = newIdx;
         activeIndexRef.current = newIdx;
         setActiveIndex(newIdx);
 
-        // Rewind complete — release
-        if (newIdx >= totalMembers - 1) {
+        // Rewind complete (reached first member) — release
+        if (newIdx <= 0) {
           trapStateRef.current = 'RELEASED';
           isTrappingRef.current = false;
 
           // Jump scroll to the Schedule dwell zone so the user sees it
-          // when scrolling up from Team. The dynamic damp lambda on
-          // ScheduleSection (lambda=12 when gap>0.4) ensures opacity
-          // snaps to ~1 within 200ms instead of the old 1s convergence.
           if (scroll.el) {
             const scrollContainer = scroll.el as HTMLElement;
             const scrollHeight = scrollContainer.scrollHeight - scrollContainer.clientHeight;

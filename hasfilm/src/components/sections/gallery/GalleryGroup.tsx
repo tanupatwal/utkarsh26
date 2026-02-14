@@ -176,6 +176,9 @@ const GalleryGroup: React.FC = () => {
 
                 dissolveProgressRef.current = 0;
                 dissolveProgressRef2.current = 0;
+
+                if (pointLightRef.current) pointLightRef.current.intensity = 3;
+                if (ambientLightRef.current) ambientLightRef.current.intensity = 1.5;
                 updateAmbientColors(rawIndex, totalItems);
 
             } else if (r < DISSOLVE_START) {
@@ -186,10 +189,12 @@ const GalleryGroup: React.FC = () => {
 
                 dissolveProgressRef.current = 0;
                 dissolveProgressRef2.current = 0;
+                if (pointLightRef.current) pointLightRef.current.intensity = 3;
+                if (ambientLightRef.current) ambientLightRef.current.intensity = 1.5;
                 updateAmbientColors(totalItems - 1, totalItems);
 
             } else if (r < DISSOLVE_END) {
-                // ── SUB-PHASE C: Dissolve + Zoom (slow→fast) ──
+                // ── SUB-PHASE C: Dissolve — panels dissolve, group fades out ──
                 const lastPanelRot = 0.2 + ((totalItems - 1) * angleStep);
                 smoothedRot.current = THREE.MathUtils.damp(smoothedRot.current, lastPanelRot, 5, 1 / 60);
                 groupRef.current.rotation.y = smoothedRot.current;
@@ -207,23 +212,41 @@ const GalleryGroup: React.FC = () => {
                 const raw2 = Math.max(0, (clampedT - delay2) / (1 - delay2));
                 dissolveProgressRef2.current = Math.min(0.4, raw2 * 0.6);
 
-                // Camera zoom: SLOW first half, then RAPID acceleration
-                // Using exponential curve: t^3 gives slow start, fast finish
-                const zoomT = clampedT * clampedT * clampedT;
-                const targetZ = THREE.MathUtils.lerp(CAM_POS_END.z, 35, zoomT);
+                // Camera zoom: inward toward panels during dissolve.
+                // CAM_POS_END.z = 60, cylinder radius = 50.
+                // ┌─ TWEAK THIS VALUE ─┐  Safe range: 48–60
+                // │  50 = panel surface (max safe zoom in)
+                // │  55 = subtle zoom    │  45 = behind panels (BAD)
+                const ZOOM_TARGET_Z = 50;
+                const zoomT = clampedT * clampedT * clampedT; // slow start, fast end
+                const targetZ = THREE.MathUtils.lerp(CAM_POS_END.z, ZOOM_TARGET_Z, zoomT);
                 camera.position.set(CAM_POS_END.x, CAM_POS_END.y, targetZ);
+
+                // Smooth, subtle light fade — stays bright for first half,
+                // then gently dims using cubic easing (t³)
+                const lightFade = clampedT * clampedT * clampedT;
+                if (pointLightRef.current) {
+                    pointLightRef.current.intensity = THREE.MathUtils.lerp(3, 0, lightFade);
+                }
+                if (ambientLightRef.current) {
+                    ambientLightRef.current.intensity = THREE.MathUtils.lerp(1.5, 0, lightFade);
+                }
 
                 updateAmbientColors(totalItems - 1, totalItems);
 
             } else {
-                // ── SUB-PHASE D: Post-dissolve — gallery fully dissolved, camera locked ──
+                // ── SUB-PHASE D: Post-dissolve — gallery fully dissolved ──
                 const lastPanelRot = 0.2 + ((totalItems - 1) * angleStep);
                 smoothedRot.current = THREE.MathUtils.damp(smoothedRot.current, lastPanelRot, 5, 1 / 60);
                 groupRef.current.rotation.y = smoothedRot.current;
 
                 dissolveProgressRef.current = 1;
                 dissolveProgressRef2.current = 0.4;
-                camera.position.set(CAM_POS_END.x, CAM_POS_END.y, 35);
+                camera.position.set(CAM_POS_END.x, CAM_POS_END.y, 50);
+
+                // Lights off
+                if (pointLightRef.current) pointLightRef.current.intensity = 0;
+                if (ambientLightRef.current) ambientLightRef.current.intensity = 0;
 
                 updateAmbientColors(totalItems - 1, totalItems);
             }
