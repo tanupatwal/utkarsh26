@@ -1,0 +1,71 @@
+/**
+ * Responsive Breakpoints
+ * Mobile-first approach with consistent breakpoints
+ */
+
+:root {
+    /* Breakpoint values (in pixels) for reference in JS/calculations */
+    --breakpoint-sm: 640px;
+    --breakpoint-md: 768px;
+    --breakpoint-lg: 1024px;
+    --breakpoint-xl: 1280px;
+    --breakpoint-2xl: 1536px;
+
+    /* Container widths */
+    --container-sm: 640px;
+    --container-md: 768px;
+    --container-lg: 1024px;
+    --container-xl: 1280px;
+    --container-2xl: 1536px;
+}
+
+/* Container helper */
+.container {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+@media (min-width: 640px) {
+    .container {
+        max-width: var(--container-sm);
+    }
+}
+
+@media (min-width: 768px) {
+    .container {
+        max-width: var(--container-md);
+    }
+}
+
+@media (min-width: 1024px) {
+    .container {
+        max-width: var(--container-lg);
+    }
+}
+
+@media (min-width: 1280px) {
+    .container {
+        max-width: var(--container-xl);
+    }
+}
+
+/* Responsive utilities */
+@media (min-width: 640px) {
+    .sm\:hidden { display: none !important; }
+}
+
+@media (min-width: 768px) {
+    .md\:block { display: block !important; }
+    .md\:flex { display: flex !important; }
+    .md\:grid { display: grid !important; }
+    .md\:hidden { display: none !important; }
+}
+
+@media (min-width: 1024px) {
+    .lg\:block { display: block !important; }
+    .lg\:flex { display: flex !important; }
+    .lg\:hidden { display: none !important; }
+}

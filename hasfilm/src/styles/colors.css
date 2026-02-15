@@ -1,0 +1,86 @@
+/**
+ * Color System
+ * CSS custom properties for consistent color usage
+ */
+
+:root {
+    /* ===== Brand Colors ===== */
+    --color-gold: #F5C16C;
+    --color-gold-light: #FFD699;
+    --color-gold-dark: #D49A30;
+
+    --color-cyan: #00E5FF;
+    --color-cyan-light: #33F0FF;
+    --color-cyan-dark: #00B8CC;
+
+    --color-orange: #FF8C42;
+    --color-orange-light: #FFAB73;
+    --color-orange-dark: #E67228;
+
+    --color-purple: #9B59B6;
+    --color-purple-light: #B57BC8;
+    --color-purple-dark: #7D3C96;
+
+    /* ===== Neutral Colors ===== */
+    --color-black: #0B0F1A;
+    --color-black-pure: #000000;
+    --color-gray-900: #1A1F2E;
+    --color-gray-800: #2D3748;
+    --color-gray-700: #4A5568;
+    --color-gray-600: #718096;
+    --color-gray-500: #A0AEC0;
+    --color-gray-400: #CBD5E0;
+    --color-gray-300: #E2E8F0;
+    --color-gray-200: #EDF2F7;
+    --color-gray-100: #F7FAFC;
+    --color-white: #FFFFFF;
+
+    /* ===== Semantic Colors ===== */
+    --color-bg-primary: var(--color-black);
+    --color-bg-secondary: var(--color-gray-900);
+    --color-bg-tertiary: var(--color-gray-800);
+
+    --color-text-primary: var(--color-white);
+    --color-text-secondary: var(--color-gray-200);
+    --color-text-muted: var(--color-gray-400);
+    --color-text-disabled: var(--color-gray-600);
+
+    --color-border-subtle: rgba(255, 255, 255, 0.08);
+    --color-border-default: rgba(255, 255, 255, 0.15);
+    --color-border-strong: rgba(255, 255, 255, 0.25);
+
+    /* ===== Glow Colors ===== */
+    --glow-gold: rgba(245, 193, 108, 0.6);
+    --glow-gold-subtle: rgba(245, 193, 108, 0.3);
+    --glow-cyan: rgba(0, 229, 255, 0.6);
+    --glow-cyan-subtle: rgba(0, 229, 255, 0.3);
+    --glow-orange: rgba(255, 140, 66, 0.5);
+    --glow-purple: rgba(155, 89, 182, 0.5);
+
+    /* ===== Gradient Definitions ===== */
+    --gradient-gold-cyan: linear-gradient(90deg, var(--color-gold), var(--color-cyan));
+    --gradient-gold-orange: linear-gradient(90deg, var(--color-gold), var(--color-orange));
+    --gradient-cyan-purple: linear-gradient(90deg, var(--color-cyan), var(--color-purple));
+
+    --gradient-hero: linear-gradient(180deg, #ffffff 0%, var(--color-gold) 30%, var(--color-orange) 55%, var(--color-cyan) 100%);
+    --gradient-overlay: linear-gradient(to right, rgba(245,193,108,0.12), rgba(0,229,255,0.12));
+}
+
+/* Dark mode support (future-proofing) */
+@media (prefers-color-scheme: dark) {
+    :root {
+        color-scheme: dark;
+    }
+}
+
+/* Text color utilities */
+.text-gold { color: var(--color-gold); }
+.text-cyan { color: var(--color-cyan); }
+.text-orange { color: var(--color-orange); }
+.text-purple { color: var(--color-purple); }
+.text-muted { color: var(--color-text-muted); }
+
+/* Background utilities */
+.bg-gold { background-color: var(--color-gold); }
+.bg-cyan { background-color: var(--color-cyan); }
+.bg-overlay { background: var(--gradient-overlay); }
