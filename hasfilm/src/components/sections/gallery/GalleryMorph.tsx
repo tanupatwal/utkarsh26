@@ -23,11 +23,23 @@ const GalleryMorph: React.FC = () => {
         if (!containerRef.current || !imageRef.current || !overlayRef.current) return;
 
         const r = scroll.offset;
+
+        // PERF: Skip ALL computation when scroll is far from our range
+        // GalleryMorph only acts near GALLERY_END (not defined in TIMELINE, approx 0.86-0.88)
+        if (r < 0.82 || r > 0.92) {
+            if (containerRef.current.style.visibility !== 'hidden') {
+                containerRef.current.style.opacity = '0';
+                containerRef.current.style.visibility = 'hidden';
+            }
+            return;
+        }
+
         const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 0;
         const targetY = viewportHeight * (SCROLL_CONFIG.PAGES - 1) * r;
 
         // Scroll compensation
         containerRef.current.style.transform = `translate3d(0, ${targetY}px, 0)`;
+        containerRef.current.style.visibility = 'visible';
 
         // === MORPH PHASE (GALLERY_END → MORPH_END) ===
         // Phase 1: Image expands from center to fullscreen (GALLERY_END → MORPH_START+half)

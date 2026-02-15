@@ -1,5 +1,5 @@
 // src/components/sections/gallery/GalleryOverlay.tsx
-import React, { useState, useRef } from 'react';
+import React, { useRef } from 'react';
 import { useScroll } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
@@ -9,10 +9,15 @@ import { SCROLL_CONFIG } from '../../../config/scroll';
 
 const GalleryOverlay: React.FC = () => {
     const scroll = useScroll();
-    const [activeIndex, setActiveIndex] = useState(0);
+    // PERF: Use ref instead of useState — setState in useFrame = 60fps re-renders
+    const activeIndexRef = useRef(0);
     const innerRef = useRef<HTMLDivElement>(null);
     const opacityRef = useRef(0);
     const textRef = useRef<HTMLDivElement>(null);
+    const titleTextRef = useRef<HTMLHeadingElement>(null);
+    const descTextRef = useRef<HTMLParagraphElement>(null);
+    const idCounterRef = useRef<HTMLSpanElement>(null);
+    const progressBarRef = useRef<HTMLDivElement>(null);
     const progressRef = useRef<HTMLDivElement>(null);
     const dotsRef = useRef<HTMLDivElement>(null);
     const scrimRef = useRef<HTMLDivElement>(null);
@@ -33,6 +38,15 @@ const GalleryOverlay: React.FC = () => {
         const targetOpacity = isVisible ? 1 : 0;
         opacityRef.current = THREE.MathUtils.damp(opacityRef.current, targetOpacity, 3, delta);
 
+        // PERF: Skip ALL remaining computation when fully invisible
+        if (opacityRef.current < 0.01) {
+            if (innerRef.current.style.visibility !== 'hidden') {
+                innerRef.current.style.visibility = 'hidden';
+            }
+            return;
+        }
+        innerRef.current.style.visibility = 'visible';
+
         // Apply scroll compensation directly (no extra damp — scroll.offset is already damped by ScrollControls)
         innerRef.current.style.transform = `translate3d(0, ${targetY}px, 0)`;
         innerRef.current.style.opacity = opacityRef.current.toString();
@@ -47,8 +61,34 @@ const GalleryOverlay: React.FC = () => {
             const rawIndex = Math.max(0, Math.min(progress * totalItems - 0.5, totalItems - 1));
             const index = Math.round(rawIndex);
 
-            if (index !== activeIndex) {
-                setActiveIndex(index);
+            if (index !== activeIndexRef.current) {
+                activeIndexRef.current = index;
+                // Update DOM directly instead of calling setState
+                const item = GALLERY_CONTENT[index];
+                if (item) {
+                    if (titleTextRef.current) titleTextRef.current.textContent = item.title;
+                    if (descTextRef.current) descTextRef.current.textContent = item.description;
+                    if (idCounterRef.current) {
+                        idCounterRef.current.textContent = `ID ${String(index + 1).padStart(2, '0')} / ${String(GALLERY_CONTENT.length).padStart(2, '0')}`;
+                    }
+                    if (progressBarRef.current) {
+                        progressBarRef.current.style.width = `${((index + 1) / GALLERY_CONTENT.length) * 100}%`;
+                    }
+                    // Update pagination dots
+                    if (dotsRef.current) {
+                        const dots = dotsRef.current.children;
+                        for (let d = 0; d < dots.length; d++) {
+                            const dot = dots[d] as HTMLElement;
+                            if (d === index) {
+                                dot.style.height = '2rem';
+                                dot.className = 'w-1 transition-all duration-500 bg-blue-500';
+                            } else {
+                                dot.style.height = '0.5rem';
+                                dot.className = 'w-1 transition-all duration-500 bg-white/20';
+                            }
+                        }
+                    }
+                }
             }
 
             // === EXIT SEQUENCE at end of gallery ===
@@ -122,7 +162,7 @@ const GalleryOverlay: React.FC = () => {
         }
     });
 
-    const activeItem = GALLERY_CONTENT[activeIndex];
+    const activeItem = GALLERY_CONTENT[0];
     if (!activeItem) return null;
 
     return (
@@ -170,8 +210,9 @@ const GalleryOverlay: React.FC = () => {
                 {/* 1. Progress Bar (Bottom HUD) */}
                 <div ref={progressRef} className="absolute bottom-12 left-1/2 -translate-x-1/2 w-80 h-[2px] bg-white/10">
                     <div
+                        ref={progressBarRef}
                         className="h-full bg-blue-500 transition-all duration-500 ease-out shadow-[0_0_10px_#3b82f6]"
-                        style={{ width: `${((activeIndex + 1) / GALLERY_CONTENT.length) * 100}%` }}
+                        style={{ width: `${(1 / GALLERY_CONTENT.length) * 100}%` }}
                     />
                     <div className="flex justify-between mt-2 text-[10px] font-mono text-white/40 tracking-widest uppercase">
                         <span>01</span>
@@ -180,10 +221,11 @@ const GalleryOverlay: React.FC = () => {
                 </div>
 
                 {/* 2. Text Content (Left Side) */}
-                <div ref={textRef} className="absolute top-1/2 left-8 md:left-20 -translate-y-1/2 max-w-lg" style={{ willChange: 'transform, opacity' }}>
+                <div ref={textRef} className="absolute top-1/2 left-8 md:left-20 -translate-y-1/2 max-w-lg">
 
-                    <div key={`title-${activeIndex}`} className="gallery-text-enter overflow-hidden relative">
+                    <div className="gallery-text-enter overflow-hidden relative">
                         <h2
+                            ref={titleTextRef}
                             className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter leading-none"
                             style={{
                                 textShadow: '0 0 15px rgba(0,0,0,0.8), 0 2px 30px rgba(0,0,0,0.5)',
@@ -194,8 +236,9 @@ const GalleryOverlay: React.FC = () => {
                     </div>
 
                     {/* Description Box */}
-                    <div key={`desc-${activeIndex}`} className="gallery-text-enter relative mt-6 p-6 border-l-2 border-blue-500/50">
+                    <div className="gallery-text-enter relative mt-6 p-6 border-l-2 border-blue-500/50">
                         <p
+                            ref={descTextRef}
                             className="text-lg text-white/80 leading-relaxed font-light"
                             style={{
                                 textShadow: '0 0 10px rgba(0,0,0,0.6)',
@@ -205,8 +248,8 @@ const GalleryOverlay: React.FC = () => {
                         </p>
                         <div className="mt-4 flex items-center gap-4">
                             <span className="h-[1px] w-8 bg-blue-500"></span>
-                            <span className="text-xs font-mono text-blue-400 uppercase tracking-widest">
-                                ID {String(activeIndex + 1).padStart(2, '0')} / {String(GALLERY_CONTENT.length).padStart(2, '0')}
+                            <span ref={idCounterRef} className="text-xs font-mono text-blue-400 uppercase tracking-widest">
+                                ID 01 / {String(GALLERY_CONTENT.length).padStart(2, '0')}
                             </span>
                         </div>
                     </div>
@@ -217,7 +260,7 @@ const GalleryOverlay: React.FC = () => {
                     {GALLERY_CONTENT.map((_, i) => (
                         <div
                             key={i}
-                            className={`w-1 transition-all duration-500 ${i === activeIndex ? 'h-8 bg-blue-500' : 'h-2 bg-white/20'}`}
+                            className={`w-1 transition-all duration-500 ${i === 0 ? 'h-8 bg-blue-500' : 'h-2 bg-white/20'}`}
                         />
                     ))}
                 </div>

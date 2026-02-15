@@ -19,8 +19,8 @@ const GalleryGroup: React.FC = () => {
     const backgroundRef = useRef<THREE.Group>(null); // Ref for Parallax Layer
     const { camera, scene } = useThree();
 
-    // Performance: Only render heavy effects when in/near gallery section
-    const [isActive, setIsActive] = React.useState(false);
+    // Performance: track active state with ref (NOT useState — setState in useFrame = 60fps re-renders)
+    const isActiveRef = useRef(false);
 
     // Physics state for inertia/momentum (initialized to 0.2 to match transition end)
     const smoothedRot = useRef(0.2);
@@ -88,10 +88,7 @@ const GalleryGroup: React.FC = () => {
         // Manage active state for performance — only render heavy effects
         // during the actual gallery zone, not before (About section) or after (Highlights)
         const shouldBeActive = r > TIMELINE.ABOUT_STAY && r <= 0.876;
-
-        if (isActive !== shouldBeActive) {
-            setIsActive(shouldBeActive);
-        }
+        isActiveRef.current = shouldBeActive;
 
         if (!groupRef.current) return;
 
@@ -300,7 +297,7 @@ const GalleryGroup: React.FC = () => {
                 </mesh>
 
                 {/* HEAVY EFFECTS - Only mount when near gallery to save Hero performance */}
-                {isActive && (
+                {isActiveRef.current && (
                     <>
                         {/* PARALLAX LAYER: Floating Dust / Sparkles */}
                         <group ref={backgroundRef}>

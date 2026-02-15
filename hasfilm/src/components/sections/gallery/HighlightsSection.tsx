@@ -385,7 +385,18 @@ const HighlightsSection: React.FC = () => {
             isVisibleRef.current = false;
             autoSinkTimerRef.current = 0;
             autoSinkActiveRef.current = false;
+            // ── PERF: Release GPU compositor layers when hidden ──
+            // Each of the 35 images has willChange which creates a separate GPU layer.
+            // Setting display:none on container removes ALL of them from the GPU pipeline.
+            if (containerRef.current) {
+                containerRef.current.style.display = 'none';
+            }
             return;
+        }
+
+        // Restore container when becoming visible again
+        if (containerRef.current && containerRef.current.style.display === 'none') {
+            containerRef.current.style.display = '';
         }
 
         // ── Auto-sink timer: still counts for time-based fallback ──

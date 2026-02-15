@@ -45,6 +45,15 @@ const GalleryTransitionOverlay: React.FC = () => {
 
         opacityRef.current = THREE.MathUtils.damp(opacityRef.current, targetOpacity, 4, delta);
 
+        // PERF: Skip scroll compensation when fully invisible
+        if (opacityRef.current < 0.01) {
+            if (innerRef.current.style.visibility !== 'hidden') {
+                innerRef.current.style.visibility = 'hidden';
+            }
+            return;
+        }
+        innerRef.current.style.visibility = 'visible';
+
         innerRef.current.style.transform = `translate3d(0, ${targetY}px, 0)`;
         innerRef.current.style.opacity = opacityRef.current.toString();
     });

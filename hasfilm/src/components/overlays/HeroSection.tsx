@@ -13,6 +13,9 @@ const HeroSection: React.FC = () => {
     const containerRef = useRef<HTMLDivElement>(null);
     const matteRef = useRef<HTMLDivElement>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
+    const wasHiddenRef = useRef(false);       // track hidden state for video pause/resume
+    const titleRef = useRef<HTMLDivElement>(null);
+    const taglineRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         // Autoplay video immediately
@@ -64,6 +67,46 @@ const HeroSection: React.FC = () => {
             }
 
             const rawR = scrollTop / scrollHeight; // 0 → 1
+
+            // ── PERF: Skip ALL computation when hero is fully hidden ──
+            // Hero is invisible when rawR > fadeEnd. Only keep polling to
+            // detect when user scrolls back. No damping, no transform math.
+            const isHidden = rawR > fadeEnd + 0.01;
+
+            if (isHidden) {
+                // First frame hidden → hide elements (don't pause video or
+                // toggle willChange — both cause expensive restart stutter)
+                if (!wasHiddenRef.current) {
+                    wasHiddenRef.current = true;
+                    containerRef.current.style.transform = 'none';
+                    containerRef.current.style.opacity = '0';
+                    containerRef.current.style.visibility = 'hidden';
+                    matteRef.current.style.opacity = '0';
+                    matteRef.current.style.visibility = 'hidden';
+                }
+                // Keep dampedR synced so there's no lerp delay on return
+                dampedR = rawR;
+                rafId = requestAnimationFrame(tick);
+                return;
+            }
+
+            // ── Returning to hero ──
+            if (wasHiddenRef.current) {
+                wasHiddenRef.current = false;
+                // Snap dampedR to rawR for instant sync (no slow lerp catch-up)
+                dampedR = rawR;
+                // Replay entrance animations on title & tagline
+                if (titleRef.current) {
+                    titleRef.current.classList.remove('animate-fade-in-up');
+                    void titleRef.current.offsetWidth; // force reflow
+                    titleRef.current.classList.add('animate-fade-in-up');
+                }
+                if (taglineRef.current) {
+                    taglineRef.current.classList.remove('animate-fade-in-up');
+                    void taglineRef.current.offsetWidth;
+                    taglineRef.current.classList.add('animate-fade-in-up');
+                }
+            }
 
             // Lerp toward raw position (matches drei's damping feel)
             dampedR += (rawR - dampedR) * 0.12;
@@ -173,7 +216,7 @@ const HeroSection: React.FC = () => {
                 {/* Text Overlay */}
                 <div className="relative z-10 w-full h-full flex flex-col justify-center items-center text-center pb-20 px-6">
                     {/* Main Title */}
-                    <div className="mb-6 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                    <div ref={titleRef} className="mb-6 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
                         <div className="relative px-8 py-3 rounded-2xl">
                             <h1
                                 className="text-7xl md:text-9xl font-black tracking-tighter leading-none"
@@ -208,6 +251,7 @@ const HeroSection: React.FC = () => {
 
                     {/* Taglines */}
                     <div
+                        ref={taglineRef}
                         className="flex flex-col items-center gap-3 mb-8 animate-fade-in-up"
                         style={{ marginTop: '25px', animationDelay: '0.4s' }}
                     >

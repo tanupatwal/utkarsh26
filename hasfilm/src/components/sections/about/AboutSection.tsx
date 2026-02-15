@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef } from 'react';
 import { useScroll } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
@@ -22,18 +22,6 @@ const PARAGRAPHS = [
     "Since its inception in 2006, Utkarsh has established itself as a premier event in Delhi & NCR, attracting over 10,000 attendees annually."
 ];
 
-// ════════════════════════════════════════════════
-//  ANIMATED COUNTER HOOK
-// ════════════════════════════════════════════════
-
-function useCountUp(target: number, progress: number, isYear: boolean): string {
-    if (progress <= 0) return isYear ? '0000' : '0';
-    const eased = Math.min(1, progress * progress); // quadratic ease-in
-    const current = Math.round(eased * target);
-    if (isYear) return current.toString();
-    if (target >= 10000) return current.toLocaleString();
-    return current.toString();
-}
 
 // ════════════════════════════════════════════════
 //  COMPONENT
@@ -53,8 +41,9 @@ const AboutSection: React.FC = () => {
     const ctaRef = useRef<HTMLDivElement>(null);
     const glowRef = useRef<HTMLDivElement>(null);
 
-    // Store animated stat values
-    const [statProgress, setStatProgress] = useState(0);
+    // PERF: Use ref instead of useState — setState in useFrame = 60fps re-renders
+    const statProgressRef = useRef(0);
+    const statElRefs = useRef<(HTMLDivElement | null)[]>([]);
 
     useFrame((_state, delta) => {
         if (!innerRef.current) return;
@@ -85,7 +74,11 @@ const AboutSection: React.FC = () => {
         opacityRef.current = THREE.MathUtils.damp(opacityRef.current, targetOpacity, 6, delta);
         innerRef.current.style.opacity = opacityRef.current.toString();
 
-        if (opacityRef.current < 0.01) return;
+        if (opacityRef.current < 0.01) {
+            innerRef.current.style.pointerEvents = 'none';
+            return;
+        }
+        innerRef.current.style.pointerEvents = '';
 
         // ── Sub-progress within the About section (0→1 across the dwell range)
         const aboutRange = TIMELINE.ABOUT_STAY - TIMELINE.ABOUT_START;
@@ -121,7 +114,19 @@ const AboutSection: React.FC = () => {
 
         // Stats: 0.45 → 0.85
         const statsT = Math.min(1, Math.max(0, (subProgress - 0.45) / 0.40));
-        setStatProgress(statsT);
+        statProgressRef.current = statsT;
+        // Update stat counter values directly via DOM
+        STATS.forEach((stat, i) => {
+            const el = statElRefs.current[i];
+            if (!el) return;
+            const eased = Math.min(1, statsT * statsT); // quadratic ease-in
+            const current = Math.round(eased * stat.value);
+            let displayed: string;
+            if (stat.isYear) displayed = current.toString();
+            else if (stat.value >= 10000) displayed = current.toLocaleString();
+            else displayed = current.toString();
+            el.textContent = `${stat.prefix}${displayed}${stat.suffix}`;
+        });
 
         if (statsRef.current) {
             const eased = 1 - Math.pow(1 - Math.min(1, statsT / 0.3), 3);
@@ -299,7 +304,7 @@ const AboutSection: React.FC = () => {
                         }}
                     >
                         {STATS.map((stat, i) => {
-                            const displayed = useCountUp(stat.value, statProgress, stat.isYear);
+                            const displayed = `${stat.prefix}${stat.isYear ? '0000' : '0'}${stat.suffix}`;
                             return (
                                 <div
                                     key={i}
@@ -322,6 +327,7 @@ const AboutSection: React.FC = () => {
                                     }}
                                 >
                                     <div
+                                        ref={(el) => { statElRefs.current[i] = el; }}
                                         style={{
                                             fontFamily: "'Orbitron', 'Inter', monospace",
                                             fontSize: 'clamp(1.4rem, 2.8vw, 2.2rem)',
@@ -332,7 +338,7 @@ const AboutSection: React.FC = () => {
                                             letterSpacing: '0.02em',
                                         }}
                                     >
-                                        {stat.prefix}{displayed}{stat.suffix}
+                                        {displayed}
                                     </div>
                                     <div
                                         style={{

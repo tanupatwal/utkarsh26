@@ -531,6 +531,15 @@ const ScheduleSection: React.FC = () => {
         containerRef.current.style.transform = `translate3d(0, ${targetY}px, 0)`;
         containerRef.current.style.opacity = String(opacityRef.current.toFixed(3));
 
+        // PERF: Skip remaining computation when fully invisible
+        if (opacityRef.current < 0.01) {
+            containerRef.current.style.pointerEvents = 'none';
+            containerRef.current.style.visibility = 'hidden';
+            if (cardsRevealed) setCardsRevealed(false);
+            return;
+        }
+        containerRef.current.style.visibility = 'visible';
+
         if (opacityRef.current > 0.5 && !cardsRevealed) {
             revealTimerRef.current += delta;
             if (revealTimerRef.current > 0.3) setCardsRevealed(true);
