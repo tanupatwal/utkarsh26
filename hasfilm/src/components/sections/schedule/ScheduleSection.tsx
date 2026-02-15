@@ -11,10 +11,10 @@ import type { ScheduleEvent } from '../../../data/schedule';
 //  CONFIGURATION
 // ════════════════════════════════════════════════
 
-const SCHEDULE_FADE_START = 0.935;
-const SCHEDULE_FADE_FULL = 0.945;
-const SCHEDULE_FADE_OUT_START = 0.965;
-const SCHEDULE_FADE_OUT_FULL = 0.97;
+const SCHEDULE_FADE_START = 0.62;
+const SCHEDULE_FADE_FULL = 0.65;
+const SCHEDULE_FADE_OUT_START = 0.78;
+const SCHEDULE_FADE_OUT_FULL = 0.80;
 const CARD_STAGGER_MS = 50;
 
 const ACCENT = '#38bdf8'; // sky-400

@@ -25,8 +25,7 @@ const GalleryMorph: React.FC = () => {
         const r = scroll.offset;
 
         // PERF: Skip ALL computation when scroll is far from our range
-        // GalleryMorph only acts near GALLERY_END (not defined in TIMELINE, approx 0.86-0.88)
-        if (r < 0.82 || r > 0.92) {
+        if (r < TIMELINE.GALLERY_END - 0.04 || r > TIMELINE.MORPH_END + 0.04) {
             if (containerRef.current.style.visibility !== 'hidden') {
                 containerRef.current.style.opacity = '0';
                 containerRef.current.style.visibility = 'hidden';

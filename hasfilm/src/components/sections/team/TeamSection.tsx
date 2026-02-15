@@ -10,8 +10,8 @@ import { TEAM_MEMBERS, TEAM_BG_IMAGES } from '../../../data/team';
 // ════════════════════════════════════════════════
 
 /** Scroll range where the team section fades in */
-const TEAM_FADE_START = 0.975;
-const TEAM_FADE_FULL = 0.985;
+const TEAM_FADE_START = 0.78;
+const TEAM_FADE_FULL = 0.83;
 
 /** Wheel delta thresholds for entry/exit gates (px of accumulated wheel delta) */
 const ENTRY_GATE_THRESHOLD = 250;
@@ -506,7 +506,7 @@ const TeamSection: React.FC = () => {
             if (scroll.el) {
               const scrollContainer = scroll.el as HTMLElement;
               const scrollHeight = scrollContainer.scrollHeight - scrollContainer.clientHeight;
-              const targetOffset = 0.955; // Schedule dwell zone
+              const targetOffset = 0.78; // Schedule dwell zone
               scrollContainer.scrollTop = targetOffset * scrollHeight;
             }
             opacityRef.current = 0;
@@ -697,7 +697,7 @@ const TeamSection: React.FC = () => {
           if (scroll.el) {
             const scrollContainer = scroll.el as HTMLElement;
             const scrollHeight = scrollContainer.scrollHeight - scrollContainer.clientHeight;
-            const targetOffset = 0.955; // Schedule dwell zone (0.945-0.965)
+            const targetOffset = 0.78; // Schedule dwell zone (0.945-0.965)
             scrollContainer.scrollTop = targetOffset * scrollHeight;
           }
           // Snap our own opacity to 0 immediately so we don't linger on screen
@@ -717,7 +717,7 @@ const TeamSection: React.FC = () => {
       const scrollContainer = scroll.el as HTMLElement;
       const scrollHeight = scrollContainer.scrollHeight - scrollContainer.clientHeight;
       // Pin at the team section's start position
-      const pinOffset = TEAM_FADE_FULL;
+      const pinOffset = TEAM_FADE_FULL;  // 0.83
       scrollContainer.scrollTop = pinOffset * scrollHeight;
     }
 

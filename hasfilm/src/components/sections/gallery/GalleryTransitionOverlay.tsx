@@ -24,10 +24,10 @@ const GalleryTransitionOverlay: React.FC = () => {
 
         // Fade to black from END (1.0) to EVENT_HIGHLIGHTS_VISIBLE (1.02)
         // Then fade back to transparent for Event Highlights to show
-        const fadeInStart = TIMELINE.END;
-        const fadeInEnd = TIMELINE.EVENT_HIGHLIGHTS_VISIBLE;
-        const fadeOutStart = TIMELINE.EVENT_HIGHLIGHTS_VISIBLE;
-        const fadeOutEnd = TIMELINE.EVENT_HIGHLIGHTS_VISIBLE + 0.02;
+        const fadeInStart = TIMELINE.GALLERY_END;
+        const fadeInEnd = TIMELINE.HIGHLIGHTS_START;
+        const fadeOutStart = TIMELINE.HIGHLIGHTS_START;
+        const fadeOutEnd = TIMELINE.HIGHLIGHTS_START + 0.02;
 
         let targetOpacity = 0;
 

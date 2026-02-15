@@ -33,7 +33,7 @@ const GalleryOverlay: React.FC = () => {
         const targetY = viewportHeight * (SCROLL_CONFIG.PAGES - 1) * r;
 
         // 1. Visibility Logic: Fade in for gallery, fade out before dissolve
-        const GALLERY_VIEW_END = 0.85;
+        const GALLERY_VIEW_END = TIMELINE.GALLERY_END;
         const isVisible = r >= TIMELINE.GALLERY_START && r <= GALLERY_VIEW_END;
         const targetOpacity = isVisible ? 1 : 0;
         opacityRef.current = THREE.MathUtils.damp(opacityRef.current, targetOpacity, 3, delta);

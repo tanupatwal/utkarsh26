@@ -26,7 +26,7 @@ const Experience: React.FC = () => {
             <SceneSetup />
 
             <ScrollControls pages={SCROLL_CONFIG.PAGES} damping={0.2}>
-                <TunnelGroup />
+                {/* <TunnelGroup /> */}
                 <FlatAboutSection />
                 <GalleryGroup />
 

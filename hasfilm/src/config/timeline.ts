@@ -2,58 +2,47 @@
  * Timeline configuration for scroll-based animations.
  * Values represent normalized scroll progress (0-1).
  *
- * LAYOUT (Pin-Dwell-Release pattern):
- *   0.0  → 0.14  Hero
- *   0.14 → 0.28  Void / deep-dive
- *   0.28 → 0.56  Tunnel trailer
- *   0.56 → 0.72  About section (dwell)
- *   0.72 → 0.80  About → Gallery transition
- *   0.80 → 0.86  Gallery (3D panels)
- *   ─── Event Highlights / Schedule / Team ───
- *   0.86 → 0.88  Highlights backdrop fade-in
- *   0.88 → 0.91  Highlights dwell (floating gallery)
- *   0.91 → 0.925 Highlights gravity drain + fade-out
- *   0.925→ 0.935 Gap (black pause)
- *   0.935→ 0.945 Schedule fade-in
- *   0.945→ 0.965 Schedule dwell (browse events)
- *   0.965→ 0.97  Schedule fade-out
- *   0.97 → 0.975 Gap (black pause between schedule & team)
- *   0.975→ 0.985 Team fade-in
- *   0.985→ 1.0   Team dwell (scroll through members)
+ * LAYOUT (Dissolve-Overlap pattern — no gaps):
+ *   0.00 → 0.10  Hero (dwell)
+ *   0.08 → 0.30  About section (dissolve overlap with hero at 0.08-0.10)
+ *   0.28 → 0.50  Gallery (dissolve overlap with about at 0.28-0.30)
+ *   0.48 → 0.52  Gallery morph → Highlights transition
+ *   0.52 → 0.64  Highlights (floating gallery)
+ *   0.62 → 0.80  Schedule (dissolve overlap with highlights at 0.62-0.64)
+ *   0.78 → 1.00  Team (dissolve overlap with schedule at 0.78-0.80)
  */
 export const TIMELINE = {
-    /** Hero handoff is complete by this point */
-    HERO_END: 0.14,
-    /** End of the empty deep-dive void phase */
-    VOID_END: 0.28,
-    /** Start of vortex tunnel reveal */
-    TUNNEL_START: 0.28,
-    /** End of tunnel trailer phase */
-    TUNNEL_END: 0.56,
-    /** Start of about section */
-    ABOUT_START: 0.56,
-    /** About section stays visible until this point */
-    ABOUT_STAY: 0.72,
-    /** Transition from about to gallery */
-    TRANSITION: 0.76,
-    /** Gallery section begins */
-    GALLERY_START: 0.76,
+    /** Hero fades out by this point */
+    HERO_END: 0.10,
+    /** About section fades in (overlaps hero fade-out) */
+    ABOUT_START: 0.08,
+    /** About section stays fully visible until */
+    ABOUT_STAY: 0.28,
+    /** About fully faded out by here */
+    TRANSITION: 0.30,
+    /** Gallery section begins (overlaps about fade-out) */
+    GALLERY_START: 0.28,
+    /** Gallery panels end */
+    GALLERY_END: 0.50,
+    /** Gallery morph completes */
+    MORPH_END: 0.52,
     /** Highlights floating gallery begins */
-    HIGHLIGHTS_START: 0.88,
+    HIGHLIGHTS_START: 0.52,
     /** Highlights images begin dissolving */
-    HIGHLIGHTS_DISSOLVE: 0.92,
-    /** Schedule section fades in */
-    SCHEDULE_START: 0.935,
+    HIGHLIGHTS_DISSOLVE: 0.62,
+    /** Schedule section fades in (overlaps highlights dissolve) */
+    SCHEDULE_START: 0.62,
     /** Schedule stays fully visible until */
-    SCHEDULE_STAY: 0.965,
+    SCHEDULE_STAY: 0.78,
     /** Schedule fades out */
-    SCHEDULE_END: 0.97,
-    /** Team section begins fading in */
-    TEAM_START: 0.975,
+    SCHEDULE_END: 0.80,
+    /** Team section begins fading in (overlaps schedule fade-out) */
+    TEAM_START: 0.78,
     /** Team section fully visible */
-    TEAM_FULL: 0.985,
+    TEAM_FULL: 0.83,
     /** End of scroll experience */
     END: 1.0
 } as const;
 
 export type TimelineKey = keyof typeof TIMELINE;
+
