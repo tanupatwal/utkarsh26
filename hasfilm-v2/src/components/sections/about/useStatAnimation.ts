@@ -1,13 +1,8 @@
-import { useRef } from 'react';
 import { useGSAP } from '@gsap/react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
-
-interface StatBarProps {
-    stats: { label: string; value: number; suffix?: string }[];
-}
 
 export function useStatAnimation(containerRef: React.RefObject<HTMLDivElement | null>, stats: any) {
     useGSAP(() => {

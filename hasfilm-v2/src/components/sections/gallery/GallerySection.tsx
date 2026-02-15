@@ -1,10 +1,23 @@
-import React from 'react';
+import React, { useRef } from 'react';
+import styles from './GallerySection.module.css';
+import { useGalleryAnimation } from './useGalleryAnimation';
 
 const GallerySection: React.FC = () => {
+    const containerRef = useRef<HTMLDivElement>(null);
+
+    useGalleryAnimation(containerRef);
+
     return (
-        <section style={{ height: '300vh', position: 'relative' }}>
-            <div style={{ position: 'sticky', top: 0, height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', pointerEvents: 'none' }}>
-                <h2 style={{ background: '#00000088', padding: '1rem' }}>Gallery Overlay (300vh scroll)</h2>
+        <section ref={containerRef} className={styles.gallerySection}>
+            <div className={styles.galleryHud}>
+                <header className={styles.header}>
+                    <h2 className={`${styles.title} gallery-title`}>Gallery</h2>
+                </header>
+
+                <footer className={styles.footer}>
+                    <span>Utkarsh 2026</span>
+                    <span className={styles.progress}>Scroll to Rotate</span>
+                </footer>
             </div>
         </section>
     );
