@@ -1,0 +1,92 @@
+/* ============================================================
+   tokens.css — Design tokens for Utkarsh 2026
+   ============================================================ */
+
+:root {
+  /* ---- Colors ---- */
+  --color-bg:           #05070d;
+  --color-bg-elevated:  #0a0e1a;
+  --color-surface:      #111628;
+
+  --color-gold:         #F5C16C;
+  --color-gold-bright:  #FFD993;
+  --color-orange:       #FF8C42;
+  --color-cyan:         #00E5FF;
+  --color-cyan-light:   #9EEAFF;
+
+  --color-text:         #f0f0f0;
+  --color-text-muted:   #8892b0;
+  --color-text-dim:     #4a5578;
+
+  --color-white:        #ffffff;
+  --color-black:        #000000;
+
+  /* ---- Typography ---- */
+  --font-display:       'Orbitron', sans-serif;
+  --font-body:          'Inter', system-ui, -apple-system, sans-serif;
+
+  --fs-xs:    clamp(0.7rem, 0.65rem + 0.25vw, 0.8rem);
+  --fs-sm:    clamp(0.8rem, 0.75rem + 0.3vw, 0.95rem);
+  --fs-base:  clamp(0.95rem, 0.9rem + 0.3vw, 1.1rem);
+  --fs-md:    clamp(1.1rem, 1rem + 0.5vw, 1.35rem);
+  --fs-lg:    clamp(1.5rem, 1.2rem + 1vw, 2rem);
+  --fs-xl:    clamp(2rem, 1.5rem + 2vw, 3rem);
+  --fs-2xl:   clamp(2.5rem, 2rem + 2.5vw, 4rem);
+  --fs-hero:  clamp(3rem, 2rem + 4vw, 6rem);
+
+  --fw-light:     300;
+  --fw-regular:   400;
+  --fw-medium:    500;
+  --fw-semibold:  600;
+  --fw-bold:      700;
+  --fw-extrabold: 800;
+
+  --lh-tight:   1.1;
+  --lh-snug:    1.3;
+  --lh-normal:  1.6;
+  --lh-relaxed: 1.8;
+
+  --ls-tight:   -0.02em;
+  --ls-normal:  0;
+  --ls-wide:    0.05em;
+  --ls-wider:   0.1em;
+  --ls-widest:  0.2em;
+
+  /* ---- Spacing ---- */
+  --space-xs:   0.25rem;
+  --space-sm:   0.5rem;
+  --space-md:   1rem;
+  --space-lg:   1.5rem;
+  --space-xl:   2rem;
+  --space-2xl:  3rem;
+  --space-3xl:  4rem;
+  --space-4xl:  6rem;
+  --space-5xl:  8rem;
+
+  /* ---- Layout ---- */
+  --max-width:        1400px;
+  --gutter:           clamp(1rem, 2vw, 3rem);
+  --section-padding:  clamp(4rem, 8vh, 8rem);
+
+  /* ---- Borders & Radii ---- */
+  --radius-sm:  4px;
+  --radius-md:  8px;
+  --radius-lg:  16px;
+  --radius-xl:  24px;
+  --radius-full: 9999px;
+
+  /* ---- Transitions ---- */
+  --ease-out:     cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out:  cubic-bezier(0.65, 0, 0.35, 1);
+  --duration-fast:   150ms;
+  --duration-normal: 300ms;
+  --duration-slow:   500ms;
+
+  /* ---- Z-index scale ---- */
+  --z-canvas:    0;
+  --z-content:   10;
+  --z-overlay:   20;
+  --z-navbar:    30;
+  --z-modal:     40;
+  --z-tooltip:   50;
+}

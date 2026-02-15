@@ -10,16 +10,16 @@
 - [x] Create Vite project (`react-ts` template)
 - [x] Verify dev server starts on port 3001
 - [x] Save planning docs into `docs/` directory
-- [ ] Install project deps (GSAP, Lenis, Zustand, R3F, Three, etc.)
-- [ ] Configure Vite (port 3001, `@` alias, env loading)
-- [ ] Configure TypeScript (strict mode matching old project)
-- [ ] Create folder structure (features/, shared/, canvas/, data/)
-- [ ] Setup `global.css` (reset, CSS custom properties, font imports)
-- [ ] Setup `tokens.css` (design tokens: colors, spacing, fonts)
-- [ ] Setup Zustand `scrollStore.ts`
-- [ ] Setup `CanvasLayer.tsx` (empty fixed Canvas)
-- [ ] Setup Lenis + GSAP ScrollTrigger integration in `App.tsx`
-- [ ] Verify: smooth scroll working, no console errors
+- [x] Install project deps (GSAP, Lenis, Zustand, R3F, Three, etc.)
+- [x] Configure Vite (port 3001, `@` alias, React plugin)
+- [x] Configure TypeScript (strict, JSX, path aliases)
+- [x] Create folder structure (features/, shared/, canvas/, data/)
+- [x] Setup `global.css` (reset, CSS custom properties, font imports)
+- [x] Setup `tokens.css` (design tokens: colors, spacing, fonts)
+- [x] Setup Zustand `scrollStore.ts`
+- [x] Setup `CanvasLayer.tsx` (empty fixed Canvas)
+- [x] Setup Lenis + GSAP ScrollTrigger integration in `App.tsx`
+- [x] Verify: `npm run build` passes with zero errors
 
 ---
 

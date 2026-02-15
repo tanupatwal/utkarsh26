@@ -1,0 +1,22 @@
+.app {
+    position: relative;
+    z-index: var(--z-content);
+}
+
+.section {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--section-padding) var(--gutter);
+}
+
+.sectionTitle {
+    font-family: var(--font-display);
+    font-size: var(--fs-xl);
+    color: var(--color-text-muted);
+    letter-spacing: var(--ls-wider);
+    text-transform: uppercase;
+    opacity: 0.3;
+    user-select: none;
+}
