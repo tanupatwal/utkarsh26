@@ -20,6 +20,7 @@
 - [x] Setup `CanvasLayer.tsx` (empty fixed Canvas)
 - [x] Setup Lenis + GSAP ScrollTrigger integration in `App.tsx`
 - [x] Verify: `npm run build` passes with zero errors
+- [x] Copy ALL media assets from `../hasfilm/public/assets/` → `public/assets/`
 
 ---
 
@@ -40,7 +41,6 @@
 ## Phase 2 — Hero Section
 > Full hero with video bg, title, zoom-on-scroll
 
-- [ ] Copy hero video + assets from `../hasfilm/public/assets/`
 - [ ] Build `HeroSection.tsx` (semantic HTML)
 - [ ] Build `HeroSection.module.css`
 - [ ] Build `useHeroAnimation.ts` (GSAP pin + scrub zoom/fade)
