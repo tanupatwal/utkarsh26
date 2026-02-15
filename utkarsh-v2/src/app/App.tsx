@@ -6,13 +6,16 @@ import { useGSAP } from '@gsap/react'
 
 import { CanvasLayer } from '@/canvas/CanvasLayer'
 import { useScrollStore } from '@/shared/stores/scrollStore'
+import { Navbar } from '@/shared/components/Navbar'
+import { ProgressBar } from '@/shared/components/ProgressBar'
+import { SkipLink } from '@/shared/components/SkipLink'
+import { HeroSection } from '@/features/hero/HeroSection'
 import styles from './App.module.css'
 
 // Register GSAP plugins
 gsap.registerPlugin(ScrollTrigger)
 
-const SECTIONS = [
-    { id: 'hero', label: 'Hero' },
+const PLACEHOLDER_SECTIONS = [
     { id: 'tunnel', label: 'Tunnel' },
     { id: 'about', label: 'About' },
     { id: 'gallery', label: 'Gallery' },
@@ -28,19 +31,24 @@ export function App() {
     // Initialize Lenis smooth scroll + GSAP ScrollTrigger proxy
     useEffect(() => {
         const lenis = new Lenis({
-            lerp: 0.1,
+            lerp: 0.15,          // Increased from 0.1 for smoother feel
             smoothWheel: true,
+            wheelMultiplier: 1,  // Normal scroll speed
         })
         lenisRef.current = lenis
 
-        // Wire Lenis → GSAP ScrollTrigger (user-specified pattern)
+        // Use requestAnimationFrame for Lenis (separate from GSAP ticker)
+        function raf(time: number) {
+            lenis.raf(time)
+            requestAnimationFrame(raf)
+        }
+        requestAnimationFrame(raf)
+
+        // Update ScrollTrigger on Lenis scroll
         lenis.on('scroll', ScrollTrigger.update)
-        gsap.ticker.add((time) => lenis.raf(time * 1000))
-        gsap.ticker.lagSmoothing(0)
 
         return () => {
             lenis.destroy()
-            gsap.ticker.remove(lenis.raf)
         }
     }, [])
 
@@ -70,17 +78,36 @@ export function App() {
 
     return (
         <>
+            {/* A11y: skip link for keyboard users */}
+            <SkipLink />
+
             {/* Fixed 3D Canvas behind everything */}
             <CanvasLayer />
 
+            {/* Fixed UI overlays */}
+            <Navbar />
+            <ProgressBar />
+
             {/* HTML content layer */}
-            <div className={styles.app}>
-                {SECTIONS.map(({ id, label }) => (
-                    <section key={id} id={id} className={styles.section}>
-                        <h2 className={styles.sectionTitle}>{label}</h2>
+            <main className={styles.app}>
+                {/* Full Hero Section */}
+                <HeroSection />
+
+                {/* Placeholder sections for remaining features */}
+                {PLACEHOLDER_SECTIONS.map(({ id, label }) => (
+                    <section
+                        key={id}
+                        id={id}
+                        className={styles.section}
+                        aria-labelledby={`${id}-heading`}
+                    >
+                        <h2 id={`${id}-heading`} className={styles.sectionTitle}>
+                            {label}
+                        </h2>
                     </section>
                 ))}
-            </div>
+            </main>
         </>
     )
 }
+

@@ -27,24 +27,24 @@
 ## Phase 1 — Design System & Layout Shell
 > Global styles, Navbar, section placeholders, progress bar
 
-- [ ] Implement design tokens (colors: `#05070d`, `#F5C16C`, `#FF8C42`, `#00E5FF`, `#9EEAFF`)
-- [ ] Build `Navbar.tsx` with CSS Module
-- [ ] Build `ProgressBar.tsx` (scroll progress via Zustand)
-- [ ] Create placeholder `<section>` for each feature
-- [ ] Implement `useReducedMotion.ts` hook
-- [ ] Build `SkipLink.tsx` (a11y)
-- [ ] Connect: Lenis scroll → Zustand → ProgressBar
-- [ ] Verify: all sections scrollable, progress bar works, skip link works
+- [x] Implement design tokens (colors: `#05070d`, `#F5C16C`, `#FF8C42`, `#00E5FF`, `#9EEAFF`)
+- [x] Build `Navbar.tsx` with CSS Module
+- [x] Build `ProgressBar.tsx` (scroll progress via Zustand)
+- [x] Create placeholder `<section>` for each feature
+- [x] Implement `useReducedMotion.ts` hook
+- [x] Build `SkipLink.tsx` (a11y)
+- [x] Connect: Lenis scroll → Zustand → ProgressBar
+- [x] Verify: all sections scrollable, progress bar works, skip link works
 
 ---
 
 ## Phase 2 — Hero Section
 > Full hero with video bg, title, zoom-on-scroll
 
-- [ ] Build `HeroSection.tsx` (semantic HTML)
-- [ ] Build `HeroSection.module.css`
-- [ ] Build `useHeroAnimation.ts` (GSAP pin + scrub zoom/fade)
-- [ ] Implement `prefers-reduced-motion` fallback
+- [x] Build `HeroSection.tsx` (semantic HTML)
+- [x] Build `HeroSection.module.css`
+- [x] Build `useHeroAnimation.ts` (GSAP pin + scrub zoom/fade)
+- [x] Implement `prefers-reduced-motion` fallback
 - [ ] Verify: hero matches old site visuals, scroll zoom works
 
 ---

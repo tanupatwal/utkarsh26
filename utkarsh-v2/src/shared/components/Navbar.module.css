@@ -1,0 +1,23 @@
+.navbar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding: 0 var(--gutter);
+    z-index: var(--z-navbar);
+    pointer-events: none;
+}
+
+.logoLink {
+    pointer-events: auto;
+    display: inline-flex;
+}
+
+.logo {
+    height: 128px;
+    width: auto;
+    object-fit: contain;
+}
