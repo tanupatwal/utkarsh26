@@ -2,7 +2,11 @@
 	import Hero from '$lib/components/sections/Hero.svelte';
 	import WarpSpacer from '$lib/components/sections/WarpSpacer.svelte';
 	import About from '$lib/components/sections/About.svelte';
-	// import GalleryReveal from '$lib/components/sections/GalleryReveal.svelte';
+	import GalleryReveal from '$lib/components/sections/GalleryReveal.svelte';
+	import EventHighlights from '$lib/components/sections/EventHighlights.svelte';
+	import Schedule from '$lib/components/sections/Schedule.svelte';
+	import Team from '$lib/components/sections/Team.svelte';
+	import Footer from '$lib/components/sections/Footer.svelte';
 </script>
 
 <div class="relative w-full">
@@ -23,9 +27,24 @@
 
 	<!-- 4. GALLERY: Transparent BG -->
 	<section class="min-h-[200dvh] w-full bg-transparent">
-		<!-- Spacer for gallery -->
-		<div class="flex h-full items-center justify-center">
-			<h2 class="text-4xl text-white/50">GALLERY ZONE (Coming Phase 4)</h2>
-		</div>
+		<GalleryReveal />
 	</section>
+
+	<!-- 5. EVENTS: Black BG -->
+	<section class="min-h-[100dvh] w-full bg-black">
+		<EventHighlights />
+	</section>
+
+	<!-- 6. SCHEDULE: Black BG -->
+	<section class="min-h-[100dvh] w-full bg-black">
+		<Schedule />
+	</section>
+
+	<!-- 7. TEAM: Black BG -->
+	<section class="min-h-[100dvh] w-full bg-black">
+		<Team />
+	</section>
+
+	<!-- 8. FOOTER -->
+	<Footer />
 </div>

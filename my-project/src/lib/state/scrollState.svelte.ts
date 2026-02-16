@@ -18,7 +18,10 @@ class ScrollState {
     targetLookAt = $state(new Vector3(0, 0, 0));
 
     // Active Section / Zone Tracker
-    activeZone = $state<'HERO' | 'WARP' | 'ABOUT' | 'GALLERY'>('HERO');
+    activeZone = $state<'HERO' | 'WARP' | 'ABOUT' | 'GALLERY' | 'HIGHLIGHTS' | 'SCHEDULE' | 'TEAM'>('HERO');
+
+    // TEAM Hover State
+    hoveredTeamMember = $state<string | null>(null);
 
     constructor() {
         // Initialize with default values
