@@ -1,7 +1,7 @@
 # UTKARSH 2026 - Master Task List & Status
 
-> **Project Phase:** Phase 2 Complete (Visual Theater Live)
-> **Next Phase:** Phase 3 (The Overlay Content)
+> **Project Phase:** Phase 3 In Progress (Content Overlay)
+> **Next Phase:** Phase 4 (Polish & Micro-Interactions)
 > **Context:** See [PROJECT_CONTEXT.md](./PROJECT_CONTEXT.md)
 
 This document tracks the **dynamic** progress of the project: The Task Checklist and The Immediate Implementation Plan.
@@ -27,10 +27,10 @@ This document tracks the **dynamic** progress of the project: The Task Checklist
 - [x] **[NEW]**: Create `Preloader.svelte` to manage asset loading state
 
 ### Phase 3: The Overlay (Content)
-- [ ] **[UPGRADE]**: Build HTML structure using `dvh` (Dynamic Viewport Height) units
-- [ ] Implement "Hero" Section (Pinned, Fade-out)
-- [ ] Implement "Warp" Spacer (Transparent)
-- [ ] Implement "About" Section (Slide-in, PCB Texture switch)
+- [x] **[UPGRADE]**: Build HTML structure using `dvh` (Dynamic Viewport Height) units
+- [x] Implement "Hero" Section (Pinned, Fade-out)
+- [x] Implement "Warp" Spacer (Transparent)
+- [x] Implement "About" Section (Slide-in, PCB Texture switch)
 - [ ] Implement "Gallery" Section (Transparent, 3D Fragments)
 - [ ] Implement "Highlights" & "Team" Section (Bento Cards, Name Scrub)
 
@@ -45,18 +45,12 @@ This document tracks the **dynamic** progress of the project: The Task Checklist
 
 ### Phase 3: The Overlay (Content)
 
-#### [MODIFY] [src/routes/+page.svelte]
-**Goal:** Create the scrollable height and section containers.
-1.  **Hero:** `h-[100dvh]` flex-center. Title "UTKARSH".
-2.  **Warp:** `h-[50dvh]`. Empty.
-3.  **About:** `h-[100dvh]`. Content right-aligned.
-4.  **Gallery:** `h-[200dvh]`. Text floating.
-5.  **Team:** `h-[100dvh]`.
+#### [NEW] [src/lib/components/sections/GalleryReveal.svelte]
+**Goal:** A "Pinned" section where text floats while 3D fragments (in Scene.svelte) fly by.
+1.  **DOM:** Just text containers (`h-[200dvh]`).
+2.  **Logic:** Updates `scrollState.activeZone = 'GALLERY'`.
 
-#### [NEW] [src/lib/components/sections/Hero.svelte]
--   Pinning logic using `ScrollTrigger`.
--   "Scramble" text effect.
-
-#### [NEW] [src/lib/components/sections/About.svelte]
--   Slide-in animation.
--   Button with "Magnetic" effect.
+#### [NEW] [src/lib/components/sections/Team.svelte]
+**Goal:** The "Humanizing" section.
+1.  **Structure:** A list of names that triggers 3D network nodes.
+2.  **Interaction:** Hovering a name updates the `scrollState.hoveredTeamMember` (to be added).

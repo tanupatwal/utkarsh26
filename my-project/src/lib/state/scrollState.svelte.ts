@@ -17,6 +17,9 @@ class ScrollState {
     // Camera look-at target (for the "Look-Ahead" effect)
     targetLookAt = $state(new Vector3(0, 0, 0));
 
+    // Active Section / Zone Tracker
+    activeZone = $state<'HERO' | 'WARP' | 'ABOUT' | 'GALLERY'>('HERO');
+
     constructor() {
         // Initialize with default values
     }
