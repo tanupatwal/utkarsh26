@@ -14,16 +14,16 @@
         width: number; // vw
         layer: DepthLayer;
         rotation: number;
-        delay: number;
+        floatDelay: number; // staggered float animation offset
     }
 
     const LAYER_CONFIG = {
-        foreground: { parallax: 30, blur: 0, brightness: 1, scale: 1.05 },
-        middle: { parallax: 15, blur: 0, brightness: 0.85, scale: 1 },
-        background: { parallax: 5, blur: 1, brightness: 0.65, scale: 0.95 },
+        foreground: { parallax: 20, blur: 0, brightness: 1, scale: 1.05 },
+        middle: { parallax: 10, blur: 0, brightness: 0.85, scale: 1 },
+        background: { parallax: 4, blur: 1, brightness: 0.65, scale: 0.95 },
     };
 
-    // Pre-computed layout — 12 images placed in a scattered bento pattern
+    // Pre-computed layout — 12 images in a scattered bento pattern
     const PLACED_IMAGES: PlacedImage[] = [
         // Foreground (4 images)
         {
@@ -33,7 +33,7 @@
             width: 22,
             layer: "foreground",
             rotation: -2,
-            delay: 0,
+            floatDelay: 0,
         },
         {
             index: 3,
@@ -42,7 +42,7 @@
             width: 18,
             layer: "foreground",
             rotation: 1.5,
-            delay: 0.1,
+            floatDelay: 1.2,
         },
         {
             index: 6,
@@ -51,7 +51,7 @@
             width: 20,
             layer: "foreground",
             rotation: -1,
-            delay: 0.2,
+            floatDelay: 2.4,
         },
         {
             index: 9,
@@ -60,7 +60,7 @@
             width: 22,
             layer: "foreground",
             rotation: 2,
-            delay: 0.15,
+            floatDelay: 0.8,
         },
         // Middle (4 images)
         {
@@ -70,7 +70,7 @@
             width: 16,
             layer: "middle",
             rotation: 1,
-            delay: 0.05,
+            floatDelay: 0.5,
         },
         {
             index: 4,
@@ -79,7 +79,7 @@
             width: 18,
             layer: "middle",
             rotation: -1.5,
-            delay: 0.12,
+            floatDelay: 1.8,
         },
         {
             index: 7,
@@ -88,7 +88,7 @@
             width: 16,
             layer: "middle",
             rotation: 0.5,
-            delay: 0.08,
+            floatDelay: 3.0,
         },
         {
             index: 10,
@@ -97,7 +97,7 @@
             width: 15,
             layer: "middle",
             rotation: -0.8,
-            delay: 0.18,
+            floatDelay: 2.0,
         },
         // Background (4 images)
         {
@@ -107,7 +107,7 @@
             width: 14,
             layer: "background",
             rotation: 0.5,
-            delay: 0.1,
+            floatDelay: 1.0,
         },
         {
             index: 5,
@@ -116,7 +116,7 @@
             width: 13,
             layer: "background",
             rotation: -0.5,
-            delay: 0.15,
+            floatDelay: 2.2,
         },
         {
             index: 8,
@@ -125,7 +125,7 @@
             width: 12,
             layer: "background",
             rotation: 1.2,
-            delay: 0.2,
+            floatDelay: 0.3,
         },
         {
             index: 11,
@@ -134,30 +134,72 @@
             width: 14,
             layer: "background",
             rotation: -1,
-            delay: 0.05,
+            floatDelay: 1.5,
         },
     ];
 
     // ════════════════════════════════════════
-    //  MOUSE PARALLAX
+    //  MOUSE PARALLAX (smoothed)
     // ════════════════════════════════════════
     let mouseX = $state(0);
     let mouseY = $state(0);
+    let smoothX = 0;
+    let smoothY = 0;
     let hoveredIndex = $state<number | null>(null);
     let sectionEl: HTMLElement;
+    let rafId: number;
 
     function handleMouse(e: MouseEvent) {
         mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
         mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
     }
 
-    onMount(() => {
+    function smoothLoop() {
+        // Damped lerp for smooth parallax feel
+        smoothX += (mouseX - smoothX) * 0.08;
+        smoothY += (mouseY - smoothY) * 0.08;
+        rafId = requestAnimationFrame(smoothLoop);
+    }
+
+    // Use smoothed values for parallax
+    let parallaxX = $derived(smoothX);
+    let parallaxY = $derived(smoothY);
+
+    // ════════════════════════════════════════
+    //  GSAP STAGGERED ENTRANCE
+    // ════════════════════════════════════════
+    onMount(async () => {
         window.addEventListener("mousemove", handleMouse);
+        smoothLoop();
+
+        const gsap = (await import("gsap")).default;
+        const { ScrollTrigger } = await import("gsap/ScrollTrigger");
+        gsap.registerPlugin(ScrollTrigger);
+
+        // Stagger entrance – cards fly in from below with rotation
+        gsap.from(".floating-card", {
+            scrollTrigger: {
+                trigger: sectionEl,
+                start: "top 85%",
+                once: true,
+            },
+            opacity: 0,
+            y: 60,
+            scale: 0.85,
+            rotation: "random(-8, 8)",
+            stagger: {
+                amount: 0.6,
+                from: "random",
+            },
+            duration: 0.9,
+            ease: "power3.out",
+        });
     });
 
     onDestroy(() => {
         if (typeof window !== "undefined") {
             window.removeEventListener("mousemove", handleMouse);
+            cancelAnimationFrame(rafId);
         }
     });
 </script>
@@ -183,14 +225,15 @@
             {#each PLACED_IMAGES as img (img.index)}
                 {@const data = HIGHLIGHTS_CONTENT[img.index]}
                 {@const config = LAYER_CONFIG[img.layer]}
-                {@const offsetX = mouseX * config.parallax}
-                {@const offsetY = mouseY * config.parallax}
+                {@const offsetX = parallaxX * config.parallax}
+                {@const offsetY = parallaxY * config.parallax}
                 {@const isHovered = hoveredIndex === img.index}
 
                 <!-- svelte-ignore a11y_no_static_element_interactions -->
                 <div
                     class="floating-card"
                     class:hovered={isHovered}
+                    class:dimmed={hoveredIndex !== null && !isHovered}
                     style="
 						left: {img.x}%;
 						top: {img.y}%;
@@ -198,9 +241,17 @@
 						transform: translate({offsetX}px, {offsetY}px) rotate({img.rotation}deg) scale({isHovered
                         ? 1.08
                         : config.scale});
-						filter: blur({config.blur}px) brightness({config.brightness});
-						animation-delay: {img.delay}s;
-						z-index: {img.layer === 'foreground' ? 3 : img.layer === 'middle' ? 2 : 1};
+						filter: blur({isHovered ? 0 : config.blur}px) brightness({isHovered
+                        ? 1.1
+                        : config.brightness});
+						z-index: {isHovered
+                        ? 50
+                        : img.layer === 'foreground'
+                          ? 3
+                          : img.layer === 'middle'
+                            ? 2
+                            : 1};
+						animation-delay: {img.floatDelay}s;
 					"
                     on:mouseenter={() => (hoveredIndex = img.index)}
                     on:mouseleave={() => (hoveredIndex = null)}
@@ -279,7 +330,6 @@
     .gallery-field {
         position: absolute;
         inset: 0;
-        perspective: 1000px;
     }
 
     /* ─── Floating card ─── */
@@ -291,23 +341,28 @@
         cursor: pointer;
         transition:
             transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-            filter 0.5s ease;
+            filter 0.5s ease,
+            opacity 0.4s ease;
         will-change: transform;
-        animation: floatIn 0.8s ease both;
+        animation: subtleFloat 6s ease-in-out infinite;
     }
 
     .floating-card.hovered {
         z-index: 50 !important;
-        filter: blur(0px) brightness(1) !important;
     }
 
-    @keyframes floatIn {
-        from {
-            opacity: 0;
-            transform: translateY(40px) scale(0.9);
+    .floating-card.dimmed {
+        opacity: 0.55;
+    }
+
+    /* Subtle floating animation — each card drifts at its own pace */
+    @keyframes subtleFloat {
+        0%,
+        100% {
+            translate: 0 0;
         }
-        to {
-            opacity: 1;
+        50% {
+            translate: 0 -8px;
         }
     }
 

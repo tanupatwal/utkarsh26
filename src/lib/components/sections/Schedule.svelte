@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount, tick } from "svelte";
     import {
         SCHEDULE_DAYS,
         SCHEDULE_EVENTS,
@@ -13,9 +14,81 @@
     let activeDay = $state(1);
     let selectedEvent = $state<ScheduleEvent | null>(null);
     let dayEvents = $derived(getEventsForDay(activeDay));
+    let cardsGridEl: HTMLElement | undefined = $state(undefined);
+    let isTransitioning = $state(false);
+    let gsapInstance: typeof import("gsap").default | null = null;
 
-    function selectDay(dayId: number) {
+    // ════════════════════════════════════════
+    //  GSAP INIT
+    // ════════════════════════════════════════
+    onMount(async () => {
+        gsapInstance = (await import("gsap")).default;
+        const { ScrollTrigger } = await import("gsap/ScrollTrigger");
+        gsapInstance.registerPlugin(ScrollTrigger);
+
+        // Initial entrance animation
+        gsapInstance.from(".event-card", {
+            scrollTrigger: {
+                trigger: cardsGridEl,
+                start: "top 85%",
+                once: true,
+            },
+            opacity: 0,
+            y: 30,
+            rotateX: 12,
+            stagger: 0.04,
+            duration: 0.5,
+            ease: "power2.out",
+        });
+    });
+
+    // ════════════════════════════════════════
+    //  DAY SWITCHING WITH GSAP
+    // ════════════════════════════════════════
+    async function selectDay(dayId: number) {
+        if (dayId === activeDay || isTransitioning) return;
+        if (!gsapInstance) {
+            // Fallback: just switch without animation
+            activeDay = dayId;
+            return;
+        }
+
+        isTransitioning = true;
+        const gsap = gsapInstance;
+
+        // Animate out current cards
+        const currentCards = cardsGridEl?.querySelectorAll(".event-card");
+        if (currentCards && currentCards.length > 0) {
+            await gsap.to(currentCards, {
+                opacity: 0,
+                y: -20,
+                stagger: 0.03,
+                duration: 0.2,
+                ease: "power2.in",
+            });
+        }
+
+        // Switch day (triggers Svelte reactivity)
         activeDay = dayId;
+        await tick(); // Wait for DOM update
+
+        // Animate in new cards
+        const newCards = cardsGridEl?.querySelectorAll(".event-card");
+        if (newCards && newCards.length > 0) {
+            gsap.from(newCards, {
+                opacity: 0,
+                y: 20,
+                rotateX: 12,
+                stagger: 0.04,
+                duration: 0.4,
+                ease: "power2.out",
+                onComplete: () => {
+                    isTransitioning = false;
+                },
+            });
+        } else {
+            isTransitioning = false;
+        }
     }
 
     function openModal(event: ScheduleEvent) {
@@ -81,65 +154,61 @@
 
         <!-- Event grid -->
         <div class="cards-scroll">
-            {#key activeDay}
-                <div class="cards-grid">
-                    {#each dayEvents as event, i (event.title)}
-                        <!-- svelte-ignore a11y_no_static_element_interactions -->
-                        <div
-                            class="event-card"
-                            style="
+            <div class="cards-grid" bind:this={cardsGridEl}>
+                {#each dayEvents as event, i (event.title)}
+                    <!-- svelte-ignore a11y_no_static_element_interactions -->
+                    <div
+                        class="event-card"
+                        style="
 								--cat-color: {getCategoryColor(event.category)};
-								animation-delay: {i * 0.04}s;
 							"
-                            on:click={() => openModal(event)}
-                        >
-                            <!-- Image -->
-                            <div class="card-img-wrap">
-                                <img
-                                    src={event.image}
-                                    alt={event.title}
-                                    class="card-img"
-                                    loading="lazy"
-                                />
-                                <!-- Category strip -->
-                                <div
-                                    class="cat-strip"
-                                    style="background: {getCategoryColor(
-                                        event.category,
-                                    )}"
-                                ></div>
-                            </div>
+                        on:click={() => openModal(event)}
+                    >
+                        <!-- Image -->
+                        <div class="card-img-wrap">
+                            <img
+                                src={event.image}
+                                alt={event.title}
+                                class="card-img"
+                                loading="lazy"
+                            />
+                            <!-- Category strip -->
+                            <div
+                                class="cat-strip"
+                                style="background: {getCategoryColor(
+                                    event.category,
+                                )}"
+                            ></div>
+                        </div>
 
-                            <!-- Info -->
-                            <div class="card-body">
-                                <div class="card-meta">
-                                    <span class="card-time">{event.time}</span>
-                                    {#if event.category}
-                                        <span
-                                            class="card-cat"
-                                            style="color: {getCategoryColor(
-                                                event.category,
-                                            )}"
-                                            >{event.category.toUpperCase()}</span
-                                        >
-                                    {/if}
-                                </div>
-                                <h3 class="card-title">{event.title}</h3>
-                                <p class="card-venue">{event.venue}</p>
-                                {#if event.prizePool}
-                                    <span class="card-prize"
-                                        >🏆 {event.prizePool}</span
+                        <!-- Info -->
+                        <div class="card-body">
+                            <div class="card-meta">
+                                <span class="card-time">{event.time}</span>
+                                {#if event.category}
+                                    <span
+                                        class="card-cat"
+                                        style="color: {getCategoryColor(
+                                            event.category,
+                                        )}">{event.category.toUpperCase()}</span
                                     >
                                 {/if}
                             </div>
-
-                            <!-- Hover glow corners -->
-                            <div class="card-corner tl"></div>
-                            <div class="card-corner br"></div>
+                            <h3 class="card-title">{event.title}</h3>
+                            <p class="card-venue">{event.venue}</p>
+                            {#if event.prizePool}
+                                <span class="card-prize"
+                                    >🏆 {event.prizePool}</span
+                                >
+                            {/if}
                         </div>
-                    {/each}
-                </div>
-            {/key}
+
+                        <!-- Hover glow corners -->
+                        <div class="card-corner tl"></div>
+                        <div class="card-corner br"></div>
+                    </div>
+                {/each}
+            </div>
         </div>
     </div>
 </section>

@@ -54,6 +54,9 @@ class ScrollState {
     /** Scroll direction: 1 = down, -1 = up, 0 = idle */
     direction = $state<-1 | 0 | 1>(0);
 
+    /** Gallery canvas opacity (0–1) for smooth fade-out transition */
+    galleryCanvasOpacity = $state(1);
+
     /**
      * Detect device tier based on hardware signals.
      * Called once from GhostScroller on mount.

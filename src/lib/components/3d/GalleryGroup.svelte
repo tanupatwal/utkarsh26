@@ -32,7 +32,8 @@
     const VIEW_END = 0.46; // Last panel reached
     const DISSOLVE_START = 0.47; // Dissolve begins
     const DISSOLVE_END = 0.49; // Dissolve complete
-    const POST_DISSOLVE = 0.5; // Gallery hidden
+    const PULLBACK_START = 0.49; // Camera begins pulling back
+    const PULLBACK_END = 0.54; // Gallery fully faded out
 
     // Camera positions
     const CAM_START = { x: 0, y: 0, z: 0 };
@@ -113,13 +114,13 @@
 
         // Visibility check
         const shouldBeVisible =
-            r >= GALLERY_ZONE_START - 0.02 && r < POST_DISSOLVE;
+            r >= GALLERY_ZONE_START - 0.02 && r < PULLBACK_END;
         isVisible = shouldBeVisible;
         if (!isVisible || !groupRef) return;
 
         // Set fog
         if (scene.fog && scene.fog instanceof FogExp2) {
-            if (r > POST_DISSOLVE - 0.01) {
+            if (r > PULLBACK_END - 0.01) {
                 scene.fog.density = 0;
             } else if (r >= GALLERY_ZONE_START) {
                 scene.fog.density = 0.012;
@@ -148,6 +149,9 @@
 
             dissolveProgress1 = 0;
             dissolveProgress2 = 0;
+
+            // Ensure canvas is fully visible during entry
+            scrollState.galleryCanvasOpacity = 1;
 
             if (pointLightRef) pointLightRef.intensity = 3;
             if (ambientLightRef) ambientLightRef.intensity = 1.5;
@@ -247,12 +251,35 @@
             currentPanelIndex = totalItems - 1;
             updateAmbientColors(totalItems - 1);
         }
-        // ── POST-DISSOLVE ──
-        else if (r >= DISSOLVE_END) {
+        // ── PULLBACK PHASE: Camera retreats + canvas fades ──
+        else if (r >= PULLBACK_START && r < PULLBACK_END) {
             dissolveProgress1 = 1;
             dissolveProgress2 = 0.4;
 
-            camera.current.position.set(CAM_END.x, CAM_END.y, 50);
+            const pullT = clamp(
+                (r - PULLBACK_START) / (PULLBACK_END - PULLBACK_START),
+                0,
+                1,
+            );
+            const easedPull = smoothstep(pullT);
+
+            // Camera pulls back from z=50 → z=80
+            const pullZ = MathUtils.lerp(50, 80, easedPull);
+            camera.current.position.set(CAM_END.x, CAM_END.y, pullZ);
+
+            // Canvas fades out
+            scrollState.galleryCanvasOpacity = 1 - easedPull;
+
+            if (pointLightRef) pointLightRef.intensity = 0;
+            if (ambientLightRef) ambientLightRef.intensity = 0;
+        }
+        // ── FULLY HIDDEN ──
+        else if (r >= PULLBACK_END) {
+            dissolveProgress1 = 1;
+            dissolveProgress2 = 0.4;
+            scrollState.galleryCanvasOpacity = 0;
+
+            camera.current.position.set(CAM_END.x, CAM_END.y, 80);
             if (pointLightRef) pointLightRef.intensity = 0;
             if (ambientLightRef) ambientLightRef.intensity = 0;
         }

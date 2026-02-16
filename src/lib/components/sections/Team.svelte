@@ -1,4 +1,5 @@
 <script lang="ts">
+    import { onMount } from "svelte";
     import { TEAM_MEMBERS, TEAM_BG_IMAGES } from "$lib/data/team";
 
     // ════════════════════════════════════════
@@ -6,11 +7,14 @@
     // ════════════════════════════════════════
     let activeIndex = $state(0);
     let total = TEAM_MEMBERS.length;
+    let teamRoot: HTMLElement | undefined = $state(undefined);
+    let portraitEl: HTMLElement | undefined = $state(undefined);
+    let isTransitioning = $state(false);
 
     // Visible names window (4 above + 4 below active)
     const VISIBLE_RADIUS = 4;
 
-    let visibleNames = $derived(() => {
+    let visibleNames = $derived.by(() => {
         const names: { index: number; dist: number }[] = [];
         for (let d = -VISIBLE_RADIUS; d <= VISIBLE_RADIUS; d++) {
             const idx = activeIndex + d;
@@ -21,10 +25,123 @@
         return names;
     });
 
-    function navigate(dir: 1 | -1) {
+    let activeMember = $derived(TEAM_MEMBERS[activeIndex]);
+    let counterText = $derived(
+        `${String(activeIndex + 1).padStart(2, "0")} / ${String(total).padStart(2, "0")}`,
+    );
+
+    // ════════════════════════════════════════
+    //  GSAP-POWERED NAVIGATION
+    // ════════════════════════════════════════
+    let gsapInstance: typeof import("gsap").default | null = null;
+
+    onMount(async () => {
+        gsapInstance = (await import("gsap")).default;
+        const { ScrollTrigger } = await import("gsap/ScrollTrigger");
+        gsapInstance.registerPlugin(ScrollTrigger);
+
+        // Entrance animation: names stagger in from left
+        gsapInstance.from(".name-item", {
+            scrollTrigger: {
+                trigger: teamRoot,
+                start: "top 80%",
+                once: true,
+            },
+            opacity: 0,
+            x: -30,
+            stagger: 0.05,
+            duration: 0.6,
+            ease: "power2.out",
+        });
+
+        // Portrait entrance
+        gsapInstance.from(".portrait-frame", {
+            scrollTrigger: {
+                trigger: teamRoot,
+                start: "top 80%",
+                once: true,
+            },
+            opacity: 0,
+            scale: 0.9,
+            clipPath: "inset(100% 0 0 0)",
+            duration: 0.8,
+            ease: "power3.out",
+            delay: 0.3,
+        });
+    });
+
+    async function navigate(dir: 1 | -1) {
         const next = activeIndex + dir;
-        if (next >= 0 && next < total) {
+        if (next < 0 || next >= total || isTransitioning) return;
+
+        if (gsapInstance && portraitEl) {
+            isTransitioning = true;
+            const gsap = gsapInstance;
+
+            // Animate portrait out
+            await gsap.to(portraitEl, {
+                opacity: 0,
+                scale: 0.95,
+                duration: 0.2,
+                ease: "power2.in",
+            });
+
+            // Update state
             activeIndex = next;
+
+            // Animate portrait in (use tick to ensure DOM updated)
+            await new Promise((r) => setTimeout(r, 30));
+            gsap.fromTo(
+                portraitEl,
+                {
+                    opacity: 0,
+                    scale: 1.05,
+                    clipPath:
+                        dir > 0 ? "inset(100% 0 0 0)" : "inset(0 0 100% 0)",
+                },
+                {
+                    opacity: 1,
+                    scale: 1,
+                    clipPath: "inset(0 0 0 0)",
+                    duration: 0.45,
+                    ease: "power2.out",
+                    onComplete: () => {
+                        isTransitioning = false;
+                    },
+                },
+            );
+        } else {
+            activeIndex = next;
+        }
+    }
+
+    function jumpTo(idx: number) {
+        if (idx === activeIndex || isTransitioning) return;
+        const dir = idx > activeIndex ? 1 : -1;
+        const oldIndex = activeIndex;
+        activeIndex = idx;
+
+        if (gsapInstance && portraitEl) {
+            isTransitioning = true;
+            gsapInstance.fromTo(
+                portraitEl,
+                {
+                    opacity: 0,
+                    scale: 1.05,
+                    clipPath:
+                        dir > 0 ? "inset(100% 0 0 0)" : "inset(0 0 100% 0)",
+                },
+                {
+                    opacity: 1,
+                    scale: 1,
+                    clipPath: "inset(0 0 0 0)",
+                    duration: 0.45,
+                    ease: "power2.out",
+                    onComplete: () => {
+                        isTransitioning = false;
+                    },
+                },
+            );
         }
     }
 
@@ -46,16 +163,16 @@
         if (dist === 3) return "dist-3";
         return "dist-4";
     }
-
-    let activeMember = $derived(TEAM_MEMBERS[activeIndex]);
-    let counterText = $derived(
-        `${String(activeIndex + 1).padStart(2, "0")} / ${String(total).padStart(2, "0")}`,
-    );
 </script>
 
 <svelte:window on:keydown={handleKeydown} />
 
-<section class="section section--full" style="height: 100dvh;" data-zone="TEAM">
+<section
+    class="section section--full"
+    style="height: 100dvh;"
+    data-zone="TEAM"
+    bind:this={teamRoot}
+>
     <div class="team-root">
         <!-- Film grain overlay -->
         <div class="film-grain"></div>
@@ -94,11 +211,11 @@
                 </div>
 
                 <div class="names-window">
-                    {#each visibleNames() as { index: idx, dist } (idx)}
+                    {#each visibleNames as { index: idx, dist } (idx)}
                         <!-- svelte-ignore a11y_no_static_element_interactions -->
                         <div
                             class="name-item {distClass(dist)}"
-                            on:click={() => (activeIndex = idx)}
+                            on:click={() => jumpTo(idx)}
                         >
                             {TEAM_MEMBERS[idx].name}
                         </div>
@@ -127,18 +244,16 @@
 
             <!-- Right panel: Portrait -->
             <div class="portrait-panel">
-                {#key activeIndex}
-                    <div class="portrait-frame">
-                        <img
-                            src={activeMember.image}
-                            alt={activeMember.name}
-                            class="portrait-img"
-                        />
-                    </div>
-                    <div class="portrait-role">
-                        {activeMember.role}
-                    </div>
-                {/key}
+                <div class="portrait-frame" bind:this={portraitEl}>
+                    <img
+                        src={activeMember.image}
+                        alt={activeMember.name}
+                        class="portrait-img"
+                    />
+                </div>
+                <div class="portrait-role">
+                    {activeMember.role}
+                </div>
             </div>
         </div>
     </div>
@@ -364,20 +479,7 @@
         overflow: hidden;
         background: #111;
         border-radius: 4px;
-        animation: portraitReveal 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    }
-
-    @keyframes portraitReveal {
-        from {
-            opacity: 0;
-            clip-path: inset(100% 0 0 0);
-            transform: scale(1.1);
-        }
-        to {
-            opacity: 1;
-            clip-path: inset(0 0 0 0);
-            transform: scale(1);
-        }
+        will-change: transform, opacity, clip-path;
     }
 
     .portrait-img {
@@ -398,18 +500,7 @@
         color: rgba(255, 255, 255, 0.4);
         letter-spacing: 0.15em;
         text-transform: uppercase;
-        animation: roleFade 0.4s ease;
-    }
-
-    @keyframes roleFade {
-        from {
-            opacity: 0;
-            transform: translateY(6px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        transition: opacity 0.3s ease;
     }
 
     /* ─── Responsive ─── */
@@ -421,10 +512,14 @@
         .names-panel {
             padding: 1rem;
             gap: 1rem;
+            flex: none;
+            height: 50%;
         }
 
         .portrait-panel {
             padding: 1rem;
+            flex: none;
+            height: 50%;
         }
 
         .portrait-frame {

@@ -4,8 +4,13 @@
     import GalleryScene from "./GalleryScene.svelte";
     import { scrollState } from "$lib/state/scrollState.svelte";
 
-    // Only render Gallery canvas during GALLERY zone
-    let show = $derived(scrollState.activeZone === "GALLERY");
+    // Show gallery canvas during GALLERY zone + a bit after for the pullback fade
+    let show = $derived(
+        scrollState.activeZone === "GALLERY" ||
+            scrollState.galleryCanvasOpacity > 0,
+    );
+
+    let canvasOpacity = $derived(scrollState.galleryCanvasOpacity);
 
     function createRenderer(canvas: HTMLCanvasElement) {
         return new WebGLRenderer({
@@ -20,7 +25,7 @@
 </script>
 
 {#if show}
-    <div class="gallery-canvas-wrapper">
+    <div class="gallery-canvas-wrapper" style="opacity: {canvasOpacity};">
         <Canvas {createRenderer} toneMapping={4} colorSpace="srgb">
             <GalleryScene />
         </Canvas>
@@ -33,6 +38,8 @@
         inset: 0;
         z-index: var(--z-canvas, -1);
         pointer-events: none;
+        transition: opacity 0.1s linear;
+        will-change: opacity;
     }
 
     .gallery-canvas-wrapper :global(canvas) {
