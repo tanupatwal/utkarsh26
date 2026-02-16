@@ -173,7 +173,7 @@ const AboutSection: React.FC = () => {
                     style={{ willChange: 'background' }}
                 />
 
-                {/* Content container */}
+                {/* Content container — solid background replaces the deleted FlatAboutSection 3D plane */}
                 <div
                     ref={containerRef}
                     style={{
@@ -185,6 +185,7 @@ const AboutSection: React.FC = () => {
                         alignItems: 'center',
                         padding: '3rem 2rem',
                         willChange: 'transform',
+                        background: 'linear-gradient(180deg, #050505 0%, #0a0a0f 50%, #050505 100%)',
                     }}
                 >
                     {/* ── Top section: Subtitle + Title ── */}

@@ -18,6 +18,8 @@ export const SCENE_CONFIG = {
 
 /** Camera positions for gallery transition */
 export const CAMERA_CONFIG = {
-    START: { x: 0, y: 0, z: 0 },
+    /** Start: Outside the cylinder, wide establishing shot */
+    START: { x: 0, y: 2, z: 80 },
+    /** End: Closer to the panels, slightly below center for dramatic angle */
     END: { x: 0, y: -2, z: 60 }
 } as const;

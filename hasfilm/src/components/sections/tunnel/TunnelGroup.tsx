@@ -133,6 +133,8 @@ const TunnelGroup: React.FC = () => {
     );
 
     const vortexAngleRef = useRef(0);
+    // Track peak tunnel progress — prevents visual regression on backward scroll
+    const peakProgressRef = useRef(0);
 
     // Auto-scroll state
     const autoScrollActiveRef = useRef(false);
@@ -277,16 +279,35 @@ const TunnelGroup: React.FC = () => {
         const velocityBoost = THREE.MathUtils.clamp(Math.abs(velocityRef.current) * 1.35, 0, 1);
 
         const inVoid = r >= TIMELINE.HERO_END && r < TIMELINE.TUNNEL_START;
-        const inTunnel = r >= TIMELINE.TUNNEL_START && r <= TIMELINE.TUNNEL_END;
-        const tunnelProgress = rangeProgress(r, TIMELINE.TUNNEL_START, TIMELINE.TUNNEL_END);
+        // Detect backward scrolling (manual or auto)
+        const isScrollingBack = velocityRef.current < -0.01 || reverseAutoScrollActiveRef.current;
+        const inTunnel = (r >= TIMELINE.TUNNEL_START && r <= TIMELINE.TUNNEL_END) || (isScrollingBack && r >= TIMELINE.HERO_END && r <= TIMELINE.ABOUT_START);
+        const rawTunnelProgress = rangeProgress(r, TIMELINE.TUNNEL_START, TIMELINE.TUNNEL_END);
+        const tunnelProgress = isScrollingBack ? Math.max(rawTunnelProgress, 0.8) : rawTunnelProgress;
 
-        // Overall visibility fade-in from HERO_END to smooth transition
-        const overallProgress = rangeProgress(r, TIMELINE.HERO_END, TIMELINE.TUNNEL_START + 0.1);
-        const tunnelVisibility = THREE.MathUtils.clamp(overallProgress, 0, 1);
+        // Overall visibility — keep at full during backward scroll
+        const rawOverallProgress = rangeProgress(r, TIMELINE.HERO_END, TIMELINE.TUNNEL_START + 0.1);
+        const tunnelVisibility = isScrollingBack ? 1.0 : THREE.MathUtils.clamp(rawOverallProgress, 0, 1);
+
+        // Track peak progress for ratchet effect — only goes up, never down
+        // Reset when scroll is before hero (user fully returned to top)
+        if (r < TIMELINE.HERO_END - 0.02) {
+            peakProgressRef.current = 0;
+        }
 
         // Group visibility
         if (groupRef.current) {
             groupRef.current.visible = r >= TIMELINE.HERO_END - 0.01 && r <= TIMELINE.ABOUT_START + 0.08;
+        }
+
+        // Camera position — tunnel expects camera near origin (z=5, looking down the tunnel).
+        // GalleryGroup moves camera to z=60-80; we need to bring it back when in tunnel zone.
+        if (inVoid || inTunnel) {
+            const TUNNEL_CAM_POS = { x: 0, y: 0, z: 5 };
+            camera.position.x = THREE.MathUtils.damp(camera.position.x, TUNNEL_CAM_POS.x, 4, delta);
+            camera.position.y = THREE.MathUtils.damp(camera.position.y, TUNNEL_CAM_POS.y, 4, delta);
+            camera.position.z = THREE.MathUtils.damp(camera.position.z, TUNNEL_CAM_POS.z, 4, delta);
+            camera.lookAt(0, 0, -10);
         }
 
         // FOV effect
@@ -314,9 +335,15 @@ const TunnelGroup: React.FC = () => {
 
         if (inVoid || inTunnel) {
             // Combined progress for smooth speed curve across void + tunnel
-            const combinedProgress = inVoid
+            const rawCombinedProgress = inVoid
                 ? (r - TIMELINE.HERO_END) / (TIMELINE.TUNNEL_START - TIMELINE.HERO_END) * 0.2
                 : 0.2 + tunnelProgress * 0.8;
+
+            // Update peak and use it during backward scroll
+            peakProgressRef.current = Math.max(peakProgressRef.current, rawCombinedProgress);
+            const combinedProgress = isScrollingBack
+                ? Math.max(rawCombinedProgress, peakProgressRef.current * 0.85)
+                : rawCombinedProgress;
 
             if (combinedProgress < 0.2) {
                 // Phase 1 (0-20%): Base visible speed
@@ -395,11 +422,15 @@ const TunnelGroup: React.FC = () => {
         // IMAGE TILES
         // ============================================================================
         // Combined progress for image visibility (starts in void, not just tunnel)
-        const combinedProgress = inVoid
+        // Use peak progress during backward scroll so tile count doesn't drop
+        const rawTileProgress = inVoid
             ? (r - TIMELINE.HERO_END) / (TIMELINE.TUNNEL_START - TIMELINE.HERO_END) * 0.15
             : inTunnel
                 ? 0.15 + tunnelProgress * 0.85
                 : 0;
+        const combinedProgress = isScrollingBack
+            ? Math.max(rawTileProgress, peakProgressRef.current * 0.85)
+            : rawTileProgress;
 
         const activeRatio = (inVoid || inTunnel)
             ? THREE.MathUtils.clamp(combinedProgress + velocityBoost * 0.2, 0, 1)

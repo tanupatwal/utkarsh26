@@ -12,13 +12,16 @@ import SceneSetup from './SceneSetup';
 
 // Section components
 import { TunnelGroup } from '../sections/tunnel';
-import { FlatAboutSection, AboutSection } from '../sections/about';
+import { AboutSection } from '../sections/about';
 import { GalleryGroup } from '../sections/gallery';
 
 /**
  * Experience - Main 3D scene orchestrator.
  * Composes all sections and manages scroll-based navigation.
- * Hero is now rendered outside the Canvas as plain HTML.
+ *
+ * GPU strategy: Both 3D scenes stay mounted (they manage their own
+ * visible = false logic internally). FlatAboutSection removed — the
+ * AboutSection HTML overlay now has a CSS gradient background instead.
  */
 const Experience: React.FC = () => {
     return (
@@ -26,8 +29,8 @@ const Experience: React.FC = () => {
             <SceneSetup />
 
             <ScrollControls pages={SCROLL_CONFIG.PAGES} damping={0.2}>
+                {/* 3D scenes — both mounted, self-manage visibility */}
                 <TunnelGroup />
-                <FlatAboutSection />
                 <GalleryGroup />
 
                 <Scroll html style={{ width: '100%', height: '100%' }}>
