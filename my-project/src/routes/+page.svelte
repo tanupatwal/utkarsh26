@@ -11,7 +11,7 @@
 
 <div class="relative w-full">
 	<!-- 1. HERO: Black BG, fades out -->
-	<section class="h-[100dvh] w-full bg-black">
+	<section class="h-[100dvh] w-full bg-transparent">
 		<Hero />
 	</section>
 

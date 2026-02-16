@@ -59,7 +59,7 @@
 
 <div
 	bind:this={container}
-	class="hero-section flex h-full w-full flex-col items-center justify-center text-center"
+	class="hero-section flex h-full w-full flex-col items-center justify-center bg-black text-center"
 >
 	<div class="relative z-10">
 		<h2 class="mb-4 font-mono text-sm tracking-[0.5em] text-cyan-400 opacity-80">
