@@ -2,6 +2,7 @@
 	import "./layout.css";
 	import GhostScroller from "$lib/components/ui/GhostScroller.svelte";
 	import Canvas3D from "$lib/components/3d/Canvas3D.svelte";
+	import GalleryCanvas from "$lib/components/3d/GalleryCanvas.svelte";
 
 	let { children } = $props();
 </script>
@@ -30,6 +31,9 @@
 
 <!-- 3D Canvas (behind DOM at z-index: -1) -->
 <Canvas3D />
+
+<!-- Gallery 3D Canvas (separate, only during GALLERY zone) -->
+<GalleryCanvas />
 
 <!-- DOM Content -->
 {@render children()}
