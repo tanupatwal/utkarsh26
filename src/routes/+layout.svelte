@@ -1,6 +1,7 @@
 <script lang="ts">
 	import "./layout.css";
 	import GhostScroller from "$lib/components/ui/GhostScroller.svelte";
+	import Canvas3D from "$lib/components/3d/Canvas3D.svelte";
 
 	let { children } = $props();
 </script>
@@ -27,8 +28,8 @@
 <!-- Scroll engine (invisible) -->
 <GhostScroller />
 
-<!-- 3D Canvas will be mounted here in Phase 2 -->
-<!-- <Canvas3D /> -->
+<!-- 3D Canvas (behind DOM at z-index: -1) -->
+<Canvas3D />
 
 <!-- DOM Content -->
 {@render children()}
