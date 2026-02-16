@@ -3,7 +3,7 @@
 	import gsap from 'gsap';
 	import { ScrollTrigger } from 'gsap/dist/ScrollTrigger';
 	import Lenis from 'lenis';
-	import { scrollState } from '$lib/state/scrollState.svelte.js';
+	import { scrollState, updateZone } from '$lib/state/scrollState.svelte.js';
 
 	gsap.registerPlugin(ScrollTrigger);
 
@@ -33,9 +33,15 @@
 		gsap.ticker.lagSmoothing(0);
 
 		// 5. Update Global State
-		lenis.on('scroll', ({ scroll, limit, velocity }) => {
-			scrollState.progress = scroll / limit;
+		lenis.on('scroll', ({ scroll, limit, velocity, progress }) => {
+			scrollState.progress = progress;
 			scrollState.velocity = velocity;
+
+			// Update the zone signal
+			const newZone = updateZone(progress);
+			if (scrollState.activeZone !== newZone) {
+				scrollState.activeZone = newZone;
+			}
 		});
 	});
 

@@ -3,7 +3,10 @@
 	import favicon from '$lib/assets/favicon.svg';
 	// Core Engine
 	import GhostScroller from '$lib/components/GhostScroller.svelte';
-	import Canvas3D from '$lib/components/3d/Canvas3D.svelte';
+	// Conditional Canvases
+	import TunnelCanvas from '$lib/components/3d/TunnelCanvas.svelte';
+	import GalleryCanvas from '$lib/components/3d/GalleryCanvas.svelte';
+	import { scrollState } from '$lib/state/scrollState.svelte.js';
 	import Preloader from '$lib/components/ui/Preloader.svelte';
 
 	let { children } = $props();
@@ -17,8 +20,14 @@
 <!-- 1. The Preloader (Blocks everything until ready) -->
 <Preloader />
 
-<!-- 2. The Theater (Fixed 3D Background) -->
-<Canvas3D />
+<!-- 2. The Theater (Conditionally Mounted 3D Backgrounds) -->
+{#if ['HERO', 'WARP', 'ABOUT'].includes(scrollState.activeZone)}
+	<TunnelCanvas />
+{/if}
+
+{#if scrollState.activeZone === 'GALLERY'}
+	<GalleryCanvas />
+{/if}
 
 <!-- 3. The Engine (Logic Only) -->
 <GhostScroller />

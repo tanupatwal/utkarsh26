@@ -6,12 +6,7 @@
 
 	let container: HTMLElement;
 
-	const events = [
-		{ title: 'ROBO WARS', category: 'FLAGSHIP', color: 'bg-red-500' },
-		{ title: 'HACKATHON', category: 'CODING', color: 'bg-blue-500' },
-		{ title: 'VALORANT', category: 'ESPORTS', color: 'bg-purple-500' },
-		{ title: 'FASHION', category: 'CULTURAL', color: 'bg-pink-500' }
-	];
+	import { EVENTS } from '$lib/data/events';
 
 	onMount(() => {
 		ScrollTrigger.create({
@@ -35,9 +30,9 @@
 
 	<!-- Bento Grid -->
 	<div class="grid h-[60vh] grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-		{#each events as event, i}
+		{#each EVENTS as event, i}
 			<div
-				class={`group relative overflow-hidden rounded-lg border border-white/10 bg-white/5 p-6 transition-all hover:bg-white/10 ${i === 0 ? 'md:col-span-2 md:row-span-2' : ''}`}
+				class={`group relative overflow-hidden rounded-lg border border-white/10 bg-white/5 p-6 transition-all hover:bg-white/10 ${event.span}`}
 			>
 				<div class={`absolute mb-4 h-2 w-2 rounded-full ${event.color}`}></div>
 
