@@ -2,10 +2,6 @@
  * 3D Scene configuration constants.
  */
 export const SCENE_CONFIG = {
-    /** Radius of the image tunnel */
-    TUNNEL_RADIUS: 8,
-    /** Length of the tunnel */
-    TUNNEL_LENGTH: 20,
     /** Fog color (deep blue-black, less harsh than pure black) */
     FOG_COLOR: "#050515",
     /** Radius of the cylindrical gallery (larger = fills more screen) */

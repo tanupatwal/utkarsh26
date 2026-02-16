@@ -3,55 +3,47 @@
  * Values represent normalized scroll progress (0-1).
  *
  * LAYOUT (Pin-Dwell-Release pattern):
- *   0.0  → 0.14  Hero
- *   0.14 → 0.28  Void / deep-dive
- *   0.28 → 0.56  Tunnel trailer
- *   0.56 → 0.72  About section (dwell)
- *   0.72 → 0.80  About → Gallery transition
- *   0.80 → 0.86  Gallery (3D panels)
+ *   0.0  → 0.12  Hero (video + overlay text, fades out)
+ *   0.12 → 0.30  About section (dwell)
+ *   0.30 → 0.34  About → Gallery transition
+ *   0.34 → 0.50  Gallery (3D panels)
  *   ─── Event Highlights / Schedule / Team ───
- *   0.86 → 0.88  Highlights backdrop fade-in
- *   0.88 → 0.91  Highlights dwell (floating gallery)
- *   0.91 → 0.925 Highlights gravity drain + fade-out
- *   0.925→ 0.935 Gap (black pause)
- *   0.935→ 0.945 Schedule fade-in
- *   0.945→ 0.965 Schedule dwell (browse events)
- *   0.965→ 0.97  Schedule fade-out
- *   0.97 → 0.975 Gap (black pause between schedule & team)
- *   0.975→ 0.985 Team fade-in
- *   0.985→ 1.0   Team dwell (scroll through members)
+ *   0.50 → 0.52  Highlights backdrop fade-in
+ *   0.52 → 0.60  Highlights dwell (floating gallery)
+ *   0.60 → 0.62  Highlights gravity drain + fade-out
+ *   0.62 → 0.63  Gap (black pause)
+ *   0.63 → 0.64  Schedule fade-in
+ *   0.64 → 0.72  Schedule dwell (browse events)
+ *   0.72 → 0.73  Schedule fade-out
+ *   0.73 → 0.74  Gap (black pause between schedule & team)
+ *   0.74 → 0.76  Team fade-in
+ *   0.76 → 1.0   Team dwell (scroll through members)
  */
 export const TIMELINE = {
-    /** Hero handoff is complete by this point */
-    HERO_END: 0.14,
-    /** End of the empty deep-dive void phase */
-    VOID_END: 0.28,
-    /** Start of vortex tunnel reveal */
-    TUNNEL_START: 0.28,
-    /** End of tunnel trailer phase */
-    TUNNEL_END: 0.56,
+    /** Hero fades out by this point */
+    HERO_END: 0.12,
     /** Start of about section */
-    ABOUT_START: 0.56,
+    ABOUT_START: 0.12,
     /** About section stays visible until this point */
-    ABOUT_STAY: 0.72,
+    ABOUT_STAY: 0.30,
     /** Transition from about to gallery */
-    TRANSITION: 0.76,
+    TRANSITION: 0.34,
     /** Gallery section begins */
-    GALLERY_START: 0.76,
+    GALLERY_START: 0.34,
     /** Highlights floating gallery begins */
-    HIGHLIGHTS_START: 0.88,
+    HIGHLIGHTS_START: 0.52,
     /** Highlights images begin dissolving */
-    HIGHLIGHTS_DISSOLVE: 0.92,
+    HIGHLIGHTS_DISSOLVE: 0.60,
     /** Schedule section fades in */
-    SCHEDULE_START: 0.935,
+    SCHEDULE_START: 0.63,
     /** Schedule stays fully visible until */
-    SCHEDULE_STAY: 0.965,
+    SCHEDULE_STAY: 0.72,
     /** Schedule fades out */
-    SCHEDULE_END: 0.97,
+    SCHEDULE_END: 0.73,
     /** Team section begins fading in */
-    TEAM_START: 0.975,
+    TEAM_START: 0.74,
     /** Team section fully visible */
-    TEAM_FULL: 0.985,
+    TEAM_FULL: 0.76,
     /** End of scroll experience */
     END: 1.0
 } as const;
