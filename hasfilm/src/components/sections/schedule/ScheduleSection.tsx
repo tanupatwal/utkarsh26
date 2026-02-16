@@ -547,7 +547,7 @@ const ScheduleSection: React.FC = () => {
             ref={containerRef}
             style={{
                 position: 'fixed', top: 0, left: 0,
-                width: '100vw', height: '100vh',
+                width: '100vw', height: '100dvh',
                 opacity: 0, zIndex: 25, overflow: 'hidden auto',
                 scrollBehavior: 'smooth',
                 WebkitOverflowScrolling: 'touch',
@@ -619,7 +619,7 @@ const ScheduleSection: React.FC = () => {
             {/* ── Main content ── */}
             <main style={{
                 position: 'relative', zIndex: 10,
-                width: '100%', minHeight: '100vh',
+                width: '100%', minHeight: '100dvh',
                 display: 'flex', flexDirection: 'column',
                 alignItems: 'center', justifyContent: 'flex-start',
                 paddingTop: '2rem', paddingBottom: '5rem',

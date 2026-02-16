@@ -30,7 +30,7 @@ const STYLES = `
 /* ─── Root container ─── */
 .${CLS}-root {
   position: fixed; inset: 0;
-  width: 100vw; height: 100vh;
+  width: 100vw; height: 100dvh;
   overflow: hidden;
   background: #000;
   font-family: 'Space Grotesk', 'Inter', sans-serif;

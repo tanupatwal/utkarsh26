@@ -665,7 +665,7 @@ const HighlightsSection: React.FC = () => {
                 top: 0,
                 left: 0,
                 width: '100vw',
-                height: '100vh',
+                height: '100dvh',
                 opacity: 0,
                 zIndex: 20,
                 overflow: 'hidden',

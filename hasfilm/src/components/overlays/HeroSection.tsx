@@ -1,128 +1,157 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useCallback } from 'react';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { TIMELINE } from '../../config/timeline';
+
+gsap.registerPlugin(ScrollTrigger);
 
 /**
  * HeroSection — Video background + text overlay with zoom-fade transition.
- * Lives OUTSIDE the Three.js Canvas. As the user scrolls:
+ * Lives OUTSIDE the Three.js Canvas.
+ *
+ * Animation stages (driven by GSAP ScrollTrigger):
  *   Stage 1 (0 → 35% of HERO_END): Static hold
  *   Stage 2 (35% → 80% of HERO_END): Zoom only (scale 1 → 2), stay opaque
  *   Stage 3 (80% → HERO_END): Zoom continues (scale 2 → 2.2) + fade out
- * Uses direct DOM refs for smooth 60fps — no React re-renders.
+ *
+ * Uses GSAP scrub for buttery-smooth interpolation — no manual RAF or lerp.
  */
 const HeroSection: React.FC = () => {
     const containerRef = useRef<HTMLDivElement>(null);
     const matteRef = useRef<HTMLDivElement>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
 
+    // Find drei ScrollControls' scroll container
+    const findScrollContainer = useCallback((): HTMLElement | null => {
+        const candidates = document.querySelectorAll('div[style]');
+        for (const el of candidates) {
+            const style = (el as HTMLElement).style;
+            if (
+                (style.overflow === 'auto' || style.overflowY === 'auto') &&
+                el.scrollHeight > el.clientHeight
+            ) {
+                return el as HTMLElement;
+            }
+        }
+        return null;
+    }, []);
+
     useEffect(() => {
-        // Autoplay video immediately
+        // Autoplay video
         if (videoRef.current) {
             videoRef.current.play().catch(err => {
                 console.log('Autoplay prevented:', err);
             });
         }
 
-        // Transition breakpoints (as fractions of total scroll 0→1)
-        const holdEnd = TIMELINE.HERO_END * 0.35;   // end of static hold
-        const zoomEnd = TIMELINE.HERO_END * 0.80;   // end of zoom-only phase
-        const fadeEnd = TIMELINE.HERO_END;           // fully gone
-
-        const MAX_ZOOM_SCALE = 2.0;
-        const EXIT_SCALE = 2.2;
-
-        // Find the drei ScrollControls scroll container
-        const findScrollContainer = (): HTMLElement | null => {
-            const candidates = document.querySelectorAll('div[style]');
-            for (const el of candidates) {
-                const style = (el as HTMLElement).style;
-                if (
-                    (style.overflow === 'auto' || style.overflowY === 'auto') &&
-                    el.scrollHeight > el.clientHeight
-                ) {
-                    return el as HTMLElement;
-                }
-            }
-            return null;
-        };
+        // Transition breakpoints as fractions of total scroll height
+        const holdEndFrac = TIMELINE.HERO_END * 0.35;
+        const zoomEndFrac = TIMELINE.HERO_END * 0.80;
+        const fadeEndFrac = TIMELINE.HERO_END;
 
         let scrollContainer: HTMLElement | null = null;
-        let dampedR = 0; // smoothed scroll progress
-        let rafId = 0;
+        let ctx: gsap.Context | null = null;
 
-        // RAF loop — polls scroll position and applies damping, synced to render cycle
-        const tick = () => {
-            if (!scrollContainer || !containerRef.current || !matteRef.current) {
-                rafId = requestAnimationFrame(tick);
-                return;
-            }
+        const setupScrollTrigger = (scroller: HTMLElement) => {
+            // Total scrollable distance
+            const scrollDistance = scroller.scrollHeight - scroller.clientHeight;
+            if (scrollDistance <= 0) return;
 
-            const scrollTop = scrollContainer.scrollTop;
-            const scrollHeight = scrollContainer.scrollHeight - scrollContainer.clientHeight;
-            if (scrollHeight <= 0) {
-                rafId = requestAnimationFrame(tick);
-                return;
-            }
+            // Convert fractions to pixel positions
+            const holdEndPx = holdEndFrac * scrollDistance;
+            const zoomEndPx = zoomEndFrac * scrollDistance;
+            const fadeEndPx = fadeEndFrac * scrollDistance;
 
-            const rawR = scrollTop / scrollHeight; // 0 → 1
+            ctx = gsap.context(() => {
+                // Stage 1→2: Zoom phase (holdEnd → zoomEnd)
+                // Scale from 1 → 2, opacity stays at 1
+                gsap.timeline({
+                    scrollTrigger: {
+                        scroller: scroller,
+                        trigger: scroller.children[0] || scroller, // scroll fill div
+                        start: `${holdEndPx}px top`,
+                        end: `${zoomEndPx}px top`,
+                        scrub: 0.5,
+                        invalidateOnRefresh: true,
+                    },
+                })
+                .fromTo(
+                    containerRef.current,
+                    { scale: 1 },
+                    { scale: 2, ease: 'none' }
+                );
 
-            // Lerp toward raw position (matches drei's damping feel)
-            dampedR += (rawR - dampedR) * 0.12;
+                // Stage 2→3: Zoom + fade phase (zoomEnd → fadeEnd)
+                // Scale from 2 → 2.2, opacity 1 → 0, matte 0 → 1
+                gsap.timeline({
+                    scrollTrigger: {
+                        scroller: scroller,
+                        trigger: scroller.children[0] || scroller,
+                        start: `${zoomEndPx}px top`,
+                        end: `${fadeEndPx}px top`,
+                        scrub: 0.5,
+                        invalidateOnRefresh: true,
+                        onUpdate: (self) => {
+                            // Manage visibility
+                            if (containerRef.current) {
+                                containerRef.current.style.visibility =
+                                    self.progress >= 0.99 ? 'hidden' : 'visible';
+                            }
+                        },
+                    },
+                })
+                .fromTo(
+                    containerRef.current,
+                    { scale: 2, opacity: 1 },
+                    { scale: 2.2, opacity: 0, ease: 'none' }
+                )
+                .fromTo(
+                    matteRef.current,
+                    { opacity: 0, visibility: 'visible' },
+                    { opacity: 1, ease: 'none' },
+                    0 // same start time
+                );
 
-            // Snap if very close to avoid endless micro-updates
-            if (Math.abs(dampedR - rawR) < 0.0001) dampedR = rawR;
-
-            const r = dampedR;
-
-            let scale = 1;
-            let opacity = 1;
-            let matteOpacity = 0;
-
-            if (r < holdEnd) {
-                scale = 1;
-                opacity = 1;
-            } else if (r < zoomEnd) {
-                const t = (r - holdEnd) / (zoomEnd - holdEnd);
-                scale = 1 + t * (MAX_ZOOM_SCALE - 1);
-                opacity = 1;
-            } else if (r < fadeEnd) {
-                const t = (r - zoomEnd) / (fadeEnd - zoomEnd);
-                scale = MAX_ZOOM_SCALE + t * (EXIT_SCALE - MAX_ZOOM_SCALE);
-                opacity = 1 - t;
-                matteOpacity = t;
-            } else {
-                scale = EXIT_SCALE;
-                opacity = 0;
-                matteOpacity = 0;
-            }
-
-            opacity = Math.max(0, Math.min(1, opacity));
-
-            containerRef.current.style.transform = `scale(${scale})`;
-            containerRef.current.style.opacity = opacity.toString();
-            containerRef.current.style.visibility = opacity <= 0 ? 'hidden' : 'visible';
-
-            matteRef.current.style.opacity = matteOpacity.toString();
-            matteRef.current.style.visibility = matteOpacity <= 0 ? 'hidden' : 'visible';
-
-            rafId = requestAnimationFrame(tick);
+                // After HERO_END: keep hidden
+                ScrollTrigger.create({
+                    scroller: scroller,
+                    trigger: scroller.children[0] || scroller,
+                    start: `${fadeEndPx}px top`,
+                    end: 'bottom bottom',
+                    onEnter: () => {
+                        if (containerRef.current) {
+                            containerRef.current.style.visibility = 'hidden';
+                            containerRef.current.style.opacity = '0';
+                        }
+                        if (matteRef.current) {
+                            matteRef.current.style.opacity = '0';
+                            matteRef.current.style.visibility = 'hidden';
+                        }
+                    },
+                    onLeaveBack: () => {
+                        if (containerRef.current) {
+                            containerRef.current.style.visibility = 'visible';
+                        }
+                    },
+                });
+            });
         };
 
-        // Retry finding the container (Canvas may not be ready immediately)
+        // Retry finding the scroll container (Canvas may not be ready immediately)
         const findTimer = setInterval(() => {
             scrollContainer = findScrollContainer();
             if (scrollContainer) {
                 clearInterval(findTimer);
-                // Start the RAF loop
-                rafId = requestAnimationFrame(tick);
+                setupScrollTrigger(scrollContainer);
             }
         }, 100);
 
-
         return () => {
             clearInterval(findTimer);
-            cancelAnimationFrame(rafId);
+            if (ctx) ctx.revert();
+            ScrollTrigger.getAll().forEach(st => st.kill());
         };
-    }, []);
+    }, [findScrollContainer]);
 
     return (
         <>
@@ -139,7 +168,7 @@ const HeroSection: React.FC = () => {
                 }}
             />
 
-            {/* Hero container — zoom + fade driven by scroll */}
+            {/* Hero container — zoom + fade driven by GSAP ScrollTrigger */}
             <div
                 ref={containerRef}
                 className="fixed inset-0 w-full h-full z-20 pointer-events-none"
@@ -282,4 +311,3 @@ const HeroSection: React.FC = () => {
 };
 
 export default HeroSection;
-

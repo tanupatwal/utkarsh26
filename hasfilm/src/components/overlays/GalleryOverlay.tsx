@@ -16,7 +16,7 @@ const GalleryOverlay: React.FC<GalleryOverlayProps> = ({ activeIndex, visible })
                 top: 0,
                 left: 0,
                 width: '100vw',
-                height: '100vh',
+                height: '100dvh',
                 pointerEvents: 'none',
                 opacity: visible ? 1 : 0,
                 transition: 'opacity 0.5s ease-in-out',
