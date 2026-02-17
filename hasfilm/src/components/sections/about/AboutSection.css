@@ -28,8 +28,8 @@
     inset: 0;
     background-color: #02020a;
     background-image:
-        linear-gradient(rgba(0, 255, 255, 0.05) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 0, 255, 0.05) 1px, transparent 1px);
+        linear-gradient(rgba(0, 229, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(245, 193, 108, 0.03) 1px, transparent 1px);
     background-size: 50px 50px;
     pointer-events: none;
     z-index: 0;
@@ -41,8 +41,8 @@
     position: absolute;
     inset: 0;
     background:
-        radial-gradient(circle at 10% 20%, rgba(0, 255, 255, 0.06) 0%, transparent 40%),
-        radial-gradient(circle at 90% 80%, rgba(255, 0, 255, 0.05) 0%, transparent 40%);
+        radial-gradient(circle at 10% 20%, rgba(0, 229, 255, 0.04) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(245, 193, 108, 0.03) 0%, transparent 40%);
     pointer-events: none;
     z-index: 0;
 }
@@ -69,7 +69,7 @@
     text-transform: uppercase;
     text-align: center;
     color: #fff;
-    text-shadow: 0 0 5px #00FFFF, 0 0 10px #00FFFF;
+    text-shadow: 0 0 15px rgba(0, 229, 255, 0.4);
     margin: 0;
     line-height: 1.3;
 }
@@ -79,7 +79,7 @@
     width: 128px;
     height: 4px;
     margin: 1rem auto 0;
-    background: linear-gradient(90deg, transparent, #FF00FF, transparent);
+    background: linear-gradient(90deg, transparent, #F5C16C, transparent);
     border: none;
 }
 
@@ -128,14 +128,14 @@
     position: absolute;
     inset: -8px;
     border-radius: 4px;
-    opacity: 0.5;
-    filter: blur(20px);
+    opacity: 0.15;
+    filter: blur(25px);
     transition: opacity 0.5s ease;
     z-index: 0;
 }
 
 .about-card:hover .about-card-glow {
-    opacity: 1;
+    opacity: 0.4;
 }
 
 /* Gradient border wrapper with clip-path */
@@ -196,44 +196,81 @@
 
 /* ── Card variant: Vision (Cyan) ─────────────── */
 .about-card--vision .about-card-glow {
-    background: rgba(0, 255, 255, 0.3);
+    background: rgba(0, 229, 255, 0.3);
 }
 
 .about-card--vision .about-card-border {
-    background: linear-gradient(to bottom right, #00FFFF, #1e3a5f);
-    box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+    background: linear-gradient(to bottom right, #00E5FF, #1e3a5f);
+    box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
 }
 
 .about-card--vision .about-card-icon {
-    color: #00FFFF;
+    color: #00E5FF;
 }
 
-/* ── Card variant: Legacy (Purple) ───────────── */
+/* ── Card variant: Legacy (Gold) ───────────── */
 .about-card--legacy .about-card-glow {
-    background: rgba(255, 0, 255, 0.3);
+    background: rgba(245, 193, 108, 0.3);
 }
 
 .about-card--legacy .about-card-border {
-    background: linear-gradient(to bottom right, #FF00FF, #5b1a5b);
-    box-shadow: 0 0 20px rgba(255, 0, 255, 0.5);
+    background: linear-gradient(to bottom right, #F5C16C, #5b4a1a);
+    box-shadow: 0 0 15px rgba(245, 193, 108, 0.2);
 }
 
 .about-card--legacy .about-card-icon {
-    color: #FF00FF;
+    color: #F5C16C;
 }
 
 /* ── Card variant: Impact (Cyan) ─────────────── */
 .about-card--impact .about-card-glow {
-    background: rgba(0, 255, 255, 0.3);
+    background: rgba(0, 229, 255, 0.3);
 }
 
 .about-card--impact .about-card-border {
-    background: linear-gradient(to bottom right, #00FFFF, #1e3a5f);
-    box-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+    background: linear-gradient(to bottom right, #00E5FF, #1e3a5f);
+    box-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
 }
 
 .about-card--impact .about-card-icon {
-    color: #00FFFF;
+    color: #00E5FF;
+}
+
+/* ── Keyframe Animations ──────────────────────── */
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-15px);
+    }
+}
+
+@keyframes pulse-glow {
+
+    0%,
+    100% {
+        opacity: 0.3;
+    }
+
+    50% {
+        opacity: 0.6;
+    }
+}
+
+@keyframes slide-up-fade {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* ── Hexagonal Images ─────────────────────────── */
@@ -256,14 +293,31 @@
 
 .about-hex-wrapper--left {
     z-index: 10;
-    filter: drop-shadow(0 0 15px rgba(0, 255, 255, 0.6));
+    filter: drop-shadow(0 0 10px rgba(0, 229, 255, 0.3));
+    animation: float 6s ease-in-out infinite;
 }
 
 .about-hex-wrapper--right {
     z-index: 20;
-    filter: drop-shadow(0 0 15px rgba(255, 0, 255, 0.6));
+    filter: drop-shadow(0 0 10px rgba(245, 193, 108, 0.3));
     margin-left: -60px;
     margin-top: 96px;
+    animation: float 7s ease-in-out infinite reverse;
+    /* Reverse and different duration for variety */
+}
+
+/* ... existing hex styles ... */
+
+/* ── Neon lines (decorative horizontal accents) ─ */
+.about-neon-line {
+    width: clamp(80px, 10vw, 140px);
+    height: 2px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, transparent, #00E5FF, #F5C16C, transparent);
+    opacity: 0.5;
+    position: absolute;
+    z-index: 0;
+    animation: pulse-glow 4s ease-in-out infinite;
 }
 
 /* Outer hex border (solid color) */
@@ -274,11 +328,11 @@
 }
 
 .about-hex-wrapper--left .about-hex-border {
-    background: #00FFFF;
+    background: #00E5FF;
 }
 
 .about-hex-wrapper--right .about-hex-border {
-    background: #FF00FF;
+    background: #F5C16C;
 }
 
 /* Inner hex with image */
@@ -322,7 +376,7 @@
     font-weight: 900;
     letter-spacing: 0.05em;
     line-height: 1;
-    text-shadow: 0 0 15px currentColor, 0 0 30px currentColor;
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
 }
 
 .about-stat-label {
@@ -340,7 +394,7 @@
     border-radius: 2px;
     margin-top: 0.25rem;
     opacity: 0.6;
-    box-shadow: 0 0 8px currentColor;
+    box-shadow: 0 0 4px currentColor;
 }
 
 /* ── Decorative corner accents ────────────────── */
@@ -355,29 +409,29 @@
 .about-corner--tl {
     top: 1.5rem;
     left: 1.5rem;
-    border-top: 2px solid rgba(255, 0, 255, 0.4);
-    border-left: 2px solid rgba(255, 0, 255, 0.4);
+    border-top: 2px solid rgba(245, 193, 108, 0.4);
+    border-left: 2px solid rgba(245, 193, 108, 0.4);
 }
 
 .about-corner--tr {
     top: 1.5rem;
     right: 1.5rem;
-    border-top: 2px solid rgba(0, 255, 255, 0.4);
-    border-right: 2px solid rgba(0, 255, 255, 0.4);
+    border-top: 2px solid rgba(0, 229, 255, 0.4);
+    border-right: 2px solid rgba(0, 229, 255, 0.4);
 }
 
 .about-corner--bl {
     bottom: 1.5rem;
     left: 1.5rem;
-    border-bottom: 2px solid rgba(0, 255, 255, 0.4);
-    border-left: 2px solid rgba(0, 255, 255, 0.4);
+    border-bottom: 2px solid rgba(0, 229, 255, 0.4);
+    border-left: 2px solid rgba(0, 229, 255, 0.4);
 }
 
 .about-corner--br {
     bottom: 1.5rem;
     right: 1.5rem;
-    border-bottom: 2px solid rgba(255, 0, 255, 0.4);
-    border-right: 2px solid rgba(255, 0, 255, 0.4);
+    border-bottom: 2px solid rgba(245, 193, 108, 0.4);
+    border-right: 2px solid rgba(245, 193, 108, 0.4);
 }
 
 /* ── Neon lines (decorative horizontal accents) ─ */
@@ -385,7 +439,7 @@
     width: clamp(80px, 10vw, 140px);
     height: 2px;
     border-radius: 2px;
-    background: linear-gradient(90deg, transparent, #00ffff, #ff00ff, transparent);
+    background: linear-gradient(90deg, transparent, #00E5FF, #F5C16C, transparent);
     opacity: 0.5;
     position: absolute;
     z-index: 0;
@@ -404,6 +458,8 @@
 }
 
 /* ── Responsive ───────────────────────────────── */
+
+/* Tablet landscape / small desktop */
 @media (max-width: 1024px) {
     .about-hex-wrapper {
         width: 160px;
@@ -420,65 +476,316 @@
     }
 }
 
+/* Tablet portrait */
 @media (max-width: 900px) {
+    .about-root {
+        /* Allow scroll when content exceeds viewport on shorter tablets */
+        overflow-y: auto;
+    }
+
+    .about-inner {
+        padding: 3rem 1.5rem;
+        gap: 2rem;
+    }
+
     .about-cards-row {
         flex-wrap: wrap;
+        justify-content: center;
         gap: 1.5rem;
     }
 
     .about-hex-group {
         width: 100%;
-        height: 300px;
+        height: 280px;
         justify-content: center;
         order: -1;
+        margin-bottom: 0.5rem;
     }
 
     .about-card {
-        flex: 0 1 calc(50% - 1.5rem);
-        min-width: 200px;
+        flex: 0 1 calc(50% - 1rem);
+        min-width: 260px;
+    }
+
+    .about-stats-row {
+        flex-wrap: wrap;
+        gap: 2rem 3rem;
     }
 }
 
-@media (max-width: 600px) {
-    .about-cards-row {
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .about-card {
-        flex: 1 1 100%;
-        max-width: 340px;
-    }
-
-    .about-hex-group {
-        height: 260px;
-    }
-
-    .about-hex-wrapper {
-        width: 140px;
-        height: 162px;
-    }
-
-    .about-hex-wrapper--right {
-        margin-left: -30px;
-        margin-top: 60px;
-    }
-
-    .about-title {
-        font-size: clamp(1.1rem, 5vw, 1.5rem);
+/* Mobile — primary breakpoint */
+@media (max-width: 768px) {
+    .about-root {
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
     }
 
     .about-inner {
-        padding: 1.5rem 1rem;
+        padding: 2rem 1rem;
+        gap: 1rem;
+        justify-content: center;
     }
 
-    .about-cta {
-        font-size: clamp(1.2rem, 5vw, 1.8rem);
-        padding: 0.5em 1.2em;
+    .about-title {
+        font-size: clamp(1rem, 4.5vw, 1.5rem);
+        letter-spacing: 0.04em;
+        margin-bottom: 0;
     }
 
-    .about-cta-line--left,
-    .about-cta-line--right {
+    .about-title-separator {
+        width: 60px;
+        height: 2px;
+        margin: 0.5rem auto 0;
+    }
+
+    .about-watermark {
+        font-size: 28vw;
+        opacity: 0.03;
+        top: 8%;
+    }
+
+    /* Stack cards vertically but keep them compact */
+    .about-cards-row {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+        width: 100%;
+        max-width: 420px;
+        margin: 0 auto;
+    }
+
+    /* Hide hexagons on mobile */
+    .about-hex-group {
         display: none;
+    }
+
+    /* Horizontal card layout for mobile */
+    .about-card {
+        flex: none;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .about-card-border {
+        /* Simplify clip-path for compact cards */
+        clip-path: polygon(12px 0, 100% 0,
+                100% calc(100% - 12px), calc(100% - 12px) 100%,
+                0 100%, 0 12px);
+    }
+
+    .about-card-content {
+        padding: 0.75rem 1rem;
+        /* Grid: icon left, title+text right */
+        display: grid;
+        grid-template-columns: 28px 1fr;
+        grid-template-rows: auto auto;
+        gap: 0.15rem 0.75rem;
+        align-items: start;
+        clip-path: polygon(12px 0, 100% 0,
+                100% calc(100% - 12px), calc(100% - 12px) 100%,
+                0 100%, 0 12px);
+    }
+
+    .about-card-icon {
+        width: 28px;
+        height: 28px;
+        margin-bottom: 0;
+        grid-row: 1 / -1;
+        align-self: center;
+    }
+
+    .about-card-icon svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .about-card-title {
+        font-size: 0.75rem;
+        margin-bottom: 0.15rem;
+        letter-spacing: 0.06em;
+    }
+
+    .about-card-text {
+        font-size: 0.75rem;
+        line-height: 1.35;
+        color: #9ca3af;
+        /* Clamp to 2 lines on mobile */
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+
+    /* Stats: compact single row */
+    .about-stats-row {
+        flex-wrap: nowrap;
+        gap: 1.5rem;
+        margin-top: 1rem;
+        justify-content: center;
+    }
+
+    .about-stat {
+        min-width: auto;
+        gap: 0.15rem;
+    }
+
+    .about-stat-number {
+        font-size: clamp(1.5rem, 6vw, 2rem);
+    }
+
+    .about-stat-label {
+        font-size: 0.65rem;
+        letter-spacing: 0.08em;
+    }
+
+    .about-stat-bar {
+        width: 24px;
+        height: 2px;
+        margin-top: 0.15rem;
+    }
+
+    /* Decorative elements */
+    .about-neon-line {
+        display: none;
+    }
+
+    .about-corner {
+        width: 30px;
+        height: 30px;
+    }
+
+    .about-corner--tl {
+        top: 0.75rem;
+        left: 0.75rem;
+    }
+
+    .about-corner--tr {
+        top: 0.75rem;
+        right: 0.75rem;
+    }
+
+    .about-corner--bl {
+        bottom: 0.75rem;
+        left: 0.75rem;
+    }
+
+    .about-corner--br {
+        bottom: 0.75rem;
+        right: 0.75rem;
+    }
+}
+
+/* Small mobile */
+@media (max-width: 480px) {
+    .about-inner {
+        padding: 2rem 1rem;
+        gap: 1.25rem;
+    }
+
+    .about-title {
+        font-size: clamp(1rem, 5.5vw, 1.5rem);
+    }
+
+    .about-title-separator {
+        width: 60px;
+        height: 2px;
+    }
+
+    .about-hex-group {
+        height: 170px;
+    }
+
+    .about-hex-wrapper {
+        width: 100px;
+        height: 115px;
+    }
+
+    .about-hex-wrapper--right {
+        margin-left: -24px;
+        margin-top: 40px;
+    }
+
+    .about-cards-row {
+        gap: 1rem;
+    }
+
+    .about-card-content {
+        padding: 1rem;
+    }
+
+    .about-card-icon {
+        width: 32px;
+        height: 32px;
+        margin-bottom: 0.5rem;
+    }
+
+    .about-card-icon svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .about-card-title {
+        font-size: 0.85rem;
+        margin-bottom: 0.4rem;
+    }
+
+    .about-card-text {
+        font-size: 0.85rem;
+        line-height: 1.45;
+    }
+
+    /* Stats: wrap to 2-per-row on very small screens */
+    .about-stats-row {
+        gap: 1.25rem 0.75rem;
+    }
+
+    .about-stat {
+        flex: 1 1 30%;
+        min-width: 70px;
+    }
+
+    .about-stat-number {
+        font-size: 1.8rem;
+    }
+
+    .about-stat-label {
+        font-size: 0.7rem;
+        letter-spacing: 0.06em;
+    }
+
+    .about-stat-bar {
+        width: 24px;
+        height: 2px;
+    }
+}
+
+/* Very small screens (iPhone SE, etc.) */
+@media (max-width: 360px) {
+    .about-inner {
+        padding: 1.5rem 0.75rem;
+        gap: 1rem;
+    }
+
+    .about-title {
+        font-size: 1rem;
+    }
+
+    .about-hex-group {
+        height: 150px;
+    }
+
+    .about-hex-wrapper {
+        width: 85px;
+        height: 98px;
+    }
+
+    .about-hex-wrapper--right {
+        margin-left: -20px;
+        margin-top: 34px;
+    }
+
+    .about-stat-number {
+        font-size: 1.5rem;
     }
 }

@@ -15,9 +15,9 @@ export const TIMELINE = {
     /** Start of about section */
     ABOUT_START: 0.06,
     /** About section stays visible until this point */
-    ABOUT_STAY: 0.14,
+    ABOUT_STAY: 0.10,
     /** Transition from about to gallery */
-    TRANSITION: 0.22,
+    TRANSITION: 0.14,
 
     /** End of scroll experience */
     END: 1.0,

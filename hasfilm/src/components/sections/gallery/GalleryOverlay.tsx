@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
 import { GALLERY_CONTENT } from '../../../data/gallery';
 import { galleryProgress } from '../../../hooks/galleryProgress';
+import { useIsMobile } from '../../../hooks/useIsMobile';
 
 /**
  * GalleryOverlay — HUD overlay for the 3D gallery section.
@@ -23,6 +24,9 @@ const GalleryOverlay: React.FC = () => {
     const activeIndexRef = useRef(0);
     const rafRef = useRef<number>(0);
     const lastTimeRef = useRef(0);
+    const isMobile = useIsMobile();
+    const isMobileRef = useRef(false);
+    isMobileRef.current = isMobile;
 
     const tick = useCallback((time: number) => {
         if (!innerRef.current) {
@@ -39,14 +43,16 @@ const GalleryOverlay: React.FC = () => {
         const p = galleryProgress.current; // 0→1 local to gallery section
 
         // 1. Visibility Logic — visible during panel viewing, hidden during dissolve
+        // On mobile: higher threshold so gallery waits for About to fully disappear
+        const enterThreshold = isMobileRef.current ? 0.08 : 0.02;
         const VIEW_END = 0.85;
-        const isVisible = p > 0.02 && p < 0.88;
+        const isVisible = p > enterThreshold && p < 0.88;
         const targetOpacity = isVisible ? 1 : 0;
         opacityRef.current = THREE.MathUtils.damp(opacityRef.current, targetOpacity, 3, delta);
         innerRef.current.style.opacity = opacityRef.current.toString();
 
         // 2. Active Index Calculation
-        if (p > 0.02) {
+        if (p > enterThreshold) {
             const totalItems = GALLERY_CONTENT.length;
             const progress = Math.min(1, p / VIEW_END); // 0→1 within viewing phase
 

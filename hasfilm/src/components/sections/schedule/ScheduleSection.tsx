@@ -439,6 +439,269 @@ const STYLES = `
   color: ${ACCENT_MED};
   white-space: nowrap;
 }
+
+/* ═══════════════════════════════════════════
+   MOBILE ACCORDION VIEW (≤768px)
+   ═══════════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* Hide desktop grid on mobile */
+  .${CLS}-grid { display: none !important; }
+
+  /* Day tabs — smaller on mobile */
+  .${CLS}-tab span:first-child {
+    font-size: clamp(1rem, 5vw, 1.3rem) !important;
+  }
+
+  /* Mobile list container */
+  .${CLS}-mob-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+    animation: ${CLS}FadeIn 0.35s ease both;
+  }
+
+  /* Accordion item — collapsed row */
+  .${CLS}-mob-item {
+    position: relative;
+    background: linear-gradient(135deg, rgba(255,255,255,0.04) 0%, transparent 100%),
+                rgba(2, 6, 23, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border: 1px solid ${ACCENT_DIM};
+    clip-path: polygon(4% 0, 100% 0, 100% 88%, 96% 100%, 0 100%, 0 12%);
+    cursor: pointer;
+    overflow: hidden;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  .${CLS}-mob-item.expanded {
+    border-color: ${ACCENT_MED};
+    box-shadow: 0 0 20px rgba(56,189,248,0.12),
+                inset 0 0 20px rgba(56,189,248,0.05);
+  }
+
+  /* Collapsed header row */
+  .${CLS}-mob-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    position: relative;
+  }
+
+  /* Thumbnail */
+  .${CLS}-mob-thumb {
+    width: 48px;
+    height: 48px;
+    min-width: 48px;
+    border-radius: 6px;
+    object-fit: cover;
+    border: 1px solid ${ACCENT_DIM};
+    filter: brightness(0.9) saturate(1.1);
+  }
+
+  /* Title + meta in header */
+  .${CLS}-mob-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .${CLS}-mob-title {
+    font-family: 'Space Grotesk', 'Orbitron', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #e2e8f0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
+  }
+  .${CLS}-mob-subtitle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.65rem;
+    color: rgba(148,163,184,0.8);
+    font-family: 'Inter', 'SF Mono', monospace;
+  }
+  .${CLS}-mob-subtitle svg {
+    width: 12px;
+    height: 12px;
+    opacity: 0.7;
+    flex-shrink: 0;
+  }
+  .${CLS}-mob-subtitle .dot {
+    width: 3px;
+    height: 3px;
+    background: ${ACCENT_MED};
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* Category tag + chevron in header */
+  .${CLS}-mob-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  /* Chevron */
+  .${CLS}-mob-chevron {
+    width: 16px;
+    height: 16px;
+    color: ${ACCENT};
+    transition: transform 0.35s cubic-bezier(0.23,1,0.32,1);
+  }
+  .${CLS}-mob-item.expanded .${CLS}-mob-chevron {
+    transform: rotate(180deg);
+  }
+
+  /* Category strip on left edge */
+  .${CLS}-mob-cat-line {
+    position: absolute;
+    left: 0; top: 0; bottom: 0;
+    width: 3px;
+  }
+
+  /* Expanded details panel */
+  .${CLS}-mob-details {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    transition: max-height 0.45s cubic-bezier(0.23,1,0.32,1),
+                opacity 0.35s ease;
+  }
+  .${CLS}-mob-item.expanded .${CLS}-mob-details {
+    max-height: 600px;
+    opacity: 1;
+  }
+
+  /* Expanded image */
+  .${CLS}-mob-exp-img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    filter: brightness(0.9) saturate(1.15);
+    border-top: 1px solid ${ACCENT_DIM};
+    border-bottom: 1px solid ${ACCENT_DIM};
+  }
+
+  /* Expanded content */
+  .${CLS}-mob-exp-content {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .${CLS}-mob-exp-desc {
+    font-size: 0.75rem;
+    font-weight: 300;
+    color: rgba(203,213,225,0.85);
+    line-height: 1.65;
+    margin: 0;
+    letter-spacing: 0.01em;
+  }
+
+  /* Expanded metadata rows */
+  .${CLS}-mob-exp-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(56,189,248,0.06);
+  }
+  .${CLS}-mob-exp-row:last-child { border-bottom: none; }
+  .${CLS}-mob-exp-row svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    opacity: 0.9;
+  }
+  .${CLS}-mob-exp-label {
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(148,163,184,0.9);
+    min-width: 70px;
+  }
+  .${CLS}-mob-exp-value {
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #e2e8f0;
+    letter-spacing: 0.02em;
+  }
+
+  /* Register CTA */
+  .${CLS}-mob-cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem;
+    margin-top: 0.25rem;
+    background: rgba(56,189,248,0.08);
+    border: 1px solid ${ACCENT_MED};
+    clip-path: polygon(3% 0, 100% 0, 97% 100%, 0 100%);
+    color: ${ACCENT};
+    font-family: 'Space Grotesk', 'Orbitron', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+  }
+  .${CLS}-mob-cta:hover {
+    background: rgba(56,189,248,0.15);
+    box-shadow: 0 0 15px rgba(56,189,248,0.25);
+  }
+
+  /* View More button */
+  .${CLS}-mob-viewmore {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.85rem 1rem;
+    margin-top: 0.5rem;
+    background: linear-gradient(135deg, rgba(56,189,248,0.06) 0%, rgba(56,189,248,0.02) 100%);
+    border: 1px dashed ${ACCENT_MED};
+    clip-path: polygon(2% 0, 100% 0, 98% 100%, 0 100%);
+    color: ${ACCENT};
+    font-family: 'Space Grotesk', 'Orbitron', sans-serif;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease;
+  }
+  .${CLS}-mob-viewmore:hover,
+  .${CLS}-mob-viewmore:active {
+    background: rgba(56,189,248,0.12);
+    border-color: ${ACCENT};
+    box-shadow: 0 0 20px rgba(56,189,248,0.15);
+  }
+  .${CLS}-mob-viewmore-count {
+    font-size: 0.65rem;
+    font-weight: 500;
+    color: ${ACCENT_MED};
+    letter-spacing: 0.1em;
+  }
+
+  /* Hide modal on mobile */
+  .${CLS}-modal-backdrop { display: none !important; }
+}
 `;
 
 // ════════════════════════════════════════════════
@@ -453,6 +716,18 @@ const ScheduleSection: React.FC = () => {
     const [activeDay, setActiveDay] = useState(1);
     const [cardsRevealed, setCardsRevealed] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(null);
+    const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
+    const [visibleCount, setVisibleCount] = useState(6);
+
+    // ── Mobile detection ──
+    const [isMobile, setIsMobile] = useState(false);
+    useEffect(() => {
+        const mql = window.matchMedia('(max-width: 768px)');
+        const update = () => setIsMobile(mql.matches);
+        update();
+        mql.addEventListener('change', update);
+        return () => mql.removeEventListener('change', update);
+    }, []);
 
     // Navigate events from modal with arrow keys / Escape
     const navigateEvent = useCallback((dir: -1 | 1) => {
@@ -479,9 +754,15 @@ const ScheduleSection: React.FC = () => {
 
     const handleDayClick = useCallback((dayId: number) => {
         setActiveDay(dayId);
+        setExpandedIndex(null);
+        setVisibleCount(6); // reset progressive loading on day switch
     }, []);
 
     const dayEvents = useMemo(() => getEventsForDay(activeDay), [activeDay]);
+
+    const handleAccordionToggle = useCallback((idx: number) => {
+        setExpandedIndex(prev => prev === idx ? null : idx);
+    }, []);
 
     // SVG bracket geometry
     const bracket = useMemo(() => {
@@ -500,7 +781,7 @@ const ScheduleSection: React.FC = () => {
         const el = containerRef.current;
         if (!el) return;
 
-        // Symmetric fade: in → hold → out
+        // Fade in only — no fade out on exit
         const fadeTl = gsap.timeline({
             scrollTrigger: {
                 trigger: '#schedule-section',
@@ -510,9 +791,8 @@ const ScheduleSection: React.FC = () => {
             },
         });
         fadeTl
-            .fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.25 })
-            .to(el, { opacity: 1, duration: 0.5 })
-            .to(el, { opacity: 0, duration: 0.25 });
+            .fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.15 })
+            .to(el, { opacity: 1, duration: 0.85 });
 
         // Cards: reveal when section in view
         const st = ScrollTrigger.create({
@@ -703,11 +983,12 @@ const ScheduleSection: React.FC = () => {
                     </div>
                 </nav>
 
-                {/* ── Card Grid ── */}
+                {/* ── Card Grid (desktop) + Mobile Accordion ── */}
                 <div style={{
                     width: '100%', maxWidth: '1400px',
                     padding: '0 2rem 4rem',
                 }}>
+                    {/* Desktop 3D Card Grid */}
                     <div key={activeDay} className={`${CLS}-grid`}>
                         {dayEvents.map((event, i) => {
                             const catColor = event.category ? CATEGORY_COLORS[event.category] || ACCENT : ACCENT;
@@ -817,6 +1098,163 @@ const ScheduleSection: React.FC = () => {
                             );
                         })}
                     </div>
+
+                    {/* ── Mobile Accordion List ── */}
+                    {isMobile && (
+                        <div key={`mob-${activeDay}`} className={`${CLS}-mob-list`}>
+                            {dayEvents.slice(0, visibleCount).map((event, i) => {
+                                const catColor = event.category ? CATEGORY_COLORS[event.category] || ACCENT : ACCENT;
+                                const catLabel = event.category?.toUpperCase() || 'EVENT';
+                                const isExpanded = expandedIndex === i;
+                                return (
+                                    <div
+                                        key={event.title}
+                                        className={`${CLS}-mob-item ${isExpanded ? 'expanded' : ''}`}
+                                        style={{
+                                            opacity: cardsRevealed ? 1 : 0,
+                                            transform: cardsRevealed ? 'translateY(0)' : 'translateY(12px)',
+                                            transition: `opacity 0.4s ease ${i * 40}ms, transform 0.4s ease ${i * 40}ms, border-color 0.3s ease, box-shadow 0.3s ease`,
+                                        }}
+                                    >
+                                        {/* Category color strip on left */}
+                                        <div className={`${CLS}-mob-cat-line`} style={{ background: catColor }} />
+
+                                        {/* Collapsed header */}
+                                        <div
+                                            className={`${CLS}-mob-header`}
+                                            onClick={() => handleAccordionToggle(i)}
+                                        >
+                                            <img
+                                                className={`${CLS}-mob-thumb`}
+                                                src={event.image}
+                                                alt={event.title}
+                                                loading="lazy"
+                                            />
+                                            <div className={`${CLS}-mob-info`}>
+                                                <h4 className={`${CLS}-mob-title`}>{event.title}</h4>
+                                                <div className={`${CLS}-mob-subtitle`}>
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.5">
+                                                        <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
+                                                    </svg>
+                                                    <span>{event.time}{event.endTime ? ` – ${event.endTime}` : ''}</span>
+                                                    <span className="dot" />
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.5">
+                                                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
+                                                        <circle cx="12" cy="9" r="2.5" />
+                                                    </svg>
+                                                    <span>{event.venue}</span>
+                                                </div>
+                                            </div>
+                                            <div className={`${CLS}-mob-right`}>
+                                                <span className={`${CLS}-cat-tag`} style={{
+                                                    background: `${catColor}20`, color: catColor,
+                                                    border: `1px solid ${catColor}40`,
+                                                    clipPath: 'polygon(8% 0, 100% 0, 92% 100%, 0 100%)',
+                                                }}>
+                                                    {catLabel}
+                                                </span>
+                                                <svg className={`${CLS}-mob-chevron`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                    <path d="M6 9l6 6 6-6" />
+                                                </svg>
+                                            </div>
+                                        </div>
+
+                                        {/* Expanded details */}
+                                        <div className={`${CLS}-mob-details`}>
+                                            <img
+                                                className={`${CLS}-mob-exp-img`}
+                                                src={event.image}
+                                                alt={event.title}
+                                                loading="lazy"
+                                            />
+                                            <div className={`${CLS}-mob-exp-content`}>
+                                                {event.description && (
+                                                    <p className={`${CLS}-mob-exp-desc`}>{event.description}</p>
+                                                )}
+
+                                                <div className={`${CLS}-divider`} />
+
+                                                {/* Time */}
+                                                <div className={`${CLS}-mob-exp-row`}>
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke={catColor} strokeWidth="1.5">
+                                                        <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
+                                                    </svg>
+                                                    <span className={`${CLS}-mob-exp-label`}>Time</span>
+                                                    <span className={`${CLS}-mob-exp-value`}>
+                                                        {event.time}{event.endTime ? ` – ${event.endTime}` : ''}
+                                                    </span>
+                                                </div>
+
+                                                {/* Venue */}
+                                                <div className={`${CLS}-mob-exp-row`}>
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke={catColor} strokeWidth="1.5">
+                                                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
+                                                        <circle cx="12" cy="9" r="2.5" />
+                                                    </svg>
+                                                    <span className={`${CLS}-mob-exp-label`}>Venue</span>
+                                                    <span className={`${CLS}-mob-exp-value`}>{event.venue}</span>
+                                                </div>
+
+                                                {/* Prize Pool */}
+                                                {event.prizePool && (
+                                                    <div className={`${CLS}-mob-exp-row`}>
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke={catColor} strokeWidth="1.5">
+                                                            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+                                                            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                                                            <path d="M4 22h16" />
+                                                            <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+                                                        </svg>
+                                                        <span className={`${CLS}-mob-exp-label`}>Prize</span>
+                                                        <span className={`${CLS}-mob-exp-value`} style={{ color: catColor, fontWeight: 700 }}>
+                                                            {event.prizePool}
+                                                        </span>
+                                                    </div>
+                                                )}
+
+                                                {/* Team Size */}
+                                                {event.teamSize && (
+                                                    <div className={`${CLS}-mob-exp-row`}>
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke={catColor} strokeWidth="1.5">
+                                                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                                            <circle cx="9" cy="7" r="4" />
+                                                            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                                                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                                        </svg>
+                                                        <span className={`${CLS}-mob-exp-label`}>Team</span>
+                                                        <span className={`${CLS}-mob-exp-value`}>{event.teamSize}</span>
+                                                    </div>
+                                                )}
+
+                                                {/* Register CTA */}
+                                                <div className={`${CLS}-mob-cta`}>
+                                                    Register Now
+                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                        <path d="M5 12h14M12 5l7 7-7 7" />
+                                                    </svg>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+
+                            {/* View More button */}
+                            {visibleCount < dayEvents.length && (
+                                <div
+                                    className={`${CLS}-mob-viewmore`}
+                                    onClick={() => setVisibleCount(prev => prev + 6)}
+                                >
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                        <path d="M12 5v14M5 12h14" />
+                                    </svg>
+                                    View More
+                                    <span className={`${CLS}-mob-viewmore-count`}>
+                                        {Math.min(visibleCount, dayEvents.length)} / {dayEvents.length}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             </main>
 

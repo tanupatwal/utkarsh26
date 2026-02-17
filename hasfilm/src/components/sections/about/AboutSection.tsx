@@ -2,6 +2,7 @@
 import React, { useRef, useEffect, useCallback, useState } from 'react';
 import * as THREE from 'three';
 import { TIMELINE } from '../../../config/timeline';
+import { useIsMobile } from '../../../hooks/useIsMobile';
 import { scrollProgress } from '../../../hooks/useScrollProgress';
 import './AboutSection.css';
 
@@ -64,9 +65,9 @@ const CARDS: {
 // ════════════════════════════════════════════════
 
 const STATS = [
-    { target: 3, suffix: '', label: 'Days Event', color: '#00FFFF' },
-    { target: 10, suffix: 'K+', label: 'Attendees', color: '#FF00FF' },
-    { target: 100, suffix: '+', label: 'Events', color: '#00FFFF' },
+    { target: 3, suffix: '', label: 'Days Event', color: '#00E5FF' },
+    { target: 10, suffix: 'K+', label: 'Attendees', color: '#F5C16C' },
+    { target: 100, suffix: '+', label: 'Events', color: '#00E5FF' },
 ];
 
 // ════════════════════════════════════════════════
@@ -107,8 +108,7 @@ const AnimatedStat: React.FC<{
         }
 
         if (!isVisible) {
-            hasAnimatedRef.current = false;
-            setValue(0);
+            // Stop animation if it's running, but DO NOT reset value or hasAnimated flag
             if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
         }
 
@@ -138,6 +138,9 @@ const AboutSection: React.FC = () => {
     const rafRef = useRef<number>(0);
     const lastTimeRef = useRef(0);
     const [sectionVisible, setSectionVisible] = useState(false);
+    const isMobile = useIsMobile();
+    const isMobileRef = useRef(false);
+    isMobileRef.current = isMobile;
 
     const tick = useCallback((time: number) => {
         if (!contentRef.current) {
@@ -154,17 +157,21 @@ const AboutSection: React.FC = () => {
         const r = scrollProgress.current;
 
         // Simple fade: in during ABOUT_START→+0.03, hold, out during ABOUT_STAY→TRANSITION
+        // On mobile: sharper/earlier fade-out so section is fully gone before gallery
+        const mobile = isMobileRef.current;
+        const aboutStay = mobile ? TIMELINE.ABOUT_START + 0.06 : TIMELINE.ABOUT_STAY;
+        const aboutEnd = mobile ? TIMELINE.ABOUT_START + 0.12 : TIMELINE.TRANSITION;
         let targetOpacity = 0;
 
-        if (r >= TIMELINE.ABOUT_START && r <= TIMELINE.TRANSITION) {
+        if (r >= TIMELINE.ABOUT_START && r <= aboutEnd) {
             const fadeInEnd = TIMELINE.ABOUT_START + 0.03;
 
             if (r < fadeInEnd) {
                 targetOpacity = (r - TIMELINE.ABOUT_START) / (fadeInEnd - TIMELINE.ABOUT_START);
-            } else if (r <= TIMELINE.ABOUT_STAY) {
+            } else if (r <= aboutStay) {
                 targetOpacity = 1;
             } else {
-                const fadeOutT = (r - TIMELINE.ABOUT_STAY) / (TIMELINE.TRANSITION - TIMELINE.ABOUT_STAY);
+                const fadeOutT = (r - aboutStay) / (aboutEnd - aboutStay);
                 targetOpacity = Math.max(0, 1 - fadeOutT);
             }
         }
@@ -213,7 +220,13 @@ const AboutSection: React.FC = () => {
                     {CARDS.map((card, i) => (
                         <React.Fragment key={card.key}>
                             {/* Card */}
-                            <article className={`about-card ${card.variant}`}>
+                            <article
+                                className={`about-card ${card.variant}`}
+                                style={{
+                                    animation: sectionVisible ? `slide-up-fade 0.8s ease-out forwards ${i * 0.2}s` : 'none',
+                                    opacity: sectionVisible ? 1 : 0, // Ensure invisible before animation
+                                }}
+                            >
                                 {/* Glow behind card */}
                                 <div className="about-card-glow" />
                                 {/* Gradient border wrapper with clip-path */}
@@ -229,7 +242,13 @@ const AboutSection: React.FC = () => {
 
                             {/* Insert hexagonal images after the 2nd card */}
                             {i === 1 && (
-                                <div className="about-hex-group">
+                                <div
+                                    className="about-hex-group"
+                                    style={{
+                                        animation: sectionVisible ? `slide-up-fade 0.8s ease-out forwards 0.3s` : 'none',
+                                        opacity: sectionVisible ? 1 : 0,
+                                    }}
+                                >
                                     <div className="about-hex-wrapper about-hex-wrapper--left">
                                         <div className="about-hex-border" />
                                         <div className="about-hex">

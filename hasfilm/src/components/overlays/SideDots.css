@@ -1,0 +1,100 @@
+/* ===========================
+   SideDots — Vertical Dot Indicator
+   =========================== */
+
+.side-dots {
+    position: fixed;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 100;
+    pointer-events: auto;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+}
+
+/* ── Individual dot ── */
+
+.side-dots__item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    cursor: pointer;
+    background: none;
+    border: none;
+    padding: 0;
+    outline: none;
+}
+
+.side-dots__dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    flex-shrink: 0;
+}
+
+.side-dots__item:hover .side-dots__dot {
+    background: rgba(255, 255, 255, 0.5);
+    transform: scale(1.3);
+}
+
+/* Active dot */
+.side-dots__item.active .side-dots__dot {
+    width: 10px;
+    height: 10px;
+    background: #D4AF37;
+    border-color: rgba(212, 175, 55, 0.6);
+    box-shadow:
+        0 0 8px rgba(212, 175, 55, 0.4),
+        0 0 20px rgba(212, 175, 55, 0.15);
+}
+
+/* ── Tooltip ── */
+
+.side-dots__tooltip {
+    position: absolute;
+    right: calc(100% + 14px);
+    top: 50%;
+    transform: translateY(-50%);
+    white-space: nowrap;
+
+    font-family: 'Inter', sans-serif;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.85);
+
+    background: rgba(15, 20, 35, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    padding: 5px 10px;
+
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    transform: translateY(-50%) translateX(6px);
+}
+
+.side-dots__item:hover .side-dots__tooltip {
+    opacity: 1;
+    transform: translateY(-50%) translateX(0);
+}
+
+/* ── Connecting line between dots ── */
+
+.side-dots__line {
+    width: 1px;
+    height: 12px;
+    background: rgba(255, 255, 255, 0.06);
+    flex-shrink: 0;
+}

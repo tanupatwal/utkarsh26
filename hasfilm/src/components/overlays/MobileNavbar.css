@@ -1,0 +1,161 @@
+/* ===========================
+   MobileNavbar — Bottom Glassmorphic Tab Bar
+   =========================== */
+
+.mobile-navbar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    pointer-events: auto;
+
+    /* Glassmorphism */
+    background: rgba(10, 14, 28, 0.6);
+    backdrop-filter: blur(24px) saturate(1.5);
+    -webkit-backdrop-filter: blur(24px) saturate(1.5);
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    box-shadow: 0 -4px 30px rgba(0, 0, 0, 0.4);
+
+    /* Safe area for iOS home indicator */
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+
+    /* Layout */
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding-top: 8px;
+    padding-left: 4px;
+    padding-right: 4px;
+
+    /* Auto-hide transition */
+    transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mobile-navbar.hidden {
+    transform: translateY(100%);
+}
+
+/* ── Tab item ── */
+
+.mobile-navbar__tab {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    padding: 6px 12px 8px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-radius: 12px;
+    transition: all 0.25s ease;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+}
+
+.mobile-navbar__tab:active {
+    transform: scale(0.92);
+}
+
+/* Icon */
+.mobile-navbar__icon {
+    width: 22px;
+    height: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.35);
+    transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.mobile-navbar__tab:hover .mobile-navbar__icon,
+.mobile-navbar__tab.active .mobile-navbar__icon {
+    color: rgba(255, 255, 255, 0.95);
+}
+
+/* Label */
+.mobile-navbar__label {
+    font-family: 'Inter', sans-serif;
+    font-size: 0.6rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    color: rgba(255, 255, 255, 0.3);
+    transition: color 0.3s ease;
+}
+
+.mobile-navbar__tab.active .mobile-navbar__label {
+    color: #F5C16C;
+}
+
+/* Active dot indicator */
+.mobile-navbar__tab.active::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 16px;
+    height: 2px;
+    border-radius: 1px;
+    background: #D4AF37;
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+}
+
+/* ── Burger trigger (top-right) ── */
+
+.mobile-burger {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    z-index: 110;
+    pointer-events: auto;
+
+    width: 44px;
+    height: 44px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+
+    /* Glassmorphism */
+    background: rgba(10, 14, 28, 0.5);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 5px;
+    padding: 0;
+
+    transition: background 0.3s ease;
+}
+
+.mobile-burger:active {
+    background: rgba(10, 14, 28, 0.7);
+}
+
+.mobile-burger__line {
+    width: 20px;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 1px;
+    transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: center;
+}
+
+/* Animate to X when open */
+.mobile-burger.open .mobile-burger__line:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+}
+
+.mobile-burger.open .mobile-burger__line:nth-child(2) {
+    opacity: 0;
+    transform: scaleX(0);
+}
+
+.mobile-burger.open .mobile-burger__line:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+}
