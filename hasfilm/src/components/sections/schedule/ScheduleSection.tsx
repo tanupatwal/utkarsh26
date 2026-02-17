@@ -495,35 +495,37 @@ const ScheduleSection: React.FC = () => {
         return { pathD: `M ${sx} 0 L ${fx} 0 L ${dx} 40 L 1000 40`, fx, dx };
     }, [activeDay]);
 
-    // ── ScrollTrigger: fade-in only (no fade-out at end → continuous flow into Team) ──
+    // ── ScrollTrigger: symmetric fade (in/hold/out) + card reveal ──
     useEffect(() => {
         const el = containerRef.current;
         if (!el) return;
 
-        // Fade in as section enters viewport — stays at full opacity (no fade-out)
-        const fadeInTl = gsap.timeline({
+        // Symmetric fade: in → hold → out
+        const fadeTl = gsap.timeline({
             scrollTrigger: {
                 trigger: '#schedule-section',
-                start: 'top 90%',
-                end: 'top 20%',
+                start: 'top bottom',
+                end: 'bottom top',
                 scrub: 0.5,
             },
         });
-        fadeInTl.fromTo(el, { opacity: 0 }, { opacity: 1 });
+        fadeTl
+            .fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.25 })
+            .to(el, { opacity: 1, duration: 0.5 })
+            .to(el, { opacity: 0, duration: 0.25 });
 
-        // Cards: reveal once section is in view, only hide if user scrolls back ABOVE
+        // Cards: reveal when section in view
         const st = ScrollTrigger.create({
             trigger: '#schedule-section',
             start: 'top 70%',
             end: 'bottom top',
             onEnter: () => setCardsRevealed(true),
             onEnterBack: () => setCardsRevealed(true),
-            onLeave: () => setCardsRevealed(true),      // stay revealed when leaving to Team
-            onLeaveBack: () => setCardsRevealed(false),  // hide only when scrolling back up past section
+            onLeaveBack: () => setCardsRevealed(false),
         });
 
         return () => {
-            fadeInTl.kill();
+            fadeTl.kill();
             st.kill();
         };
     }, []);

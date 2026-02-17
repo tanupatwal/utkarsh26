@@ -2,8 +2,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
 import { GALLERY_CONTENT } from '../../../data/gallery';
-import { TIMELINE } from '../../../config/timeline';
-import { scrollProgress } from '../../../hooks/useScrollProgress';
+import { galleryProgress } from '../../../hooks/galleryProgress';
 
 /**
  * GalleryOverlay — HUD overlay for the 3D gallery section.
@@ -37,18 +36,19 @@ const GalleryOverlay: React.FC = () => {
         const delta = deltaMs / 1000;
         lastTimeRef.current = time;
 
-        const r = scrollProgress.current;
+        const p = galleryProgress.current; // 0→1 local to gallery section
 
-        // 1. Visibility Logic
-        const isVisible = r >= TIMELINE.GALLERY_START && r <= TIMELINE.GALLERY_VIEW_END;
+        // 1. Visibility Logic — visible during panel viewing, hidden during dissolve
+        const VIEW_END = 0.85;
+        const isVisible = p > 0.02 && p < 0.88;
         const targetOpacity = isVisible ? 1 : 0;
         opacityRef.current = THREE.MathUtils.damp(opacityRef.current, targetOpacity, 3, delta);
         innerRef.current.style.opacity = opacityRef.current.toString();
 
         // 2. Active Index Calculation
-        if (r >= TIMELINE.GALLERY_START) {
+        if (p > 0.02) {
             const totalItems = GALLERY_CONTENT.length;
-            const progress = (r - TIMELINE.GALLERY_START) / (TIMELINE.GALLERY_VIEW_END - TIMELINE.GALLERY_START);
+            const progress = Math.min(1, p / VIEW_END); // 0→1 within viewing phase
 
             const rawIndex = Math.max(0, Math.min(progress * totalItems - 0.5, totalItems - 1));
             const index = Math.round(rawIndex);
@@ -59,8 +59,8 @@ const GalleryOverlay: React.FC = () => {
             }
 
             // === EXIT SEQUENCE ===
-            const exitStart = 0.96;
-            const exitT = progress > exitStart ? (progress - exitStart) / (1 - exitStart) : 0;
+            const exitStart = 0.80;
+            const exitT = p > exitStart ? (p - exitStart) / (0.88 - exitStart) : 0;
             const targetExit = Math.min(1, Math.max(0, exitT));
             exitProgress.current = THREE.MathUtils.damp(exitProgress.current, targetExit, 3, delta);
 

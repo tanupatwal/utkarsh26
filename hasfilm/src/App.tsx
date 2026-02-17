@@ -1,8 +1,13 @@
-import React, { Suspense, useMemo } from 'react';
+import React, { Suspense, useEffect, useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
+import gsap from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Navbar } from './components/overlays';
 import HeroSection from './components/overlays/HeroSection';
 import LenisProvider from './providers/LenisProvider';
+import { galleryProgress } from './hooks/galleryProgress';
+
+gsap.registerPlugin(ScrollTrigger);
 
 // DOM sections (outside Canvas — real scroll)
 import { AboutSection } from './components/sections/about';
@@ -33,6 +38,20 @@ const App: React.FC = () => {
         if (isMobile && isSmallScreen) return [1, 1]; // No retina on low-end mobile
         if (isMobile) return [1, 1.5];                 // Capped retina on tablets
         return [1, 2];                                 // Full retina on desktop
+    }, []);
+
+    // Drive gallery progress from ScrollTrigger (local 0→1, independent of other section heights)
+    useEffect(() => {
+        const st = ScrollTrigger.create({
+            trigger: '#gallery-section',
+            start: 'top top',
+            end: 'bottom bottom',
+            scrub: true,
+            onUpdate: (self) => {
+                galleryProgress.current = self.progress;
+            },
+        });
+        return () => st.kill();
     }, []);
 
     return (
@@ -70,10 +89,10 @@ const App: React.FC = () => {
                 <AboutSection />
                 <div style={{ height: '200vh' }} />
 
-                {/* Gallery trigger zone — tall div that drives 3D gallery rotation */}
-                <div className="gallery-trigger" style={{ height: '500vh', position: 'relative' }}>
+                {/* Gallery section — drives 3D gallery + HUD via ScrollTrigger */}
+                <section id="gallery-section" style={{ height: '500vh', position: 'relative' }}>
                     <GalleryOverlay />
-                </div>
+                </section>
 
                 {/* Post-gallery sections — each <section> provides:
                  *   1. Real scroll height for ScrollTrigger
@@ -87,7 +106,7 @@ const App: React.FC = () => {
                     <ScheduleSection />
                 </section>
 
-                <section id="team-section" style={{ height: '150vh', position: 'relative' }}>
+                <section id="team-section" style={{ height: '400vh', position: 'relative' }}>
                     <TeamSection />
                 </section>
             </main>

@@ -369,31 +369,30 @@ const TeamSection: React.FC = () => {
     }
   }, [effectiveIndex]);
 
-  // ── ScrollTrigger: fade + pin + snap ──
+  // ── ScrollTrigger: fade + scroll-driven member selection ──
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
 
-    // Fade in/out
+    // Fade in/out — starts later so it doesn't cover Schedule too early
     const fadeTl = gsap.timeline({
       scrollTrigger: {
         trigger: '#team-section',
-        start: 'top bottom',
+        start: 'top 90%',
         end: 'bottom top',
         scrub: 0.5,
       },
     });
     fadeTl
-      .fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.15 })
-      .to(el, { opacity: 1, duration: 0.5 })
-      .to(el, { opacity: 0, duration: 0.15 });
+      .fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.25 })
+      .to(el, { opacity: 1, duration: 0.75 });
 
-    // Scroll-driven member selection via scrub progress
+    // Scroll-driven member selection — full range for smooth pacing
     const memberST = ScrollTrigger.create({
       trigger: '#team-section',
-      start: 'top 40%',
-      end: 'bottom 60%',
-      scrub: 0.3,
+      start: 'top top',
+      end: 'bottom bottom',
+      scrub: 1,
       onUpdate: (self) => {
         const p = self.progress; // 0..1
         const idx = Math.round(p * (totalMembers - 1));

@@ -70,7 +70,7 @@ const LenisProvider: React.FC<LenisProviderProps> = ({ children }) => {
 
         // Gallery velocity dampening — slow scroll in gallery section
         ScrollTrigger.create({
-            trigger: '.gallery-trigger',
+            trigger: '#gallery-section',
             start: 'top top',
             end: 'bottom bottom',
             onEnter: () => {

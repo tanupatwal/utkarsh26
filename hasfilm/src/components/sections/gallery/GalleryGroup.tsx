@@ -2,9 +2,9 @@ import React, { useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
 import { Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
-import { TIMELINE, SCENE_CONFIG, CAMERA_CONFIG } from '../../../config';
+import { SCENE_CONFIG, CAMERA_CONFIG } from '../../../config';
 import { GALLERY_CONTENT } from '../../../data';
-import { scrollProgress } from '../../../hooks/useScrollProgress';
+import { galleryProgress } from '../../../hooks/galleryProgress';
 import ThickPanel from './ThickPanel';
 import GalleryEffects from './GalleryEffects';
 import { useGalleryColors, tintFogColor } from '../../../hooks/useGalleryColors';
@@ -46,11 +46,6 @@ const GalleryGroup: React.FC = () => {
         };
     }, [scene]);
 
-    const CAM_POS_START = new THREE.Vector3(
-        CAMERA_CONFIG.START.x,
-        CAMERA_CONFIG.START.y,
-        CAMERA_CONFIG.START.z
-    );
     const CAM_POS_END = new THREE.Vector3(
         CAMERA_CONFIG.END.x,
         CAMERA_CONFIG.END.y,
@@ -83,11 +78,10 @@ const GalleryGroup: React.FC = () => {
     }
 
     useFrame(() => {
-        const r = scrollProgress.current;
+        const p = galleryProgress.current; // 0→1 local to gallery section
 
-        // Manage active state for performance — only render heavy effects
-        // during the actual gallery zone, not before (About section) or after (Highlights)
-        const shouldBeActive = r > TIMELINE.ABOUT_STAY && r <= TIMELINE.GALLERY_HIDE;
+        // Gallery is active when ScrollTrigger progress is between 0 and 1
+        const shouldBeActive = p > 0.001 && p < 0.999;
 
         if (isActive !== shouldBeActive) {
             setIsActive(shouldBeActive);
@@ -95,155 +89,133 @@ const GalleryGroup: React.FC = () => {
 
         if (!groupRef.current) return;
 
-        // Hide immediately after dissolve completes — no reason to
-        // keep 3D gallery visible after panels are dissolved and camera is
-        // zoomed to z=35. Leaving it on causes the "behind gallery" feeling
-        // as the WebGL canvas shows the back of the cylinder.
-
         // Zero out fog once past the gallery to prevent haze over Highlights
         if (scene.fog && scene.fog instanceof THREE.FogExp2) {
-            if (r > TIMELINE.GALLERY_HIDE) {
+            if (p > 0.97) {
                 scene.fog.density = 0;
-            } else if (r >= TIMELINE.ABOUT_STAY) {
-                // Restore fog during active gallery zone
+            } else if (p > 0.001) {
                 scene.fog.density = 0.012;
             }
         }
 
-        if (r < TIMELINE.ABOUT_STAY || r > TIMELINE.GALLERY_HIDE) {
+        // Hide when fully outside gallery
+        if (p <= 0.001 || p >= 0.999) {
             groupRef.current.visible = false;
             return;
         }
 
         groupRef.current.visible = true;
 
-        // TRANSITION phase
-        if (r >= TIMELINE.ABOUT_STAY && r < TIMELINE.GALLERY_START) {
-            const t = (r - TIMELINE.ABOUT_STAY) / (TIMELINE.GALLERY_START - TIMELINE.ABOUT_STAY);
-            const smoothT = t * t * (3 - 2 * t);
+        // ── SUB-PHASE BOUNDARIES (local 0→1) ──
+        const VIEW_END = 0.85;  // panel rotation ends
+        const PAUSE_END = 0.90;  // last panel dwells
+        const DISSOLVE_END = 0.97;  // dissolve animation
+        // > 0.97 = post-dissolve (hidden)
 
-            camera.position.lerpVectors(CAM_POS_START, CAM_POS_END, smoothT);
+        const totalItems = GALLERY_CONTENT.length;
+        const angleStep = SCENE_CONFIG.CYLINDER_ARC / totalItems;
 
-            const scale = THREE.MathUtils.lerp(0.8, 1, smoothT);
-            groupRef.current.scale.setScalar(scale);
+        // Camera: always at end position during gallery (transition-in handled separately)
+        camera.position.copy(CAM_POS_END);
+        groupRef.current.scale.setScalar(1);
 
-            const transitionRot = smoothT * 0.2;
-            groupRef.current.rotation.y = transitionRot;
+        if (p < VIEW_END) {
+            // ── VIEWING: Sticky scroll through panels ──
+            const rotProgress = p / VIEW_END; // 0→1 within viewing phase
 
-            smoothedRot.current = transitionRot;
-        }
-        // ACTIVE gallery phase — split into: Viewing → Pause → Dissolve
-        else if (r >= TIMELINE.GALLERY_START) {
-            camera.position.copy(CAM_POS_END);
-            groupRef.current.scale.setScalar(1);
+            const rawIndex = Math.max(0, Math.min(rotProgress * totalItems - 0.5, totalItems - 1));
+            const index = Math.min(Math.floor(rawIndex), totalItems - 2);
+            let frac = index >= 0 ? rawIndex - index : 0;
 
-            const totalItems = GALLERY_CONTENT.length;
-            const angleStep = SCENE_CONFIG.CYLINDER_ARC / totalItems;
+            if (rawIndex >= totalItems - 1) { frac = 0; }
 
-            if (r < TIMELINE.GALLERY_VIEW_END) {
-                // ── SUB-PHASE A: Sticky scroll through panels ──
-                const rotProgress = (r - TIMELINE.GALLERY_START) / (TIMELINE.GALLERY_VIEW_END - TIMELINE.GALLERY_START);
-
-                const rawIndex = Math.max(0, Math.min(rotProgress * totalItems - 0.5, totalItems - 1));
-                const index = Math.min(Math.floor(rawIndex), totalItems - 2);
-                let frac = index >= 0 ? rawIndex - index : 0;
-
-                if (rawIndex >= totalItems - 1) { frac = 0; }
-
-                // Sticky easing
-                if (frac < 0.5) {
-                    frac = 4 * frac * frac * frac;
-                } else {
-                    frac = 1 - Math.pow(-2 * frac + 2, 3) / 2;
-                }
-
-                const stickyIndex = rawIndex >= totalItems - 1 ? totalItems - 1 : index + frac;
-                const stickyRot = 0.2 + (stickyIndex * angleStep);
-
-                smoothedRot.current = THREE.MathUtils.damp(smoothedRot.current, stickyRot, 5, 1 / 60);
-                groupRef.current.rotation.y = smoothedRot.current;
-
-                // PARALLAX
-                if (backgroundRef.current) {
-                    backgroundRef.current.rotation.y = smoothedRot.current * 0.25;
-                }
-
-                dissolveProgressRef.current = 0;
-                dissolveProgressRef2.current = 0;
-
-                if (pointLightRef.current) pointLightRef.current.intensity = 3;
-                if (ambientLightRef.current) ambientLightRef.current.intensity = 1.5;
-                updateAmbientColors(rawIndex, totalItems);
-
-            } else if (r < TIMELINE.GALLERY_DISSOLVE_START) {
-                // ── SUB-PHASE B: Pause — last panel dwells, HUD fades ──
-                const lastPanelRot = 0.2 + ((totalItems - 1) * angleStep);
-                smoothedRot.current = THREE.MathUtils.damp(smoothedRot.current, lastPanelRot, 5, 1 / 60);
-                groupRef.current.rotation.y = smoothedRot.current;
-
-                dissolveProgressRef.current = 0;
-                dissolveProgressRef2.current = 0;
-                if (pointLightRef.current) pointLightRef.current.intensity = 3;
-                if (ambientLightRef.current) ambientLightRef.current.intensity = 1.5;
-                updateAmbientColors(totalItems - 1, totalItems);
-
-            } else if (r < TIMELINE.GALLERY_DISSOLVE_END) {
-                // ── SUB-PHASE C: Dissolve — panels dissolve, group fades out ──
-                const lastPanelRot = 0.2 + ((totalItems - 1) * angleStep);
-                smoothedRot.current = THREE.MathUtils.damp(smoothedRot.current, lastPanelRot, 5, 1 / 60);
-                groupRef.current.rotation.y = smoothedRot.current;
-
-                // Dissolve progress: 0 → 1
-                const dissolveT = (r - TIMELINE.GALLERY_DISSOLVE_START) / (TIMELINE.GALLERY_DISSOLVE_END - TIMELINE.GALLERY_DISSOLVE_START);
-                const clampedT = Math.max(0, Math.min(1, dissolveT));
-                const eased = clampedT < 0.5
-                    ? 2 * clampedT * clampedT
-                    : 1 - Math.pow(-2 * clampedT + 2, 2) / 2;
-                dissolveProgressRef.current = eased;
-
-                // Second-to-last panel: delayed, caps at ~40%
-                const delay2 = 0.35;
-                const raw2 = Math.max(0, (clampedT - delay2) / (1 - delay2));
-                dissolveProgressRef2.current = Math.min(0.4, raw2 * 0.6);
-
-                // Camera zoom: inward toward panels during dissolve.
-                // CAM_POS_END.z = 60, cylinder radius = 50.
-                // ┌─ TWEAK THIS VALUE ─┐  Safe range: 48–60
-                // │  50 = panel surface (max safe zoom in)
-                // │  55 = subtle zoom    │  45 = behind panels (BAD)
-                const ZOOM_TARGET_Z = 50;
-                const zoomT = clampedT * clampedT * clampedT; // slow start, fast end
-                const targetZ = THREE.MathUtils.lerp(CAM_POS_END.z, ZOOM_TARGET_Z, zoomT);
-                camera.position.set(CAM_POS_END.x, CAM_POS_END.y, targetZ);
-
-                // Smooth, subtle light fade — stays bright for first half,
-                // then gently dims using cubic easing (t³)
-                const lightFade = clampedT * clampedT * clampedT;
-                if (pointLightRef.current) {
-                    pointLightRef.current.intensity = THREE.MathUtils.lerp(3, 0, lightFade);
-                }
-                if (ambientLightRef.current) {
-                    ambientLightRef.current.intensity = THREE.MathUtils.lerp(1.5, 0, lightFade);
-                }
-
-                updateAmbientColors(totalItems - 1, totalItems);
-
+            // Sticky easing
+            if (frac < 0.5) {
+                frac = 4 * frac * frac * frac;
             } else {
-                // ── SUB-PHASE D: Post-dissolve — gallery fully dissolved ──
-                const lastPanelRot = 0.2 + ((totalItems - 1) * angleStep);
-                smoothedRot.current = THREE.MathUtils.damp(smoothedRot.current, lastPanelRot, 5, 1 / 60);
-                groupRef.current.rotation.y = smoothedRot.current;
-
-                dissolveProgressRef.current = 1;
-                dissolveProgressRef2.current = 0.4;
-                camera.position.set(CAM_POS_END.x, CAM_POS_END.y, 50);
-
-                // Lights off
-                if (pointLightRef.current) pointLightRef.current.intensity = 0;
-                if (ambientLightRef.current) ambientLightRef.current.intensity = 0;
-
-                updateAmbientColors(totalItems - 1, totalItems);
+                frac = 1 - Math.pow(-2 * frac + 2, 3) / 2;
             }
+
+            const stickyIndex = rawIndex >= totalItems - 1 ? totalItems - 1 : index + frac;
+            const stickyRot = 0.2 + (stickyIndex * angleStep);
+
+            smoothedRot.current = THREE.MathUtils.damp(smoothedRot.current, stickyRot, 5, 1 / 60);
+            groupRef.current.rotation.y = smoothedRot.current;
+
+            // PARALLAX
+            if (backgroundRef.current) {
+                backgroundRef.current.rotation.y = smoothedRot.current * 0.25;
+            }
+
+            dissolveProgressRef.current = 0;
+            dissolveProgressRef2.current = 0;
+
+            if (pointLightRef.current) pointLightRef.current.intensity = 3;
+            if (ambientLightRef.current) ambientLightRef.current.intensity = 1.5;
+            updateAmbientColors(rawIndex, totalItems);
+
+        } else if (p < PAUSE_END) {
+            // ── PAUSE: Last panel dwells, HUD fades ──
+            const lastPanelRot = 0.2 + ((totalItems - 1) * angleStep);
+            smoothedRot.current = THREE.MathUtils.damp(smoothedRot.current, lastPanelRot, 5, 1 / 60);
+            groupRef.current.rotation.y = smoothedRot.current;
+
+            dissolveProgressRef.current = 0;
+            dissolveProgressRef2.current = 0;
+            if (pointLightRef.current) pointLightRef.current.intensity = 3;
+            if (ambientLightRef.current) ambientLightRef.current.intensity = 1.5;
+            updateAmbientColors(totalItems - 1, totalItems);
+
+        } else if (p < DISSOLVE_END) {
+            // ── DISSOLVE: Panels dissolve, group fades out ──
+            const lastPanelRot = 0.2 + ((totalItems - 1) * angleStep);
+            smoothedRot.current = THREE.MathUtils.damp(smoothedRot.current, lastPanelRot, 5, 1 / 60);
+            groupRef.current.rotation.y = smoothedRot.current;
+
+            // Dissolve progress: 0 → 1
+            const dissolveT = (p - PAUSE_END) / (DISSOLVE_END - PAUSE_END);
+            const clampedT = Math.max(0, Math.min(1, dissolveT));
+            const eased = clampedT < 0.5
+                ? 2 * clampedT * clampedT
+                : 1 - Math.pow(-2 * clampedT + 2, 2) / 2;
+            dissolveProgressRef.current = eased;
+
+            // Second-to-last panel: delayed, caps at ~40%
+            const delay2 = 0.35;
+            const raw2 = Math.max(0, (clampedT - delay2) / (1 - delay2));
+            dissolveProgressRef2.current = Math.min(0.4, raw2 * 0.6);
+
+            // Camera zoom: inward toward panels during dissolve
+            const ZOOM_TARGET_Z = 50;
+            const zoomT = clampedT * clampedT * clampedT;
+            const targetZ = THREE.MathUtils.lerp(CAM_POS_END.z, ZOOM_TARGET_Z, zoomT);
+            camera.position.set(CAM_POS_END.x, CAM_POS_END.y, targetZ);
+
+            // Light fade
+            const lightFade = clampedT * clampedT * clampedT;
+            if (pointLightRef.current) {
+                pointLightRef.current.intensity = THREE.MathUtils.lerp(3, 0, lightFade);
+            }
+            if (ambientLightRef.current) {
+                ambientLightRef.current.intensity = THREE.MathUtils.lerp(1.5, 0, lightFade);
+            }
+
+            updateAmbientColors(totalItems - 1, totalItems);
+
+        } else {
+            // ── POST-DISSOLVE: Gallery fully dissolved ──
+            const lastPanelRot = 0.2 + ((totalItems - 1) * angleStep);
+            smoothedRot.current = THREE.MathUtils.damp(smoothedRot.current, lastPanelRot, 5, 1 / 60);
+            groupRef.current.rotation.y = smoothedRot.current;
+
+            dissolveProgressRef.current = 1;
+            dissolveProgressRef2.current = 0.4;
+            camera.position.set(CAM_POS_END.x, CAM_POS_END.y, 50);
+
+            if (pointLightRef.current) pointLightRef.current.intensity = 0;
+            if (ambientLightRef.current) ambientLightRef.current.intensity = 0;
+
+            updateAmbientColors(totalItems - 1, totalItems);
         }
 
         camera.lookAt(0, 0, 0);

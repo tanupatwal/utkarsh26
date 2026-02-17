@@ -247,16 +247,15 @@ const HighlightsSection: React.FC = () => {
 
         const triggers: ScrollTrigger[] = [];
 
-        // Container fade — only onEnter (scroll down into section)
+        // Container fade — symmetric, works in both directions
         const containerTl = gsap.timeline({
             scrollTrigger: {
                 trigger: '#highlights-section',
                 start: 'top bottom',
                 end: 'bottom top',
                 scrub: 0.5,
-                // onEnterBack is intentionally omitted — section stays hidden
-                // when scrolling back up from schedule
                 onEnter: () => { hasEnteredRef.current = true; },
+                onEnterBack: () => { hasEnteredRef.current = true; },
                 onLeave: () => { hasEnteredRef.current = false; },
                 onLeaveBack: () => { hasEnteredRef.current = false; },
             },
@@ -303,13 +302,13 @@ const HighlightsSection: React.FC = () => {
             if (galTl.scrollTrigger) triggers.push(galTl.scrollTrigger);
         }
 
-        // isActive toggle — only from gallery side (onEnter), not schedule side
+        // isActive toggle — fires in both directions
         const st = ScrollTrigger.create({
             trigger: '#highlights-section',
             start: 'top 80%',
             end: 'bottom 20%',
             onEnter: () => { isActiveRef.current = true; },
-            // onEnterBack intentionally omitted
+            onEnterBack: () => { isActiveRef.current = true; },
             onLeave: () => { isActiveRef.current = false; },
             onLeaveBack: () => { isActiveRef.current = false; },
         });
