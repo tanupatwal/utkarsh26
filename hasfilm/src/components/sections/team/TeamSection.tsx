@@ -2,7 +2,7 @@ import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react'
 import { useScroll } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { SCROLL_CONFIG } from '../../../config';
+import { SCROLL_CONFIG, TIMELINE } from '../../../config';
 import { TEAM_MEMBERS, TEAM_BG_IMAGES } from '../../../data/team';
 
 // ════════════════════════════════════════════════
@@ -10,8 +10,8 @@ import { TEAM_MEMBERS, TEAM_BG_IMAGES } from '../../../data/team';
 // ════════════════════════════════════════════════
 
 /** Scroll range where the team section fades in */
-const TEAM_FADE_START = 0.975;
-const TEAM_FADE_FULL = 0.985;
+const TEAM_FADE_START = TIMELINE.TEAM_FADE_START;
+const TEAM_FADE_FULL = TIMELINE.TEAM_FADE_FULL;
 
 /** Wheel delta thresholds for entry/exit gates (px of accumulated wheel delta) */
 const ENTRY_GATE_THRESHOLD = 250;

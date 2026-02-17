@@ -87,7 +87,7 @@ const GalleryGroup: React.FC = () => {
 
         // Manage active state for performance — only render heavy effects
         // during the actual gallery zone, not before (About section) or after (Highlights)
-        const shouldBeActive = r > TIMELINE.ABOUT_STAY && r <= 0.876;
+        const shouldBeActive = r > TIMELINE.ABOUT_STAY && r <= TIMELINE.GALLERY_HIDE;
 
         if (isActive !== shouldBeActive) {
             setIsActive(shouldBeActive);
@@ -95,15 +95,14 @@ const GalleryGroup: React.FC = () => {
 
         if (!groupRef.current) return;
 
-        // Hide immediately after dissolve completes (0.875) — no reason to
+        // Hide immediately after dissolve completes — no reason to
         // keep 3D gallery visible after panels are dissolved and camera is
         // zoomed to z=35. Leaving it on causes the "behind gallery" feeling
         // as the WebGL canvas shows the back of the cylinder.
-        const POST_DISSOLVE_HIDE = 0.876;
 
         // Zero out fog once past the gallery to prevent haze over Highlights
         if (scene.fog && scene.fog instanceof THREE.FogExp2) {
-            if (r > POST_DISSOLVE_HIDE) {
+            if (r > TIMELINE.GALLERY_HIDE) {
                 scene.fog.density = 0;
             } else if (r >= TIMELINE.ABOUT_STAY) {
                 // Restore fog during active gallery zone
@@ -111,7 +110,7 @@ const GalleryGroup: React.FC = () => {
             }
         }
 
-        if (r < TIMELINE.ABOUT_STAY || r > POST_DISSOLVE_HIDE) {
+        if (r < TIMELINE.ABOUT_STAY || r > TIMELINE.GALLERY_HIDE) {
             groupRef.current.visible = false;
             return;
         }
@@ -141,14 +140,9 @@ const GalleryGroup: React.FC = () => {
             const totalItems = GALLERY_CONTENT.length;
             const angleStep = SCENE_CONFIG.CYLINDER_ARC / totalItems;
 
-            // ── Sub-phase boundaries ──
-            const GALLERY_VIEW_END = 0.85;   // Gallery sticky scroll ends
-            const DISSOLVE_START = 0.855;    // Dissolve begins (after HUD fade pause)
-            const DISSOLVE_END = 0.875;      // Dissolve complete → screen dark
-
-            if (r < GALLERY_VIEW_END) {
+            if (r < TIMELINE.GALLERY_VIEW_END) {
                 // ── SUB-PHASE A: Sticky scroll through panels ──
-                const rotProgress = (r - TIMELINE.GALLERY_START) / (GALLERY_VIEW_END - TIMELINE.GALLERY_START);
+                const rotProgress = (r - TIMELINE.GALLERY_START) / (TIMELINE.GALLERY_VIEW_END - TIMELINE.GALLERY_START);
 
                 const rawIndex = Math.max(0, Math.min(rotProgress * totalItems - 0.5, totalItems - 1));
                 const index = Math.min(Math.floor(rawIndex), totalItems - 2);
@@ -181,7 +175,7 @@ const GalleryGroup: React.FC = () => {
                 if (ambientLightRef.current) ambientLightRef.current.intensity = 1.5;
                 updateAmbientColors(rawIndex, totalItems);
 
-            } else if (r < DISSOLVE_START) {
+            } else if (r < TIMELINE.GALLERY_DISSOLVE_START) {
                 // ── SUB-PHASE B: Pause — last panel dwells, HUD fades ──
                 const lastPanelRot = 0.2 + ((totalItems - 1) * angleStep);
                 smoothedRot.current = THREE.MathUtils.damp(smoothedRot.current, lastPanelRot, 5, 1 / 60);
@@ -193,14 +187,14 @@ const GalleryGroup: React.FC = () => {
                 if (ambientLightRef.current) ambientLightRef.current.intensity = 1.5;
                 updateAmbientColors(totalItems - 1, totalItems);
 
-            } else if (r < DISSOLVE_END) {
+            } else if (r < TIMELINE.GALLERY_DISSOLVE_END) {
                 // ── SUB-PHASE C: Dissolve — panels dissolve, group fades out ──
                 const lastPanelRot = 0.2 + ((totalItems - 1) * angleStep);
                 smoothedRot.current = THREE.MathUtils.damp(smoothedRot.current, lastPanelRot, 5, 1 / 60);
                 groupRef.current.rotation.y = smoothedRot.current;
 
                 // Dissolve progress: 0 → 1
-                const dissolveT = (r - DISSOLVE_START) / (DISSOLVE_END - DISSOLVE_START);
+                const dissolveT = (r - TIMELINE.GALLERY_DISSOLVE_START) / (TIMELINE.GALLERY_DISSOLVE_END - TIMELINE.GALLERY_DISSOLVE_START);
                 const clampedT = Math.max(0, Math.min(1, dissolveT));
                 const eased = clampedT < 0.5
                     ? 2 * clampedT * clampedT

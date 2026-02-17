@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { useScroll } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { SCROLL_CONFIG } from '../../../config';
+import { SCROLL_CONFIG, TIMELINE } from '../../../config';
 import { SCHEDULE_DAYS, getEventsForDay, CATEGORY_COLORS } from '../../../data/schedule';
 import type { ScheduleEvent } from '../../../data/schedule';
 
@@ -11,10 +11,10 @@ import type { ScheduleEvent } from '../../../data/schedule';
 //  CONFIGURATION
 // ════════════════════════════════════════════════
 
-const SCHEDULE_FADE_START = 0.935;
-const SCHEDULE_FADE_FULL = 0.945;
-const SCHEDULE_FADE_OUT_START = 0.965;
-const SCHEDULE_FADE_OUT_FULL = 0.97;
+const SCHEDULE_FADE_START = TIMELINE.SCHEDULE_FADE_START;
+const SCHEDULE_FADE_FULL = TIMELINE.SCHEDULE_FADE_FULL;
+const SCHEDULE_FADE_OUT_START = TIMELINE.SCHEDULE_FADE_OUT_START;
+const SCHEDULE_FADE_OUT_FULL = TIMELINE.SCHEDULE_FADE_OUT_FULL;
 const CARD_STAGGER_MS = 50;
 
 const ACCENT = '#38bdf8'; // sky-400

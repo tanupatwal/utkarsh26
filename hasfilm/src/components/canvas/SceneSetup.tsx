@@ -8,7 +8,7 @@ const SceneSetup: React.FC = () => {
     return (
         <>
             {/* No background color - canvas is transparent to show hero image */}
-            {/* Fog starts later for depth during tunnel/gallery phases */}
+            {/* Fog for depth during gallery phase */}
             <fog attach="fog" args={[SCENE_CONFIG.FOG_COLOR, 15, 60]} />
 
             {/* Ambient lighting */}

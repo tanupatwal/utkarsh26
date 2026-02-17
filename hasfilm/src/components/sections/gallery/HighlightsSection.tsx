@@ -2,7 +2,7 @@ import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { useScroll } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
-import { SCROLL_CONFIG } from '../../../config';
+import { SCROLL_CONFIG, TIMELINE } from '../../../config';
 import { HIGHLIGHTS_CONTENT } from '../../../data';
 
 // ════════════════════════════════════════════════
@@ -315,12 +315,12 @@ const HighlightsSection: React.FC = () => {
     }, []);
 
     // Phase boundaries (spread for Pin-Dwell-Release pattern)
-    const DARK_START = 0.88;
-    const DARK_FULL = 0.895;
+    const DARK_START = TIMELINE.HIGHLIGHTS_DARK_START;
+    const DARK_FULL = TIMELINE.HIGHLIGHTS_DARK_FULL;
 
     // Gravity drain phase — images fall downward
-    const GRAVITY_START = 0.92;
-    const GRAVITY_END = 0.935;
+    const GRAVITY_START = TIMELINE.HIGHLIGHTS_GRAVITY_START;
+    const GRAVITY_END = TIMELINE.HIGHLIGHTS_END;
 
     // Per-layer gravity delay (foreground falls first — closest/heaviest)
     const LAYER_GRAVITY_DELAY: Record<DepthLayer, number> = {
@@ -343,13 +343,13 @@ const HighlightsSection: React.FC = () => {
     const GALLERY_FADE_START = 2.0;   // gallery starts appearing at 2.0s
     const GALLERY_FADE_END = 3.2;     // gallery fully visible by 3.2s
 
-    // Scroll-based sub-phases within 0.895→0.92 (wider arcs)
-    const SCROLL_TITLE_IN_START = 0.895;    // title starts fading in
-    const SCROLL_TITLE_IN_END = 0.900;      // title fully visible
-    const SCROLL_TITLE_HOLD_END = 0.907;    // title holds
-    const SCROLL_TITLE_OUT_END = 0.913;     // title fully faded out
-    const SCROLL_GALLERY_START = 0.905;     // gallery starts appearing
-    const SCROLL_GALLERY_FULL = 0.912;      // gallery fully visible
+    // Scroll-based sub-phases within highlights visible range
+    const SCROLL_TITLE_IN_START = TIMELINE.HIGHLIGHTS_TITLE_IN;
+    const SCROLL_TITLE_IN_END = TIMELINE.HIGHLIGHTS_TITLE_VISIBLE;
+    const SCROLL_TITLE_HOLD_END = TIMELINE.HIGHLIGHTS_TITLE_HOLD;
+    const SCROLL_TITLE_OUT_END = TIMELINE.HIGHLIGHTS_TITLE_OUT;
+    const SCROLL_GALLERY_START = TIMELINE.HIGHLIGHTS_GALLERY_START;
+    const SCROLL_GALLERY_FULL = TIMELINE.HIGHLIGHTS_GALLERY_FULL;
 
     // fast DOM lookup
     const domMapRef = useRef<Map<number, HTMLDivElement>>(new Map());
@@ -364,9 +364,9 @@ const HighlightsSection: React.FC = () => {
 
         containerRef.current.style.transform = `translate3d(0, ${targetY}px, 0)`;
 
-        // ── Dark backdrop ── (fades in during 0.88→0.895, fades out during 0.925→0.935)
-        const BG_FADE_OUT_START = 0.925;
-        const BG_FADE_OUT_END = 0.935;
+        // ── Dark backdrop ── (fades in during start→full, fades out during BG_FADE_OUT range)
+        const BG_FADE_OUT_START = TIMELINE.HIGHLIGHTS_BG_FADE_OUT_START;
+        const BG_FADE_OUT_END = TIMELINE.HIGHLIGHTS_END;
 
         let bgTarget = 0;
         if (r >= DARK_START && r < DARK_FULL) {
@@ -435,8 +435,8 @@ const HighlightsSection: React.FC = () => {
         // ── Gallery visibility — SCROLL-BASED with time-based fallback ──
         if (galleryRef.current) {
             // Scroll-based gallery opacity (with fade-out before Schedule)
-            const GAL_FADE_OUT_START = 0.925;
-            const GAL_FADE_OUT_END = 0.935;
+            const GAL_FADE_OUT_START = TIMELINE.HIGHLIGHTS_BG_FADE_OUT_START;
+            const GAL_FADE_OUT_END = TIMELINE.HIGHLIGHTS_END;
 
             let scrollGalTarget = 0;
             if (r >= SCROLL_GALLERY_START && r < SCROLL_GALLERY_FULL) {
