@@ -42,10 +42,4 @@ export const CONTENT: ImageData[] = imageUrls.map((url) => {
     };
 });
 
-/**
- * For debugging: log how many images were loaded.
- */
-if (import.meta.env.DEV) {
-    console.log(`[Tunnel Content] Loaded ${CONTENT.length} images from /assets/tunnel-trailer/`);
-    console.log(`[Tunnel Content] Images:`, imageUrls);
-}
+

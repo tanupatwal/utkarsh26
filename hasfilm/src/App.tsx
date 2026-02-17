@@ -9,6 +9,7 @@ import HeroSection from './components/overlays/HeroSection';
 import LenisProvider from './providers/LenisProvider';
 import { galleryProgress } from './hooks/galleryProgress';
 import { useIsMobile } from './hooks/useIsMobile';
+import './styles/tailwind.css';
 import './styles/spacing.css';
 import './styles/typography.css';
 

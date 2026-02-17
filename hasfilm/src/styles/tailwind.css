@@ -1,0 +1,8 @@
+@import "tailwindcss";
+
+/* ── Map Tailwind font utilities to our design tokens ── */
+@theme {
+    --font-sans: var(--font-body);
+    --font-serif: var(--font-serif);
+    --font-mono: var(--font-mono);
+}
