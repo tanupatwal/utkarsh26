@@ -2,6 +2,7 @@ import React, { useRef, useEffect, useCallback, useState } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { HIGHLIGHTS_CONTENT } from '../../../data';
+import { useHighlights } from '../../../hooks/useSupabaseData';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -187,6 +188,9 @@ const HighlightsSection: React.FC = () => {
     const containerRef = useRef<HTMLDivElement>(null);
     const titleRef = useRef<HTMLDivElement>(null);
     const galleryRef = useRef<HTMLDivElement>(null);
+
+    // ── Supabase data hook (lazy-loads on viewport approach) ──
+    const { highlights, ref: lazyRef } = useHighlights();
 
     // Mouse position (normalized -1 to 1, lerped)
     const mouseTarget = useRef({ x: 0, y: 0 });
@@ -423,11 +427,15 @@ const HighlightsSection: React.FC = () => {
     const hoveredImage = hoveredId !== null
         ? activeImagesRef.current.find(img => img.id === hoveredId)
         : null;
-    const hoveredContent = hoveredImage ? HIGHLIGHTS_CONTENT[hoveredImage.imageIndex] : null;
+    const hoveredContent = hoveredImage ? highlights[hoveredImage.imageIndex] : null;
 
     return (
         <div
-            ref={containerRef}
+            ref={(el) => {
+                (containerRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+                if (typeof lazyRef === 'function') lazyRef(el);
+                else if (lazyRef && 'current' in lazyRef) (lazyRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+            }}
             style={{
                 position: 'sticky',
                 top: 0,
@@ -488,7 +496,7 @@ const HighlightsSection: React.FC = () => {
                 }}
             >
                 {renderImages.map((img) => {
-                    const content = HIGHLIGHTS_CONTENT[img.imageIndex]!;
+                    const content = highlights[img.imageIndex]!;
                     const isHovered = hoveredId === img.id;
                     const anyHovered = hoveredId !== null;
                     const layerCfg = LAYER_CONFIG[img.layer];

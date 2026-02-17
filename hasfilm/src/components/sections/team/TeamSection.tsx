@@ -1,7 +1,8 @@
 import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { TEAM_MEMBERS, TEAM_BG_IMAGES } from '../../../data/team';
+import { TEAM_BG_IMAGES } from '../../../data/team';
+import { useTeamMembers } from '../../../hooks/useSupabaseData';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -351,6 +352,9 @@ const TeamSection: React.FC = () => {
   const mouseRef = useRef({ x: 0, y: 0 });
   const autoScrollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // ── Supabase data hook (lazy-loads on viewport approach) ──
+  const { members: TEAM_MEMBERS, ref: lazyRef } = useTeamMembers();
+
   const [activeIndex, setActiveIndex] = useState(0);
   const [prevActiveIndex, setPrevActiveIndex] = useState(0);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
@@ -539,7 +543,11 @@ const TeamSection: React.FC = () => {
 
   return (
     <div
-      ref={containerRef}
+      ref={(el) => {
+        (containerRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+        if (typeof lazyRef === 'function') lazyRef(el);
+        else if (lazyRef && 'current' in lazyRef) (lazyRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+      }}
       className={`${CLS}-root`}
       style={{ opacity: 0 }}
     >

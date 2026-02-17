@@ -1,8 +1,10 @@
-import React, { Suspense, useEffect, useMemo } from 'react';
+import React, { Suspense, useEffect, useLayoutEffect, useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Navbar } from './components/overlays';
+import { Preload } from '@react-three/drei';
+import { useThree } from '@react-three/fiber';
 import HeroSection from './components/overlays/HeroSection';
 import LenisProvider from './providers/LenisProvider';
 import { galleryProgress } from './hooks/galleryProgress';
@@ -10,6 +12,19 @@ import { useIsMobile } from './hooks/useIsMobile';
 import './styles/spacing.css';
 
 gsap.registerPlugin(ScrollTrigger);
+
+/**
+ * Precompile — Warms GPU shaders on mount to eliminate first-frame hitches.
+ * Calls gl.compile(scene, camera) once so shaders are compiled before
+ * the gallery comes into view.
+ */
+function Precompile() {
+    const { gl, scene, camera } = useThree();
+    useLayoutEffect(() => {
+        gl.compile(scene, camera);
+    }, [gl, scene, camera]);
+    return null;
+}
 
 // DOM sections (outside Canvas — real scroll)
 import { AboutSection } from './components/sections/about';
@@ -19,6 +34,7 @@ import ScheduleSection from './components/sections/schedule/ScheduleSection';
 import TeamSection from './components/sections/team/TeamSection';
 import MobileTeamSection from './components/sections/team/MobileTeamSection';
 import MobileHighlightsSection from './components/sections/team/MobileHighlightsSection';
+import FooterSection from './components/sections/footer/FooterSection';
 
 // 3D scene (inside Canvas)
 import SceneSetup from './components/canvas/SceneSetup';
@@ -83,6 +99,8 @@ const App: React.FC = () => {
                 <Suspense fallback={null}>
                     <SceneSetup />
                     <GalleryGroup />
+                    <Precompile />
+                    <Preload all />
                 </Suspense>
             </Canvas>
 
@@ -117,6 +135,8 @@ const App: React.FC = () => {
                 <section id="team-section" style={{ height: isMobile ? 'auto' : '400vh', position: 'relative' }}>
                     {isMobile ? <MobileTeamSection /> : <TeamSection />}
                 </section>
+
+                <FooterSection />
             </main>
 
             {/* Navbar - highest z-index */}

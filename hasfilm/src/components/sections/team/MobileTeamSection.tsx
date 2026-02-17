@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useLayoutEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { Flip } from 'gsap/Flip';
-import { TEAM_MEMBERS } from '../../../data/team';
+import { useTeamMembers } from '../../../hooks/useSupabaseData';
 import './MobileTeamSection.css';
 
 gsap.registerPlugin(Flip);
@@ -16,6 +16,9 @@ gsap.registerPlugin(Flip);
  *   - Tap again to collapse
  */
 const MobileTeamSection: React.FC = () => {
+    // ── Supabase data hook (lazy-loads on viewport approach) ──
+    const { members: TEAM_MEMBERS } = useTeamMembers();
+
     const [activeIdx, setActiveIdx] = useState<number | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const stateRef = useRef<Flip.FlipState | null>(null);

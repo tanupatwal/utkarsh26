@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { SCHEDULE_DAYS, getEventsForDay, CATEGORY_COLORS } from '../../../data/schedule';
+import { CATEGORY_COLORS } from '../../../data/schedule';
 import type { ScheduleEvent } from '../../../data/schedule';
+import { useEvents } from '../../../hooks/useSupabaseData';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -713,11 +714,20 @@ const ScheduleSection: React.FC = () => {
     const containerRef = useRef<HTMLDivElement>(null);
     const bgRef = useRef<HTMLDivElement>(null);
 
+    // ── Supabase data hook (lazy-loads on viewport approach) ──
+    const { events: allEvents, days: scheduleDays, ref: lazyRef } = useEvents();
+
     const [activeDay, setActiveDay] = useState(1);
     const [cardsRevealed, setCardsRevealed] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(null);
     const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
     const [visibleCount, setVisibleCount] = useState(6);
+
+    // Helper: filter events by day (replaces hardcoded getEventsForDay)
+    const getEventsForDay = useCallback(
+        (dayId: number) => allEvents.filter(e => e.dayId === dayId),
+        [allEvents],
+    );
 
     // ── Mobile detection ──
     const [isMobile, setIsMobile] = useState(false);
@@ -740,7 +750,7 @@ const ScheduleSection: React.FC = () => {
             if (next < 0 || next >= events.length) return prev;
             return events[next] ?? prev;
         });
-    }, []);
+    }, [getEventsForDay]);
 
     useEffect(() => {
         const handleKey = (e: KeyboardEvent) => {
@@ -758,7 +768,7 @@ const ScheduleSection: React.FC = () => {
         setVisibleCount(6); // reset progressive loading on day switch
     }, []);
 
-    const dayEvents = useMemo(() => getEventsForDay(activeDay), [activeDay]);
+    const dayEvents = useMemo(() => getEventsForDay(activeDay), [activeDay, getEventsForDay]);
 
     const handleAccordionToggle = useCallback((idx: number) => {
         setExpandedIndex(prev => prev === idx ? null : idx);
@@ -812,7 +822,11 @@ const ScheduleSection: React.FC = () => {
 
     return (
         <div
-            ref={containerRef}
+            ref={(el) => {
+                (containerRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+                if (typeof lazyRef === 'function') lazyRef(el);
+                else if (lazyRef && 'current' in lazyRef) (lazyRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+            }}
             style={{
                 position: 'relative',
                 width: '100%', minHeight: '100vh',
@@ -911,7 +925,7 @@ const ScheduleSection: React.FC = () => {
                         paddingTop: '3rem', paddingBottom: '1rem',
                         position: 'relative', zIndex: 20,
                     }}>
-                        {SCHEDULE_DAYS.map((day, i) => {
+                        {scheduleDays.map((day: { id: number; label: string; date: string }, i: number) => {
                             const isActive = activeDay === day.id;
                             return (
                                 <div

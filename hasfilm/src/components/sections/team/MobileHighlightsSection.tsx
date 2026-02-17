@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { HIGHLIGHTS_CONTENT } from '../../../data/highlights';
+import { useHighlights } from '../../../hooks/useSupabaseData';
 import './MobileHighlightsSection.css';
 
 /**
@@ -14,6 +14,9 @@ import './MobileHighlightsSection.css';
  * No GSAP/ScrollTrigger — pure CSS transitions + React state.
  */
 const MobileHighlightsSection: React.FC = () => {
+    // ── Supabase data hook (lazy-loads on viewport approach) ──
+    const { highlights: HIGHLIGHTS_CONTENT } = useHighlights();
+
     const [activeCard, setActiveCard] = useState<number | null>(null);
     const [heroIndex, setHeroIndex] = useState(0);
     const [heroTransitioning, setHeroTransitioning] = useState(false);
