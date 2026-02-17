@@ -1,11 +1,11 @@
 // src/components/sections/gallery/GalleryOverlay.tsx
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { useScroll } from '@react-three/drei';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 import { GALLERY_CONTENT } from '../../../data/gallery';
 import { TIMELINE } from '../../../config/timeline';
-import { SCROLL_CONFIG } from '../../../config/scroll';
 
 const GalleryOverlay: React.FC = () => {
     const scroll = useScroll();
@@ -17,6 +17,21 @@ const GalleryOverlay: React.FC = () => {
     const dotsRef = useRef<HTMLDivElement>(null);
     const scrimRef = useRef<HTMLDivElement>(null);
 
+    // Portal root — renders overlay DOM directly on document.body,
+    // bypassing <Scroll html>'s automatic scroll-offset transforms.
+    const [portalRoot, setPortalRoot] = useState<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        const el = document.createElement('div');
+        el.id = 'gallery-overlay-portal';
+        el.style.cssText = 'position:fixed;inset:0;width:100%;height:100vh;pointer-events:none;z-index:30;';
+        document.body.appendChild(el);
+        setPortalRoot(el);
+        return () => {
+            document.body.removeChild(el);
+        };
+    }, []);
+
     // Smoothed exit progress (0 = fully visible, 1 = fully collapsed)
     const exitProgress = useRef(0);
 
@@ -24,16 +39,14 @@ const GalleryOverlay: React.FC = () => {
         if (!innerRef.current) return;
 
         const r = scroll.offset;
-        const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 0;
-        const targetY = viewportHeight * (SCROLL_CONFIG.PAGES - 1) * r;
 
         // 1. Visibility Logic: Fade in for gallery, fade out before dissolve
         const isVisible = r >= TIMELINE.GALLERY_START && r <= TIMELINE.GALLERY_VIEW_END;
         const targetOpacity = isVisible ? 1 : 0;
         opacityRef.current = THREE.MathUtils.damp(opacityRef.current, targetOpacity, 3, delta);
 
-        // Apply scroll compensation directly (no extra damp — scroll.offset is already damped by ScrollControls)
-        innerRef.current.style.transform = `translate3d(0, ${targetY}px, 0)`;
+        // No manual scroll compensation needed — the overlay is portaled
+        // to document.body (position: fixed), completely outside <Scroll html>.
         innerRef.current.style.opacity = opacityRef.current.toString();
 
         // 2. Active Index Calculation — must use same range as GalleryGroup's viewing phase
@@ -122,106 +135,82 @@ const GalleryOverlay: React.FC = () => {
     });
 
     const activeItem = GALLERY_CONTENT[activeIndex];
-    if (!activeItem) return null;
+    if (!activeItem || !portalRoot) return null;
 
-    return (
-        <div className="fixed inset-0 w-full h-full z-10 pointer-events-none">
+    return createPortal(
+        <div
+            ref={innerRef}
+            className="absolute inset-0 w-full h-full"
+            style={{
+                opacity: 0,
+                willChange: 'opacity',
+            }}
+        >
+            {/* Left gradient scrim + text shadow */}
             <div
-                ref={innerRef}
-                className="absolute inset-0 w-full h-full"
+                ref={scrimRef}
+                className="absolute inset-0 pointer-events-none"
                 style={{
-                    opacity: 0,
-                    willChange: 'transform, opacity',
+                    background: 'linear-gradient(to right, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.45) 30%, rgba(0,0,0,0) 55%)',
                 }}
-            >
-                {/* OPTION 1: Left-side gradient scrim for text readability */}
-                {/* <div
-                    className="absolute inset-0 pointer-events-none"
-                    style={{
-                        background: 'linear-gradient(to right, rgba(0,0,0,0.85) 0%, rgba(0,0,0,0.55) 35%, rgba(0,0,0,0) 60%)',
-                    }}
-                /> */}
+            />
 
-                {/* OPTION 2 (saved): Text shadow + stroke on title for readability
-                    Title style: textShadow: '0 0 20px rgba(0,0,0,0.9), 0 0 40px rgba(0,0,0,0.6), 2px 2px 8px rgba(0,0,0,0.8), -2px -2px 8px rgba(0,0,0,0.8)'
-                    Desc style:  textShadow: '0 0 12px rgba(0,0,0,0.8), 1px 1px 4px rgba(0,0,0,0.7)'
-                */}
-
-                {/* OPTION 3 (saved): Frosted glass panel behind entire text block
-                    <div className="absolute -inset-8 rounded-2xl backdrop-blur-xl bg-black/40"
-                        style={{ maskImage: 'linear-gradient(to right, black 60%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to right, black 60%, transparent 100%)' }}
-                    />
-                */}
-
-                {/* OPTION 4 (saved): Outlined / stroke text with -webkit-text-stroke
-                    WebkitTextStroke: '1.5px rgba(0,0,0,0.7)', paintOrder: 'stroke fill', textShadow: '0 2px 20px rgba(0,0,0,0.7)'
-                */}
-
-                {/* OPTION 5 (active): Combo — left gradient scrim + text shadow */}
+            {/* 1. Progress Bar (Bottom HUD) */}
+            <div ref={progressRef} className="absolute bottom-12 left-1/2 -translate-x-1/2 w-80 h-[2px] bg-white/10">
                 <div
-                    ref={scrimRef}
-                    className="absolute inset-0 pointer-events-none"
-                    style={{
-                        background: 'linear-gradient(to right, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.45) 30%, rgba(0,0,0,0) 55%)',
-                    }}
+                    className="h-full bg-blue-500 transition-all duration-500 ease-out shadow-[0_0_10px_#3b82f6]"
+                    style={{ width: `${((activeIndex + 1) / GALLERY_CONTENT.length) * 100}%` }}
                 />
-
-                {/* 1. Progress Bar (Bottom HUD) */}
-                <div ref={progressRef} className="absolute bottom-12 left-1/2 -translate-x-1/2 w-80 h-[2px] bg-white/10">
-                    <div
-                        className="h-full bg-blue-500 transition-all duration-500 ease-out shadow-[0_0_10px_#3b82f6]"
-                        style={{ width: `${((activeIndex + 1) / GALLERY_CONTENT.length) * 100}%` }}
-                    />
-                    <div className="flex justify-between mt-2 text-[10px] font-mono text-white/40 tracking-widest uppercase">
-                        <span>01</span>
-                        <span>0{GALLERY_CONTENT.length}</span>
-                    </div>
-                </div>
-
-                {/* 2. Text Content (Left Side) */}
-                <div ref={textRef} className="absolute top-1/2 left-8 md:left-20 -translate-y-1/2 max-w-lg" style={{ willChange: 'transform, opacity' }}>
-
-                    <div key={`title-${activeIndex}`} className="gallery-text-enter overflow-hidden relative">
-                        <h2
-                            className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter leading-none"
-                            style={{
-                                textShadow: '0 0 15px rgba(0,0,0,0.8), 0 2px 30px rgba(0,0,0,0.5)',
-                            }}
-                        >
-                            {activeItem.title}
-                        </h2>
-                    </div>
-
-                    {/* Description Box */}
-                    <div key={`desc-${activeIndex}`} className="gallery-text-enter relative mt-6 p-6 border-l-2 border-blue-500/50">
-                        <p
-                            className="text-lg text-white/80 leading-relaxed font-light"
-                            style={{
-                                textShadow: '0 0 10px rgba(0,0,0,0.6)',
-                            }}
-                        >
-                            {activeItem.description}
-                        </p>
-                        <div className="mt-4 flex items-center gap-4">
-                            <span className="h-[1px] w-8 bg-blue-500"></span>
-                            <span className="text-xs font-mono text-blue-400 uppercase tracking-widest">
-                                ID {String(activeIndex + 1).padStart(2, '0')} / {String(GALLERY_CONTENT.length).padStart(2, '0')}
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                {/* 3. Vertical Pagination Dots (Right Side) */}
-                <div ref={dotsRef} className="absolute top-1/2 right-8 md:right-12 -translate-y-1/2 flex flex-col items-center gap-4">
-                    {GALLERY_CONTENT.map((_, i) => (
-                        <div
-                            key={i}
-                            className={`w-1 transition-all duration-500 ${i === activeIndex ? 'h-8 bg-blue-500' : 'h-2 bg-white/20'}`}
-                        />
-                    ))}
+                <div className="flex justify-between mt-2 text-[10px] font-mono text-white/40 tracking-widest uppercase">
+                    <span>01</span>
+                    <span>0{GALLERY_CONTENT.length}</span>
                 </div>
             </div>
-        </div>
+
+            {/* 2. Text Content (Left Side) */}
+            <div ref={textRef} className="absolute top-1/2 left-8 md:left-20 -translate-y-1/2 max-w-lg" style={{ willChange: 'transform, opacity' }}>
+
+                <div key={`title-${activeIndex}`} className="gallery-text-enter overflow-hidden relative">
+                    <h2
+                        className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter leading-none"
+                        style={{
+                            textShadow: '0 0 15px rgba(0,0,0,0.8), 0 2px 30px rgba(0,0,0,0.5)',
+                        }}
+                    >
+                        {activeItem.title}
+                    </h2>
+                </div>
+
+                {/* Description Box */}
+                <div key={`desc-${activeIndex}`} className="gallery-text-enter relative mt-6 p-6 border-l-2 border-blue-500/50">
+                    <p
+                        className="text-lg text-white/80 leading-relaxed font-light"
+                        style={{
+                            textShadow: '0 0 10px rgba(0,0,0,0.6)',
+                        }}
+                    >
+                        {activeItem.description}
+                    </p>
+                    <div className="mt-4 flex items-center gap-4">
+                        <span className="h-[1px] w-8 bg-blue-500"></span>
+                        <span className="text-xs font-mono text-blue-400 uppercase tracking-widest">
+                            ID {String(activeIndex + 1).padStart(2, '0')} / {String(GALLERY_CONTENT.length).padStart(2, '0')}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            {/* 3. Vertical Pagination Dots (Right Side) */}
+            <div ref={dotsRef} className="absolute top-1/2 right-8 md:right-12 -translate-y-1/2 flex flex-col items-center gap-4">
+                {GALLERY_CONTENT.map((_, i) => (
+                    <div
+                        key={i}
+                        className={`w-1 transition-all duration-500 ${i === activeIndex ? 'h-8 bg-blue-500' : 'h-2 bg-white/20'}`}
+                    />
+                ))}
+            </div>
+        </div>,
+        portalRoot
     );
 };
 
