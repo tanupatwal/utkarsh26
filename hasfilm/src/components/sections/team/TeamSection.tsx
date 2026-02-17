@@ -506,7 +506,7 @@ const TeamSection: React.FC = () => {
             if (scroll.el) {
               const scrollContainer = scroll.el as HTMLElement;
               const scrollHeight = scrollContainer.scrollHeight - scrollContainer.clientHeight;
-              const targetOffset = 0.955; // Schedule dwell zone
+              const targetOffset = (TIMELINE.SCHEDULE_FADE_FULL + TIMELINE.SCHEDULE_FADE_OUT_START) / 2; // Schedule dwell zone midpoint
               scrollContainer.scrollTop = targetOffset * scrollHeight;
             }
             opacityRef.current = 0;
@@ -697,7 +697,7 @@ const TeamSection: React.FC = () => {
           if (scroll.el) {
             const scrollContainer = scroll.el as HTMLElement;
             const scrollHeight = scrollContainer.scrollHeight - scrollContainer.clientHeight;
-            const targetOffset = 0.955; // Schedule dwell zone (0.945-0.965)
+            const targetOffset = (TIMELINE.SCHEDULE_FADE_FULL + TIMELINE.SCHEDULE_FADE_OUT_START) / 2; // Schedule dwell zone midpoint
             scrollContainer.scrollTop = targetOffset * scrollHeight;
           }
           // Snap our own opacity to 0 immediately so we don't linger on screen
