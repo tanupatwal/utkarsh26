@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Utkarsh Event Highlights</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&amp;family=Rajdhani:wght@300;500;700&amp;family=Playfair+Display:ital,wght@1,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet"/>
+<script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        primary: "#0ea5e9", // Cyan/Electric Blue
+                        secondary: "#f97316", // Orange/Fire
+                        "background-light": "#f0f4f8",
+                        "background-dark": "#020617", // Very dark blue/black
+                        "card-dark": "#0f172a",
+                        "accent-glow": "rgba(14, 165, 233, 0.5)",
+                    },
+                    fontFamily: {
+                        display: ["Orbitron", "sans-serif"],
+                        body: ["Rajdhani", "sans-serif"],
+                        serif: ["Playfair Display", "serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "0.5rem",
+                    },
+                    backgroundImage: {
+                        'cyber-grid': "linear-gradient(to right, #1e293b 1px, transparent 1px), linear-gradient(to bottom, #1e293b 1px, transparent 1px)",
+                    }
+                },
+            },
+        };
+    </script>
+<style>::-webkit-scrollbar {
+            width: 4px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #020617;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+        .glow-text {
+            text-shadow: 0 0 10px rgba(14, 165, 233, 0.5);
+        }
+        .image-card {
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .image-card:active {
+            transform: scale(0.98);
+        }
+        .tech-border {
+            position: relative;
+        }
+        .tech-border::before, .tech-border::after {
+            content: '';
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+        .tech-border::before {
+            top: -2px;
+            left: -2px;
+            border-top-color: #0ea5e9;
+            border-left-color: #0ea5e9;
+        }
+        .tech-border::after {
+            bottom: -2px;
+            right: -2px;
+            border-bottom-color: #f97316;
+            border-right-color: #f97316;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark text-slate-800 dark:text-slate-200 min-h-screen font-body antialiased selection:bg-primary selection:text-white transition-colors duration-300">
+<nav class="fixed top-0 w-full z-50 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800">
+<div class="px-4 py-3 flex justify-between items-center max-w-md mx-auto">
+<div class="flex items-center space-x-2">
+<div class="w-8 h-8 rounded bg-gradient-to-tr from-primary to-secondary flex items-center justify-center text-white font-display font-bold text-xs shadow-lg shadow-primary/20">UTK</div>
+<span class="font-display font-bold text-lg tracking-wider dark:text-white">UTKARSH</span>
+</div>
+<div class="flex items-center space-x-4">
+<div class="hidden xs:flex flex-col items-end text-[10px] font-mono leading-none text-green-500 opacity-70">
+<span>FPS: 60</span>
+<span class="text-red-500">PING: 12ms</span>
+</div>
+<button class="text-slate-600 dark:text-slate-300 focus:outline-none">
+<span class="material-icons">menu</span>
+</button>
+</div>
+</div>
+</nav>
+<main class="pt-20 pb-24 px-4 max-w-md mx-auto overflow-hidden relative">
+<div class="absolute inset-0 bg-cyber-grid bg-[length:40px_40px] opacity-[0.03] dark:opacity-[0.1] pointer-events-none -z-10"></div>
+<div class="absolute top-20 -left-20 w-64 h-64 bg-primary/20 rounded-full blur-[100px] pointer-events-none"></div>
+<div class="absolute bottom-40 -right-20 w-64 h-64 bg-secondary/10 rounded-full blur-[100px] pointer-events-none"></div>
+<header class="mb-12 text-center relative">
+<div class="inline-block mb-3 px-3 py-1 border border-primary/30 rounded-full bg-primary/5 dark:bg-primary/10 backdrop-blur-sm">
+<span class="text-xs font-bold tracking-widest text-primary uppercase">Legacy Gallery</span>
+</div>
+<h1 class="font-display text-4xl font-bold mb-2 uppercase leading-tight bg-clip-text text-transparent bg-gradient-to-r from-slate-900 to-slate-600 dark:from-white dark:to-slate-400 glow-text">
+                Moments That<br/><span class="text-slate-400 dark:text-slate-600 font-light">Made Us</span>
+</h1>
+<p class="font-serif italic text-lg text-slate-500 dark:text-slate-400 mt-2">
+                "Virasat se Vikas tak"
+            </p>
+<div class="w-24 h-1 bg-gradient-to-r from-primary to-secondary mx-auto mt-6 rounded-full"></div>
+<div class="absolute top-1/2 left-0 w-8 h-[1px] bg-slate-300 dark:bg-slate-700"></div>
+<div class="absolute top-1/2 right-0 w-8 h-[1px] bg-slate-300 dark:bg-slate-700"></div>
+</header>
+<div class="space-y-8">
+<div class="relative group tech-border rounded-xl overflow-hidden shadow-xl shadow-black/20 dark:shadow-primary/5">
+<div class="aspect-[4/3] w-full overflow-hidden">
+<img alt="Concert crowd with hands raised" class="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-110 opacity-90 dark:opacity-70 group-hover:opacity-100" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCABEF4qXKTmP-PCQB22hJSqJxLrtDiksiKETZsfxCYCo37YMqHMsVHlWRL5Vnan4fdcRdvPZDAE5qJr6_stzOYLCH0bKMPAR8rS-c_xOzS-2sYoGIQDXIlA7-LQNEJxNGgh_8p1tAQsHv17ECxUeabu7g4UGZ4qbv2P1eNZTJzfReqi1-2iNGbfAvt91MxEA9cHHUh6scIGYuMCAFbdN6PSFssu6nOjFHbPRgOvXA6COLOq7Hj0lIB1kkKyCVRnIsM-ZVlqAKhKBlR"/>
+</div>
+<div class="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-90"></div>
+<div class="absolute bottom-0 left-0 p-5 w-full">
+<div class="flex justify-between items-end">
+<div>
+<span class="text-xs font-mono text-secondary mb-1 block">FEB 2024</span>
+<h3 class="text-white font-display text-xl font-bold tracking-wide">Grand Finale Night</h3>
+<p class="text-slate-300 text-sm mt-1 line-clamp-1">Over 5000 students united by rhythm.</p>
+</div>
+<button class="w-10 h-10 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20 text-white">
+<span class="material-icons text-sm">arrow_forward</span>
+</button>
+</div>
+</div>
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div class="col-span-1 space-y-4">
+<div class="relative group rounded-lg overflow-hidden h-64 shadow-lg image-card">
+<div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-primary to-transparent z-10"></div>
+<img alt="Traditional dance performance" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAs2t_yzLi0tE01F3W-WVa-rLHoHI4VSjE2jaVrOM4GLSfZlJjYT8uh7M9c8gRnR8KjJzRwm6YmBTKRSdjDXutLLHSHposKvX7OUnEXrcpKjq3PH5avVF47wmRJaBd0HDyKx_JjSUm08IKhf61R0mtafOFJN_GWbh0qEDtvr9LOoLEVVQyIk6ZjOEHuh3HR4oXAUvRCGkzAkM3qPSjV-FpQgCSX-1KvcLdSQqt5_I9pQQdzr3vUVrmwQNcb0bMZ70fsFB7_xj2BI4UQ"/>
+<div class="absolute inset-0 bg-black/40 group-hover:bg-transparent transition-colors duration-300"></div>
+<div class="absolute bottom-3 left-3">
+<h4 class="text-white font-display text-sm font-bold">Cultural Roots</h4>
+</div>
+</div>
+<div class="relative group rounded-lg overflow-hidden h-40 shadow-lg image-card bg-card-dark border border-slate-200 dark:border-slate-800">
+<div class="p-4 h-full flex flex-col justify-center items-center text-center">
+<span class="material-icons text-4xl text-secondary mb-2">emoji_events</span>
+<span class="text-2xl font-display font-bold dark:text-white">50+</span>
+<span class="text-xs text-slate-500 dark:text-slate-400 uppercase tracking-wider">Events</span>
+</div>
+</div>
+</div>
+<div class="col-span-1 space-y-4 mt-8">
+<div class="relative group rounded-lg overflow-hidden h-40 shadow-lg image-card bg-slate-900">
+<img alt="Robotics competition" class="w-full h-full object-cover opacity-60 group-hover:opacity-90 transition-opacity" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBoDXmHsBqGLuGmCHS-kDHzInYUligF0HA61505ZnMO9jWCNs93SARs3M1FFIbZa2PHQ79AresTCtq4wM57WCtiLQmJOwFCNa3e1dWkylvOjpwyQ5UHsBoHGRgFBmIJIlpK8kFFBZoP5mawPkBaVYnVqGYLaWm2LXKldOrDHfsDh8WQSrOY1IX5BUq26og8yqBfmAyt84pW0gOM1K5pGl30qzaHyYiXmFf6rD7NYiBBhnY4qMyXuRHeMgXPUo4M35WpHOtXBBbcLc6w"/>
+<div class="absolute inset-0 border border-primary/30 rounded-lg"></div>
+<div class="absolute bottom-3 left-3">
+<h4 class="text-primary font-display text-sm font-bold tracking-widest">ROBO WARS</h4>
+</div>
+</div>
+<div class="relative group rounded-lg overflow-hidden h-64 shadow-lg image-card">
+<div class="absolute top-0 right-0 w-0 h-0 border-t-[30px] border-r-[30px] border-t-transparent border-r-secondary z-10"></div>
+<img alt="Students celebrating" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDVGIVKRXYR8lTQNcqzCiywzJRu_erHtxJ7YC8tTpg8bvsF5NUx0BSdZ285MnSLJARofTkpL3GVZQ_sBnl2BeBgKgpqqquC9ZlbCx-KSoEeZfVhUN7a8R3wSNsN3_2ejbKy0_1g_rQsQTwAiVk9as9H28Q85pkj9WtiFpprye-EFenwHQB-u-9n0jMEMVgrqyITLJj7wAQPXjfEbQvMrEkYjXErsfY4rBSaqOcUTES1dR-lQ7e85gmzaHBy-bejyqssV4rQvQzyAWCK"/>
+<div class="absolute inset-0 bg-gradient-to-b from-transparent to-black/80"></div>
+<div class="absolute bottom-3 left-3 pr-2">
+<p class="text-white/80 font-serif italic text-xs mb-1">"Friendships forged in fire"</p>
+<h4 class="text-white font-display text-sm font-bold">Hackathon '23</h4>
+</div>
+</div>
+</div>
+</div>
+<div class="relative rounded-xl overflow-hidden mt-4 shadow-xl border border-slate-200 dark:border-slate-800">
+<div class="absolute inset-0 bg-gradient-to-r from-slate-900 to-slate-800"></div>
+<div class="absolute inset-0 opacity-10" style="background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'0 0 2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%239C92AC\' fill-opacity=\'1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');"></div>
+<div class="relative p-6 flex flex-col items-center text-center z-10">
+<span class="text-primary text-xs font-mono mb-2">[ ARCHIVE ACCESS ]</span>
+<h3 class="text-white font-display text-2xl font-bold mb-3">2006 - 2025</h3>
+<p class="text-slate-400 text-sm mb-6 max-w-[80%]">Explore the complete timeline of innovation and culture.</p>
+<button class="bg-transparent border border-primary text-primary hover:bg-primary hover:text-white transition-colors px-6 py-2 rounded uppercase text-xs font-bold tracking-widest">
+                        View Full Timeline
+                    </button>
+</div>
+</div>
+</div>
+</main>
+<button class="fixed bottom-6 right-6 w-14 h-14 bg-white dark:bg-card-dark text-slate-800 dark:text-white rounded-full shadow-2xl flex items-center justify-center border border-slate-200 dark:border-slate-700 z-40">
+<div class="absolute inset-0 rounded-full border border-primary animate-ping opacity-20"></div>
+<span class="material-icons">arrow_upward</span>
+</button>
+<div class="fixed bottom-0 w-full bg-white dark:bg-[#020617] border-t border-slate-200 dark:border-slate-800 z-50 pb-safe">
+<div class="flex justify-around items-center py-3 max-w-md mx-auto">
+<a class="flex flex-col items-center space-y-1 text-slate-400 dark:text-slate-500 hover:text-primary dark:hover:text-primary transition-colors" href="#">
+<span class="material-icons text-xl">home</span>
+<span class="text-[10px] uppercase font-bold tracking-wider">Home</span>
+</a>
+<a class="flex flex-col items-center space-y-1 text-slate-400 dark:text-slate-500 hover:text-primary dark:hover:text-primary transition-colors" href="#">
+<span class="material-icons text-xl">calendar_today</span>
+<span class="text-[10px] uppercase font-bold tracking-wider">Events</span>
+</a>
+<a class="flex flex-col items-center space-y-1 text-primary relative" href="#">
+<div class="absolute -top-10 w-12 h-12 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center shadow-lg shadow-primary/30 border-4 border-white dark:border-[#020617]">
+<span class="material-icons text-white">camera_alt</span>
+</div>
+<span class="text-[10px] uppercase font-bold tracking-wider mt-5">Gallery</span>
+</a>
+<a class="flex flex-col items-center space-y-1 text-slate-400 dark:text-slate-500 hover:text-primary dark:hover:text-primary transition-colors" href="#">
+<span class="material-icons text-xl">groups</span>
+<span class="text-[10px] uppercase font-bold tracking-wider">Team</span>
+</a>
+<a class="flex flex-col items-center space-y-1 text-slate-400 dark:text-slate-500 hover:text-primary dark:hover:text-primary transition-colors" href="#">
+<span class="material-icons text-xl">person</span>
+<span class="text-[10px] uppercase font-bold tracking-wider">Profile</span>
+</a>
+</div>
+</div>
+<script>
+        // Simple dark mode toggle for testing (since system preference is default)
+        // In a real app, this would be more robust.
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+    </script>
+
+</body></html>

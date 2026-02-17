@@ -331,6 +331,9 @@ const STYLES = `
 /** How many names are visible above/below the active one */
 const VISIBLE_RADIUS = 4;
 
+/** Milliseconds between each member advance during hover auto-scroll */
+const AUTO_SCROLL_SPEED = 450;
+
 /** Get distance-based CSS class for inactive names */
 function distClass(dist: number): string {
   if (dist <= 1) return `dist-1`;
@@ -346,6 +349,7 @@ function distClass(dist: number): string {
 const TeamSection: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const mouseRef = useRef({ x: 0, y: 0 });
+  const autoScrollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [prevActiveIndex, setPrevActiveIndex] = useState(0);
@@ -356,7 +360,8 @@ const TeamSection: React.FC = () => {
   const totalMembers = TEAM_MEMBERS.length;
 
   // Effective active index (hover overrides scroll-driven)
-  const effectiveIndex = hoverIndex !== null ? hoverIndex : activeIndex;
+  // Hover no longer overrides the displayed member; it only drives auto-scroll direction
+  const effectiveIndex = activeIndex;
 
   // Keep ref in sync
   useEffect(() => { activeIndexRef.current = activeIndex; }, [activeIndex]);
@@ -474,6 +479,40 @@ const TeamSection: React.FC = () => {
     setHoverIndex(null);
   }, []);
 
+  // ── Auto-scroll when hovering above/below the active name ──
+  useEffect(() => {
+    // Always clear previous interval first
+    if (autoScrollRef.current) {
+      clearInterval(autoScrollRef.current);
+      autoScrollRef.current = null;
+    }
+
+    // Nothing to do if not hovering or hovering the active name
+    if (hoverIndex === null || hoverIndex === activeIndex) return;
+
+    const direction = hoverIndex < activeIndex ? -1 : 1;
+
+    autoScrollRef.current = setInterval(() => {
+      setActiveIndex(prev => {
+        const next = prev + direction;
+        if (next < 0 || next >= totalMembers) {
+          // Hit the boundary → stop
+          if (autoScrollRef.current) clearInterval(autoScrollRef.current);
+          return prev;
+        }
+        activeIndexRef.current = next;
+        return next;
+      });
+    }, AUTO_SCROLL_SPEED);
+
+    return () => {
+      if (autoScrollRef.current) {
+        clearInterval(autoScrollRef.current);
+        autoScrollRef.current = null;
+      }
+    };
+  }, [hoverIndex, activeIndex, totalMembers]);
+
   // Precompute drift columns
   const driftColumns = useMemo(() => {
     const third = Math.ceil(TEAM_BG_IMAGES.length / 3);
@@ -552,7 +591,7 @@ const TeamSection: React.FC = () => {
             <em>Our</em> <strong>Team</strong>
           </div>
 
-          <div className={`${CLS}-names-window`}>
+          <div className={`${CLS}-names-window`} onMouseLeave={handleNameLeave}>
             {visibleMembers.map((member, vi) => {
               const realIdx = windowStart + vi;
               const isActive = realIdx === effectiveIndex;

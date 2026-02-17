@@ -1,25 +1,132 @@
 // src/components/sections/about/AboutSection.tsx
-import React, { useRef, useEffect, useCallback } from 'react';
+import React, { useRef, useEffect, useCallback, useState } from 'react';
 import * as THREE from 'three';
 import { TIMELINE } from '../../../config/timeline';
 import { scrollProgress } from '../../../hooks/useScrollProgress';
+import './AboutSection.css';
 
 // ════════════════════════════════════════════════
-//  CONTENT
+//  CARD DATA
+// ════════════════════════════════════════════════
+
+const CARDS: {
+    key: string;
+    variant: string;
+    title: string;
+    text: string;
+    icon: React.ReactNode;
+}[] = [
+        {
+            key: 'vision',
+            variant: 'about-card--vision',
+            title: 'THE VISION',
+            text: 'Unites pioneering arts and tech of technology to uniting arts and tech.',
+            icon: (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M12 2a8 8 0 0 0-8 8c0 3.5 2.5 6.5 6 7.5V20h4v-2.5c3.5-1 6-4 6-7.5a8 8 0 0 0-8-8z" />
+                    <path d="M10 20h4v2h-4z" />
+                    <path d="M8 12h2l1-2 2 4 1-2h2" strokeLinejoin="round" />
+                </svg>
+            ),
+        },
+        {
+            key: 'legacy',
+            variant: 'about-card--legacy',
+            title: 'THE LEGACY',
+            text: 'Since 2006, Utkarsh has been the premier convergence of tech — unites over 10,000+ attendees annually.',
+            icon: (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <rect x="3" y="6" width="7" height="6" rx="1" />
+                    <rect x="14" y="6" width="7" height="6" rx="1" />
+                    <rect x="8" y="12" width="8" height="6" rx="1" />
+                    <circle cx="6.5" cy="9" r="1" fill="currentColor" />
+                    <circle cx="17.5" cy="9" r="1" fill="currentColor" />
+                </svg>
+            ),
+        },
+        {
+            key: 'impact',
+            variant: 'about-card--impact',
+            title: 'THE IMPACT',
+            text: 'Inspiring visionaries and empowerment for the extraordinary fusion of talent and passion.',
+            icon: (
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 3v4m0 10v4M3 12h4m10 0h4" />
+                    <circle cx="12" cy="12" r="3" />
+                </svg>
+            ),
+        },
+    ];
+
+// ════════════════════════════════════════════════
+//  STATS DATA
 // ════════════════════════════════════════════════
 
 const STATS = [
-    { label: 'Established', value: '2006' },
-    { label: 'Attendees Annually', value: '10,000+' },
-    { label: 'Days of Innovation', value: '3' },
-    { label: 'Events & Workshops', value: '50+' },
+    { target: 3, suffix: '', label: 'Days Event', color: '#00FFFF' },
+    { target: 10, suffix: 'K+', label: 'Attendees', color: '#FF00FF' },
+    { target: 100, suffix: '+', label: 'Events', color: '#00FFFF' },
 ];
 
-const PARAGRAPHS = [
-    "Utkarsh, formerly known as INNOVIZ, is a three-day extravaganza celebrating arts, culture, and engineering. As a premier tech fest, it brings together bright minds, groundbreaking ideas, and cutting-edge advancements that shape the future.",
-    "From hands-on workshops and competitive hackathons to insightful talks by industry experts and research paper presentations — Utkarsh is the ultimate platform for students, professionals, and tech enthusiasts to explore, learn, and showcase their talents.",
-    "Since its inception in 2006, Utkarsh has established itself as a premier event in Delhi & NCR, attracting over 10,000 attendees annually."
-];
+// ════════════════════════════════════════════════
+//  ANIMATED STAT COMPONENT
+// ════════════════════════════════════════════════
+
+const AnimatedStat: React.FC<{
+    target: number;
+    suffix: string;
+    label: string;
+    color: string;
+    isVisible: boolean;
+}> = ({ target, suffix, label, color, isVisible }) => {
+    const [value, setValue] = useState(0);
+    const hasAnimatedRef = useRef(false);
+    const startTimeRef = useRef(0);
+    const rafIdRef = useRef(0);
+
+    useEffect(() => {
+        if (isVisible && !hasAnimatedRef.current) {
+            hasAnimatedRef.current = true;
+            startTimeRef.current = performance.now();
+            const duration = 1800; // ms
+
+            const animate = (now: number) => {
+                const elapsed = now - startTimeRef.current;
+                const progress = Math.min(elapsed / duration, 1);
+                // Ease-out cubic
+                const eased = 1 - Math.pow(1 - progress, 3);
+                setValue(Math.round(eased * target));
+
+                if (progress < 1) {
+                    rafIdRef.current = requestAnimationFrame(animate);
+                }
+            };
+
+            rafIdRef.current = requestAnimationFrame(animate);
+        }
+
+        if (!isVisible) {
+            hasAnimatedRef.current = false;
+            setValue(0);
+            if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+        }
+
+        return () => {
+            if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
+        };
+    }, [isVisible, target]);
+
+    return (
+        <div className="about-stat">
+            <span className="about-stat-number" style={{ color }}>
+                {value}{suffix}
+            </span>
+            <span className="about-stat-label">{label}</span>
+            <div className="about-stat-bar" style={{ background: color }} />
+        </div>
+    );
+};
 
 // ════════════════════════════════════════════════
 //  COMPONENT
@@ -30,6 +137,7 @@ const AboutSection: React.FC = () => {
     const opacityRef = useRef(0);
     const rafRef = useRef<number>(0);
     const lastTimeRef = useRef(0);
+    const [sectionVisible, setSectionVisible] = useState(false);
 
     const tick = useCallback((time: number) => {
         if (!contentRef.current) {
@@ -65,6 +173,10 @@ const AboutSection: React.FC = () => {
         contentRef.current.style.opacity = opacityRef.current.toString();
         contentRef.current.style.visibility = opacityRef.current < 0.01 ? 'hidden' : 'visible';
 
+        // Trigger stat animation when section is sufficiently visible
+        const nowVisible = opacityRef.current > 0.5;
+        setSectionVisible((prev) => (prev !== nowVisible ? nowVisible : prev));
+
         rafRef.current = requestAnimationFrame(tick);
     }, []);
 
@@ -76,139 +188,79 @@ const AboutSection: React.FC = () => {
     }, [tick]);
 
     return (
-        <div
-            ref={contentRef}
-            style={{
-                position: 'fixed',
-                inset: 0,
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                padding: '3rem 2rem',
-                opacity: 0,
-                willChange: 'opacity',
-                background: 'linear-gradient(180deg, #050505 0%, #0a0a0f 50%, #050505 100%)',
-                zIndex: 15,
-                pointerEvents: 'none',
-            }}
-        >
-            {/* Subtitle */}
-            <span
-                style={{
-                    fontFamily: "'Inter', sans-serif",
-                    fontSize: 'clamp(0.65rem, 1.2vw, 0.85rem)',
-                    fontWeight: 500,
-                    letterSpacing: '0.35em',
-                    textTransform: 'uppercase',
-                    color: '#3b82f6',
-                    display: 'inline-block',
-                    padding: '0.4em 1.2em',
-                    border: '1px solid rgba(59,130,246,0.3)',
-                    borderRadius: '999px',
-                    background: 'rgba(59,130,246,0.05)',
-                    marginBottom: '1rem',
-                }}
-            >
-                The Most Awaited Fest of the Year
-            </span>
+        <div ref={contentRef} className="about-root">
+            {/* Decorative corner accents */}
 
-            {/* Title */}
-            <h2
-                style={{
-                    fontFamily: "'Orbitron', 'Inter', sans-serif",
-                    fontSize: 'clamp(2rem, 5vw, 4rem)',
-                    fontWeight: 900,
-                    letterSpacing: '0.08em',
-                    textTransform: 'uppercase',
-                    lineHeight: 1.1,
-                    margin: 0,
-                    background: 'linear-gradient(135deg, #ffffff 0%, #93c5fd 50%, #3b82f6 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                    filter: 'drop-shadow(0 2px 10px rgba(59,130,246,0.3))',
-                }}
-            >
-                About Utkarsh
-            </h2>
 
-            {/* Decorative line */}
-            <div style={{
-                width: '80px',
-                height: '2px',
-                background: 'linear-gradient(90deg, transparent, #3b82f6, transparent)',
-                margin: '1.2rem auto 2.5rem',
-                borderRadius: '2px',
-            }} />
+            {/* Decorative neon lines */}
+            <div className="about-neon-line about-neon-line--top" />
+            <div className="about-neon-line about-neon-line--bottom" />
 
-            {/* Paragraphs */}
-            <div style={{ maxWidth: '42rem', textAlign: 'center', marginBottom: '3rem' }}>
-                {PARAGRAPHS.map((text, i) => (
-                    <p
-                        key={i}
-                        style={{
-                            fontFamily: "'Inter', sans-serif",
-                            fontSize: 'clamp(0.9rem, 1.4vw, 1.05rem)',
-                            fontWeight: 300,
-                            lineHeight: 1.8,
-                            color: 'rgba(255,255,255,0.72)',
-                            margin: 0,
-                            marginBottom: i < PARAGRAPHS.length - 1 ? '1.2rem' : 0,
-                        }}
-                    >
-                        {text}
-                    </p>
-                ))}
-            </div>
+            {/* UTKARSH watermark */}
+            <span className="about-watermark" aria-hidden="true">UTKARSH</span>
 
-            {/* Stats */}
-            <div
-                style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(4, 1fr)',
-                    gap: 'clamp(1rem, 3vw, 2.5rem)',
-                    maxWidth: '48rem',
-                    width: '100%',
-                }}
-            >
-                {STATS.map((stat, i) => (
-                    <div
-                        key={i}
-                        style={{
-                            textAlign: 'center',
-                            padding: '1.2rem 0.5rem',
-                            borderRadius: '12px',
-                            background: 'rgba(255,255,255,0.03)',
-                            border: '1px solid rgba(255,255,255,0.06)',
-                        }}
-                    >
-                        <div
-                            style={{
-                                fontFamily: "'Orbitron', 'Inter', monospace",
-                                fontSize: 'clamp(1.4rem, 2.8vw, 2.2rem)',
-                                fontWeight: 800,
-                                color: '#ffffff',
-                                lineHeight: 1,
-                                marginBottom: '0.5rem',
-                            }}
-                        >
-                            {stat.value}
-                        </div>
-                        <div
-                            style={{
-                                fontFamily: "'Inter', sans-serif",
-                                fontSize: 'clamp(0.55rem, 0.9vw, 0.72rem)',
-                                fontWeight: 400,
-                                color: 'rgba(255,255,255,0.45)',
-                                letterSpacing: '0.15em',
-                                textTransform: 'uppercase',
-                            }}
-                        >
-                            {stat.label}
-                        </div>
-                    </div>
-                ))}
+            <div className="about-inner">
+                {/* Title */}
+                <div style={{ textAlign: 'center' }}>
+                    <h2 className="about-title">
+                        The Most Awaited Fest of The Year!
+                    </h2>
+                    <div className="about-title-separator" />
+                </div>
+
+                {/* Cards + Hexagons row */}
+                <div className="about-cards-row">
+                    {CARDS.map((card, i) => (
+                        <React.Fragment key={card.key}>
+                            {/* Card */}
+                            <article className={`about-card ${card.variant}`}>
+                                {/* Glow behind card */}
+                                <div className="about-card-glow" />
+                                {/* Gradient border wrapper with clip-path */}
+                                <div className="about-card-border">
+                                    {/* Inner content */}
+                                    <div className="about-card-content">
+                                        <div className="about-card-icon">{card.icon}</div>
+                                        <h3 className="about-card-title">{card.title}</h3>
+                                        <p className="about-card-text">{card.text}</p>
+                                    </div>
+                                </div>
+                            </article>
+
+                            {/* Insert hexagonal images after the 2nd card */}
+                            {i === 1 && (
+                                <div className="about-hex-group">
+                                    <div className="about-hex-wrapper about-hex-wrapper--left">
+                                        <div className="about-hex-border" />
+                                        <div className="about-hex">
+                                            <img src="/assets/about-section/hex1.webp" alt="Utkarsh workshop" loading="lazy" />
+                                        </div>
+                                    </div>
+                                    <div className="about-hex-wrapper about-hex-wrapper--right">
+                                        <div className="about-hex-border" />
+                                        <div className="about-hex">
+                                            <img src="/assets/about-section/hex2.webp" alt="Utkarsh stage performance" loading="lazy" />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </React.Fragment>
+                    ))}
+                </div>
+
+                {/* Animated Stats Row */}
+                <div className="about-stats-row">
+                    {STATS.map((stat) => (
+                        <AnimatedStat
+                            key={stat.label}
+                            target={stat.target}
+                            suffix={stat.suffix}
+                            label={stat.label}
+                            color={stat.color}
+                            isVisible={sectionVisible}
+                        />
+                    ))}
+                </div>
             </div>
         </div>
     );

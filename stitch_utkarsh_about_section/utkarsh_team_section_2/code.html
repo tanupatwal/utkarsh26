@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Utkarsh Team Section - Mosaic View</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&amp;family=Rajdhani:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            colors: {
+              primary: "#06b6d4", // Cyan glow
+              secondary: "#f97316", // Orange heritage accent
+              "background-light": "#f3f4f6",
+              "background-dark": "#020617", // Very dark slate/blue
+              "card-dark": "#0f172a",
+            },
+            fontFamily: {
+              display: ['Orbitron', 'sans-serif'],
+              body: ['Rajdhani', 'sans-serif'],
+            },
+            borderRadius: {
+              DEFAULT: "0.5rem",
+            },
+            backgroundImage: {
+                'mandala': "url('https://images.unsplash.com/photo-1598155523122-38423fa4d6c3?q=80&w=2070&auto=format&fit=crop')",
+                'tech-grid': "linear-gradient(rgba(2, 6, 23, 0.95), rgba(2, 6, 23, 0.98)), url('https://images.unsplash.com/photo-1550751827-4bd374c3f58b?q=80&w=2070&auto=format&fit=crop')",
+            }
+          },
+        },
+      };
+    </script>
+<style>
+        .glow-text {
+            text-shadow: 0 0 10px rgba(6, 182, 212, 0.5);
+        }
+        .glow-border {
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.2);
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }.custom-scrollbar::-webkit-scrollbar {
+            width: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.1); 
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #06b6d4; 
+            border-radius: 4px;
+        }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background-light dark:bg-background-dark min-h-screen font-body text-gray-800 dark:text-gray-100 selection:bg-primary selection:text-white overflow-hidden">
+<div class="fixed inset-0 z-0 pointer-events-none opacity-10 dark:opacity-20 bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDBlY1saLLnAp2N9Hu8m4svaeOaqzV3Bp6Gl_gkYgO7ukxTFCToEMcc0jGaHS-oy2xIYZSgCZLDeYUxBXkC9mgmvLKOv8JCbTpFRh8xURfoL9VU2qa0NbjXkdEgDAzT05MW5Lc8j1e0YaaiVntePHg_wTU91v7h6-JKnEhHJuaZLpnDiO2EGCXorjNp1jGHLe9VngnXP48JCiR9JM0KDoUegFRjFaZMCrcOCb1Q4094vDoRQnJUiCgB_uo-aS0y6d4ALt_NtGqQ_2bR');"></div>
+<div class="fixed inset-0 z-0 pointer-events-none bg-gradient-to-b from-transparent via-transparent to-background-light dark:to-background-dark"></div>
+<div class="relative z-10 max-w-md mx-auto h-screen flex flex-col bg-white/5 dark:bg-black/5 backdrop-blur-[2px]">
+<header class="flex justify-between items-center p-6 pb-2 shrink-0">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-full bg-gradient-to-tr from-secondary to-primary flex items-center justify-center shadow-[0_0_15px_rgba(249,115,22,0.5)]">
+<span class="material-symbols-outlined text-white text-sm">hub</span>
+</div>
+<span class="font-display font-bold text-lg tracking-wider text-gray-900 dark:text-white">UTKARSH</span>
+</div>
+<div class="hidden sm:block text-[10px] font-mono text-primary bg-black/30 border border-primary/20 px-2 py-1 rounded">
+            FPS: 60
+        </div>
+<button class="p-2 rounded-full hover:bg-black/10 dark:hover:bg-white/10 transition-colors">
+<span class="material-symbols-outlined text-gray-600 dark:text-gray-300">menu</span>
+</button>
+</header>
+<div class="px-6 pt-2 pb-4 shrink-0">
+<div class="flex justify-between items-end mb-4">
+<div>
+<h2 class="text-xs font-bold tracking-[0.3em] text-secondary uppercase mb-1">Interactive Mosaic</h2>
+<h1 class="font-display text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-gray-900 to-gray-600 dark:from-white dark:to-gray-400">THE SQUAD</h1>
+</div>
+<div class="flex items-center bg-gray-200 dark:bg-gray-800 rounded-lg p-1 gap-1">
+<button class="p-1.5 rounded-md bg-white dark:bg-gray-700 shadow-sm text-primary">
+<span class="material-symbols-outlined text-sm">grid_view</span>
+</button>
+<button class="p-1.5 rounded-md text-gray-500 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
+<span class="material-symbols-outlined text-sm">view_list</span>
+</button>
+</div>
+</div>
+<div class="relative">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">search</span>
+<input class="w-full bg-white/80 dark:bg-card-dark/80 backdrop-blur border border-gray-200 dark:border-gray-700 rounded-lg py-2 pl-9 pr-4 text-sm focus:ring-1 focus:ring-primary focus:border-primary outline-none text-gray-800 dark:text-gray-200 placeholder-gray-400" placeholder="Search team members..." type="text"/>
+</div>
+</div>
+<main class="flex-1 flex overflow-hidden relative">
+<aside class="w-8 flex flex-col items-center justify-center py-4 shrink-0 border-r border-gray-200/20 dark:border-gray-800/50 z-20 bg-background-light/50 dark:bg-background-dark/50 backdrop-blur-sm">
+<div class="flex flex-col gap-1 overflow-y-auto scrollbar-hide h-full justify-center text-[10px] font-bold text-gray-400 dark:text-gray-600">
+<a class="hover:text-primary hover:scale-150 transition-all text-center h-4" href="#">A</a>
+<a class="hover:text-primary hover:scale-150 transition-all text-center h-4" href="#">B</a>
+<a class="hover:text-primary hover:scale-150 transition-all text-center h-4 text-primary scale-125 glow-text" href="#">C</a>
+<a class="hover:text-primary hover:scale-150 transition-all text-center h-4" href="#">D</a>
+<a class="hover:text-primary hover:scale-150 transition-all text-center h-4" href="#">E</a>
+<a class="hover:text-primary hover:scale-150 transition-all text-center h-4" href="#">F</a>
+<a class="hover:text-primary hover:scale-150 transition-all text-center h-4" href="#">G</a>
+<a class="hover:text-primary hover:scale-150 transition-all text-center h-4" href="#">H</a>
+<a class="hover:text-primary hover:scale-150 transition-all text-center h-4" href="#">I</a>
+<a class="hover:text-primary hover:scale-150 transition-all text-center h-4" href="#">J</a>
+<a class="hover:text-primary hover:scale-150 transition-all text-center h-4" href="#">K</a>
+<a class="hover:text-primary hover:scale-150 transition-all text-center h-4" href="#">L</a>
+<a class="hover:text-primary hover:scale-150 transition-all text-center h-4" href="#">M</a>
+<span class="text-center h-2 opacity-50">.</span>
+<span class="text-center h-2 opacity-50">.</span>
+</div>
+</aside>
+<div class="flex-1 overflow-y-auto custom-scrollbar p-2 pb-24">
+<div class="grid grid-cols-3 sm:grid-cols-4 gap-1.5 auto-rows-[1fr]">
+<div class="relative aspect-square group cursor-pointer">
+<div class="absolute inset-0 bg-primary/20 blur-sm opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+<img alt="Team member" class="w-full h-full object-cover rounded-sm grayscale group-hover:grayscale-0 transition-all duration-300 border border-transparent group-hover:border-primary group-hover:scale-105 group-hover:z-10 shadow-lg relative z-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqn8ScLQuj2zlx8KqK8CypayeD7Fslb0UJNqmlO_ONVlWhILWgEoILEgVPSB_11gVKxPTZofehjkCe-tdx0S_Q9yHGSZ5UH0Kg8UmkR8f_WC6iKSQErTSjvL66U3uL6NaXvGh94-PYzCzVb3B6awZOeCqX1K76QQegbNfx9cTbyYjQGD6mnB5hQeGBOEcVVm8lL7qSYDF3m5ebdEeZF20T9KO15pU-9bq7SF2or6XDkX9G0QLfSjV7JDReQ88xTUwDpt287x2SOxUx"/>
+<div class="absolute bottom-0 left-0 w-full p-1 bg-black/70 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 pointer-events-none">
+<p class="text-[10px] text-white font-bold truncate">Aisha K.</p>
+</div>
+</div>
+<div class="relative aspect-square group cursor-pointer">
+<img alt="Team member" class="w-full h-full object-cover rounded-sm grayscale group-hover:grayscale-0 transition-all duration-300 border border-transparent group-hover:border-primary group-hover:scale-105 group-hover:z-10 shadow-lg relative z-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXO3L1NEFyWk-B4MlSzpdu7YN4lGm-T4J5FPCXZpcfxlUu7GPjyZvoNN5fLM3wDNsE0BbZWd7ufVDtqz_ooswOujCyWu7Z5YTcnX_sbOcWmiRFu65Uojkh6qz8djI5iBNLTofIoItKY5dpkZ-jIpTHWQnqUInkZwNcu-Y6JVJZNgHAqmESp9DvgPAJcmyBM8iktwPSQPvqvZQFud-xP4-glNlla4Affv5Vf9k9l5Wx4SwQPsq4tUquMC79rc5JLk65Y7ghzjY7-4-O"/>
+</div>
+<div class="relative aspect-square group cursor-pointer">
+<img alt="Team member" class="w-full h-full object-cover rounded-sm grayscale group-hover:grayscale-0 transition-all duration-300 border border-transparent group-hover:border-primary group-hover:scale-105 group-hover:z-10 shadow-lg relative z-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDfONqBcp3AxwvSU3pGrvaoejjGKnV9BRWRi31avIRKfr3hI3iW2YcyQZjJ19JJg_P06jkvIAwjBXFgoAbCRWkHE9aOUaBoGi1J-5Yaw6k9ZlosJkxiHYD12RHW07PU4A1mNjt1eoAg32YYuL3wwmrOihqGkCpuPvlPxRrWTz9MtUdEOVfBwIKzSqz1qw8BPxPJDjIqYWfxCRs-Cz2Ca16Y6R431dk_r_s9cKA6tDbD21TFgeqGVIiBlYiPvcVKuhcIYM_gmGfFerrv"/>
+</div>
+<div class="relative aspect-square row-span-2 col-span-2 group cursor-pointer">
+<img alt="Lead" class="w-full h-full object-cover rounded-sm grayscale group-hover:grayscale-0 transition-all duration-300 border border-transparent group-hover:border-secondary group-hover:scale-[1.02] group-hover:z-10 shadow-lg relative z-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAGFxx3MYNySCPPaWFvMCOVYYyUFPf0u0K9Chw4cmmOaJzqup0kQjZCOSj8_8zMOO0mv86of4Q4xFA8o2k3kWoKVYAfO8cTy3frZMhDMJ1CnyL2rOafWDOuwj2CkF1aZ7GFbr8lkThY8ugN-fs_4LGtM4rE5L1u_q_SYX9jzZUyJ3QXAtJs19-PLKbd8yctrv2wWogqCZ13DHo4AFh-4LtLXJL6A-BMpPT7MnWnXKIthLuTb0YAjCVxdW_WYq4E-MphsLZK2mzvDpdS"/>
+<div class="absolute top-2 right-2 bg-secondary text-white text-[10px] font-bold px-1.5 py-0.5 rounded">LEAD</div>
+<div class="absolute bottom-0 left-0 w-full p-2 bg-gradient-to-t from-black via-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 pointer-events-none">
+<p class="text-sm text-white font-display font-bold">Ishaan</p>
+<p class="text-[10px] text-gray-300">Content Lead</p>
+</div>
+</div>
+<div class="relative aspect-square group cursor-pointer">
+<img alt="Team member" class="w-full h-full object-cover rounded-sm grayscale group-hover:grayscale-0 transition-all duration-300 border border-transparent group-hover:border-primary group-hover:scale-105 group-hover:z-10 shadow-lg relative z-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCzs4Gs0PscfzdoHHSxezjr6P4peTVCaySpdjeFaUH7cmIvp6N7AOb_cLyNttTKFYJ3xzOOzNQGWwqLwNz1IuQ2NSIfBzJ24QxvN1CR3CR7YwcS6RQAEMFlhEp_5HYeHO6zW7_MRzEXjSSWFI5759Qhae5aSRJi7bx3Sqv1QaBGYdwnlk0Y1v0x0Xl4KXXwQu-ykQy_fCg0fI97Z7X5cUvUbOs_OAkfHut_4qvCouAhtS87YyG4VMxMvOAZk7f7mVm1DaosGqpcOgQO"/>
+</div>
+<div class="relative aspect-square group cursor-pointer">
+<img alt="Team member" class="w-full h-full object-cover rounded-sm grayscale group-hover:grayscale-0 transition-all duration-300 border border-transparent group-hover:border-primary group-hover:scale-105 group-hover:z-10 shadow-lg relative z-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB8omQ7ZQCVI1mYiuTHIAX3DK6fy-cmmVUhyTIU7O0qx-axAqCyCSl3PInGM1q_MwAH_3wCE4GVJgRc30I59EmJp3CFYnUuc5iucWtIELGeI-lmHAl0vD_gIG0gELzOuu7uHYFnma-CHpQ4mz4QDsW_X7h0XUMg6yWDUgoQan3SFerThPzdXu3QNLA2ZOhHB63mt8Euj0r0vmUoyqdYl1T4cgpd_NORTTk1A2k3fc807Tt_kJcviKZ-RfQDqWEN9jlXCr17Bg_489NH"/>
+</div>
+<div class="relative aspect-square group cursor-pointer">
+<img alt="Team member" class="w-full h-full object-cover rounded-sm grayscale group-hover:grayscale-0 transition-all duration-300 border border-transparent group-hover:border-primary group-hover:scale-105 group-hover:z-10 shadow-lg relative z-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCuvgMgQ76s9Wn4x6Ryqx9ZzkwBgA9GAS6-0kMOf0Ysui0brPRfzaJECxoEeWcUYv29NpiBXJPKhrg2AfZdMnyq4TkwAtcmSFjcsCsMVUCAcqfh0SwEJPh6kvPUUwHIdHtvd0CVQ3XbXmGmOzCfWi8JCNd-ou0su-5IaABUc5HzygR4jODyOT0x8b3j4bAe3LyMVve-7Nr8C5hvOLEab0MI_9I7VYBPD56ypV2maYmtZF0n2F5iis1lu7ew4A3aLztzxROu08Q2ozf6"/>
+</div>
+<div class="relative aspect-square group cursor-pointer">
+<img alt="Team member" class="w-full h-full object-cover rounded-sm grayscale group-hover:grayscale-0 transition-all duration-300 border border-transparent group-hover:border-primary group-hover:scale-105 group-hover:z-10 shadow-lg relative z-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDJkClH3Tds2QbAYvvsO5G41DIvLnabCr0OweEgVtKsG4g35DyyRu5--WGlxU74S1ITJeiit7IzpYSSfVnpts0K_rRfuEtqnYx5t3qr_-tI4dymt16WhJYrvuLTyej5Ybki1MGKproKiEguSHjXFYDQPGCKl04s2n6E8zdKBGqgukWOm0Ktj7KRyt7v6oTh35jbL9gWvPAzA55owoai7BFymgTLcmFjsdfkgLNaS7OlgSYh_ZaE7qs_-BBwG6MpQTtfiORiuMEgXP9c"/>
+</div>
+<div class="relative aspect-square group cursor-pointer">
+<img alt="Team member" class="w-full h-full object-cover rounded-sm grayscale group-hover:grayscale-0 transition-all duration-300 border border-transparent group-hover:border-primary group-hover:scale-105 group-hover:z-10 shadow-lg relative z-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAx2t82qzZKcME_NCDDsojjlMao5papm_VK5-uRTAkVyodteOd-eqfHVSvFgVDTt3eSRQvwHjpckVW1DSIiDCWxCCvFT-0iyu3AB0lBCexuytU2l1SM16fnjST6l5QoXIUKwoiIcFFTXtqtj97QFd6BmwghSdkp9PCKIKxoGPSVcJuvEmQ9XYGJvJHZWahtdM9LCgOHGbUh4m1JCDFj3g7MPOuv3dJG4RK0IoJNnQus30dWFPEipYIHoO4yCFiSXFMETOOMkgKA2AIH"/>
+</div>
+<div class="relative aspect-square group cursor-pointer">
+<img alt="Team member" class="w-full h-full object-cover rounded-sm grayscale group-hover:grayscale-0 transition-all duration-300 border border-transparent group-hover:border-primary group-hover:scale-105 group-hover:z-10 shadow-lg relative z-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBjPYxGw4SYUx7BlkzBZvjJpOITFMcXk1KtcSwYmKX0Iwaox07TYY6dqW4B8DrU_zBv9lSsWXbsTTJAATjhl1WWzN4-TiAmyNKOk4I9NRbuYpKlG8TTuxsXtTp4b86Dl3qp8sr5PvPoD8fMqljbUCvs5uGL0XqJi3NXcTB55Z6n15OE9juZTHP5nBRjzOQG93KcH6FZyE2RgZvrzyRUdyu7-1EWptIZ9mGQOzjnAz-ZK5u1aW8E6gn9r5Nq0tF3gai2CuHktHwAYyid"/>
+</div>
+<div class="relative aspect-square group cursor-pointer">
+<img alt="Team member" class="w-full h-full object-cover rounded-sm grayscale group-hover:grayscale-0 transition-all duration-300 border border-transparent group-hover:border-primary group-hover:scale-105 group-hover:z-10 shadow-lg relative z-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBqes-pZgDFcaBx3HNSY5tJkSfoQzLpyOx7XMDZ4Mg2JuyqPUyfN1lpmgN-ITTEEnX3JzZ4feam_ni1yJP7GioC0h70TN_g7Yh1Q85FGjkUrPmuTffbiYtgeWbDcwyDHaIxTrARbnjlDd7uAeiOLdNGFii3sIuSOdZMbJx6g3DLCtV9qw5hCokUwaL19JLQZPE2CAoDT7gxPvj_JNRwg3p-4elh8kTTAcw--ONM60H1v2EVBX54AzYmlZpBsBO5fXLAcqU-2BJPbRBh"/>
+</div>
+<div class="relative aspect-square group cursor-pointer">
+<img alt="Team member" class="w-full h-full object-cover rounded-sm grayscale group-hover:grayscale-0 transition-all duration-300 border border-transparent group-hover:border-primary group-hover:scale-105 group-hover:z-10 shadow-lg relative z-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDbRWCHY2JwGKP4WwSTq42xkvCeECt7l9pHBt-TY6hHeR28gIOnuWWf2PORQ5urS5HXWVH-s8bZDtg26VTnaS50LTtkaNJeg32cbWCo_3AbHAerKhpnRkR_lMaLf2cqfDRZekeh-h_59gpftw6RUImeLSZH9f9Gx1LjcELL_5zl2IgcywZBZkJ9cfXflxCwJivs6RxkzY8dsVoJRNl9Bws6te2T4Zp1is1I7nD4W1pAlMMopWlyfYMIQ0XYHX_6zjLpCMafilMSe9ix"/>
+</div>
+<div class="relative aspect-square group cursor-pointer">
+<img alt="Team member" class="w-full h-full object-cover rounded-sm grayscale group-hover:grayscale-0 transition-all duration-300 border border-transparent group-hover:border-primary group-hover:scale-105 group-hover:z-10 shadow-lg relative z-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBxfNiU18YJoU-dbLa3fP41hWL4dc_m-A50zTX9gSqkx5yM2178PsVac9aFAT0rbjUdx_yLkR-iVyCJFElflytNlX19ohxhF-NO9AmFuPyMAGW5ATDOAge0VereR6LGxI4kqKhjwqNGYGG65h29mYLDUSKhLToEFhitwSsO55RvgplhGJrtksoIIoaK9QfyiET0lBm9tHKerVlzGXtQs4Gy-6sdvaDmpIm2iB2z5xNgEfjpe2RXbpXb5M1imtnxe88GIeyHS0W4L61P"/>
+</div>
+<div class="relative aspect-square group cursor-pointer">
+<img alt="Team member" class="w-full h-full object-cover rounded-sm grayscale group-hover:grayscale-0 transition-all duration-300 border border-transparent group-hover:border-primary group-hover:scale-105 group-hover:z-10 shadow-lg relative z-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFhnIO3-D6y39D4JUDZ4Bzp0o04uTW6he9AX-GeICK4IhmowLV3CKuKMoBKBwqcgXELiASXwhDkqCTD1oKB9EXK0opWPdlP0E-bPmgqRSdDrWefKRD4j763G4Rwp52q8NXXxCys2X918YCFijEfgRfAVM7EntRQjhUTFMk9qUmmuYmVXVG646rt2_-mLfGu11w447f5Cf4GhYoTFKhZ4XP_FV8zWE8KqwTR2Fp10uR6FnmsEJTAUZ_PmNqsaFZz01uEY3Lp8R3cEam"/>
+</div>
+<div class="relative aspect-square group cursor-pointer">
+<img alt="Team member" class="w-full h-full object-cover rounded-sm grayscale group-hover:grayscale-0 transition-all duration-300 border border-transparent group-hover:border-primary group-hover:scale-105 group-hover:z-10 shadow-lg relative z-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDex5vVsiKvA1UBW5d1KRXhOLO8xixbcIhAoS6n10BimBEQdf2NtuoR0-i_AgN4xL19k9-caIthe2Kvm-2Qk95MUFB7qOKYuX90xgwk0a6_E58puwOkavjaj0XmAOOm97fwhxoMchn5gks-kZ7BPC0dy35_iHTQtwLpH1rlOIVccBAAbNbrRYn8Ptz32ijoBNSPz18-xrEHfdodKUCN0LL5CXpTFlRYPukZQ784C0n6f0740CMPX7X6nFT4EfRZDA1AS_7HVkcZyL5T"/>
+</div>
+<div class="relative aspect-square group cursor-pointer">
+<img alt="Team member" class="w-full h-full object-cover rounded-sm grayscale group-hover:grayscale-0 transition-all duration-300 border border-transparent group-hover:border-primary group-hover:scale-105 group-hover:z-10 shadow-lg relative z-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBADCwGKoSAI2hsfWku34b67zvLHM_FBKGCg_v7SiPEDvsVXLI8ROl0O-D1y1GOmERkrdeJCkJBE0ygm26z3kkdru43VdNYTnby-815FxOrTXLjMzHRXu874uz0_s9_Z1G9QivSfM3mUAf4gbsVytmTmk003lGEiC41WDcDdbKwN3TI6Jt0xCw3qAR5jlZd0AFnafeuhh0C5QxUH4zamPLsPA3aekm3JyT4kkzm2CPqDShMR96XhUYdonfH3gpiYgBkw6eM0jYa-83C"/>
+</div>
+</div>
+<div class="flex justify-center mt-8 mb-4">
+<span class="material-symbols-outlined animate-bounce text-gray-400">expand_more</span>
+</div>
+</div>
+</main>
+<nav class="shrink-0 bg-background-light dark:bg-card-dark border-t border-gray-200 dark:border-gray-800">
+<div class="flex justify-around items-center px-2 py-3">
+<a class="flex flex-col items-center gap-1 group w-14" href="#">
+<span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition-colors text-xl">home</span>
+<span class="text-[9px] uppercase tracking-wider text-gray-400 group-hover:text-primary transition-colors font-medium">Home</span>
+</a>
+<a class="flex flex-col items-center gap-1 group w-14" href="#">
+<span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition-colors text-xl">info</span>
+<span class="text-[9px] uppercase tracking-wider text-gray-400 group-hover:text-primary transition-colors font-medium">About</span>
+</a>
+<div class="relative -top-6">
+<a class="flex items-center justify-center w-14 h-14 rounded-full bg-gradient-to-tr from-secondary to-primary shadow-[0_0_15px_rgba(6,182,212,0.4)] border-4 border-background-light dark:border-background-dark transform hover:scale-110 transition-transform" href="#">
+<span class="material-symbols-outlined text-white text-2xl">calendar_month</span>
+</a>
+<span class="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[9px] uppercase tracking-wider text-gray-900 dark:text-white font-bold">Schedule</span>
+</div>
+<a class="flex flex-col items-center gap-1 group w-14" href="#">
+<span class="material-symbols-outlined text-primary text-xl glow-text">diversity_3</span>
+<span class="text-[9px] uppercase tracking-wider text-primary font-bold glow-text">Team</span>
+</a>
+<a class="flex flex-col items-center gap-1 group w-14" href="#">
+<span class="material-symbols-outlined text-gray-400 group-hover:text-primary transition-colors text-xl">mail</span>
+<span class="text-[9px] uppercase tracking-wider text-gray-400 group-hover:text-primary transition-colors font-medium">Contact</span>
+</a>
+</div>
+<div class="pb-1 w-full flex justify-center">
+<div class="w-1/3 h-1 bg-gray-200 dark:bg-gray-800 rounded-full"></div>
+</div>
+</nav>
+</div>
+<script>
+        // Simple script to toggle dark mode
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+    </script>
+</body></html>
