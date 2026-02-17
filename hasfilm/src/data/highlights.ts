@@ -62,7 +62,7 @@ export const HIGHLIGHTS_CONTENT: ImageData[] = [
         description: "Melodies that carried through the corridors and stayed in our hearts."
     },
     {
-        url: "/assets/highlights/12.jpg",
+        url: "/assets/highlights/12.webp",
         title: "Our Campus",
         description: "The backdrop to it all — where memories were made and friendships forged."
     },

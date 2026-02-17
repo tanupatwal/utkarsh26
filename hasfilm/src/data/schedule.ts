@@ -25,7 +25,7 @@ export const SCHEDULE_DAYS: ScheduleDay[] = [
     { id: 3, label: 'DAY 03', date: 'Feb 27' },
 ];
 
-const img = (n: number) => `/assets/eventimg/img${((n - 1) % 9) + 1}.jpg`;
+const img = (n: number) => `/assets/eventimg/img${((n - 1) % 9) + 1}.webp`;
 
 export const SCHEDULE_EVENTS: ScheduleEvent[] = [
     // ════════════════════════════════════════
