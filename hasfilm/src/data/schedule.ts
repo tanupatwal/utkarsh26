@@ -11,6 +11,7 @@ export interface ScheduleEvent {
     image: string;
     prizePool?: string;
     teamSize?: string;
+    registrationLink?: string;
 }
 
 export interface ScheduleDay {

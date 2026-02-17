@@ -78,7 +78,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
                     justifyContent: 'center',
                     backgroundColor: '#0B0F1A',
                     color: '#ffffff',
-                    fontFamily: "'Inter', sans-serif",
+                    fontFamily: "var(--font-body)",
                     padding: '20px',
                     zIndex: 9999,
                 }}>

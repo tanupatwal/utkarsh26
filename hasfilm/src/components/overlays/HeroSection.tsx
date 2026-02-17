@@ -99,7 +99,7 @@ const HeroSection: React.FC = () => {
                         <h1
                             className="text-7xl md:text-9xl font-black tracking-tighter leading-none"
                             style={{
-                                fontFamily: "'Orbitron', 'Inter', sans-serif",
+                                fontFamily: "var(--font-display)",
                                 fontWeight: 900,
                                 background:
                                     'linear-gradient(180deg, #ffffff 0%, #F5C16C 30%, #FF8C42 55%, #00E5FF 100%)',
@@ -115,7 +115,7 @@ const HeroSection: React.FC = () => {
                         <h2
                             className="text-3xl md:text-5xl font-bold mt-2"
                             style={{
-                                fontFamily: "'Orbitron', 'Inter', sans-serif",
+                                fontFamily: "var(--font-display)",
                                 fontWeight: 800,
                                 color: '#9EEAFF',
                                 letterSpacing: '0.35em',
@@ -135,7 +135,7 @@ const HeroSection: React.FC = () => {
                     <p
                         className="text-xl md:text-3xl tracking-[0.2em] uppercase text-white font-bold"
                         style={{
-                            fontFamily: "'Inter', sans-serif",
+                            fontFamily: "var(--font-body)",
                             textShadow:
                                 '0 4px 4px rgba(0,0,0,1), 0 0 20px rgba(0,0,0,0.8), 0 0 40px rgba(0,229,255,0.3)',
                         }}
@@ -146,7 +146,7 @@ const HeroSection: React.FC = () => {
                     <p
                         className="text-3xl md:text-6xl font-serif italic tracking-wide mt-4"
                         style={{
-                            fontFamily: "'Playfair Display', serif",
+                            fontFamily: "var(--font-serif)",
                             background:
                                 'linear-gradient(to right, #E5C56C, #FFFDE7, #D4AF37, #FFFDE7, #D4A030, #E5C56C)',
                             backgroundSize: '200% auto',

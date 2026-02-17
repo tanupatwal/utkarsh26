@@ -462,7 +462,7 @@ const HighlightsSection: React.FC = () => {
                 }}
             >
                 <h2 style={{
-                    fontFamily: "'Inter', 'Outfit', sans-serif",
+                    fontFamily: "var(--font-body)",
                     fontSize: 'clamp(1.8rem, 4vw, 3.5rem)',
                     fontWeight: 200,
                     color: '#ffffff',
@@ -474,7 +474,7 @@ const HighlightsSection: React.FC = () => {
                     Moments That Made Us
                 </h2>
                 <p style={{
-                    fontFamily: "'Inter', 'Outfit', sans-serif",
+                    fontFamily: "var(--font-body)",
                     fontSize: 'clamp(0.85rem, 1.5vw, 1.1rem)',
                     fontWeight: 300,
                     color: 'rgba(255,255,255,0.45)',
@@ -593,7 +593,7 @@ const HighlightsSection: React.FC = () => {
                     }}
                 >
                     <h3 style={{
-                        fontFamily: "'Inter', 'Outfit', sans-serif",
+                        fontFamily: "var(--font-body)",
                         fontSize: 'clamp(2rem, 5vw, 4.5rem)',
                         fontWeight: 400,
                         color: '#ffffff',
@@ -605,7 +605,7 @@ const HighlightsSection: React.FC = () => {
                         {hoveredContent.title}
                     </h3>
                     <p style={{
-                        fontFamily: "'Inter', 'Outfit', sans-serif",
+                        fontFamily: "var(--font-body)",
                         fontSize: 'clamp(0.85rem, 1.6vw, 1.2rem)',
                         fontWeight: 500,
                         color: '#ffffff',

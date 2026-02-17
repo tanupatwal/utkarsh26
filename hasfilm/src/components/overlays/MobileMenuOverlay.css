@@ -52,7 +52,7 @@
     border-radius: 12px;
     -webkit-tap-highlight-color: transparent;
 
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-body);
     font-size: 1.3rem;
     font-weight: 600;
     letter-spacing: 0.2em;
@@ -151,7 +151,7 @@
 .mobile-overlay__social-link {
     color: rgba(255, 255, 255, 0.4);
     text-decoration: none;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-body);
     font-size: 0.75rem;
     font-weight: 500;
     letter-spacing: 0.1em;
@@ -176,7 +176,7 @@
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
 
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-body);
     font-size: 0.8rem;
     font-weight: 600;
     letter-spacing: 0.15em;

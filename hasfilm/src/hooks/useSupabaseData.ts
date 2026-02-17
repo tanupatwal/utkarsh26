@@ -36,6 +36,7 @@ export interface SupabaseEvent {
     image_url: string;
     prize_pool: string | null;
     team_size: string | null;
+    registration_link: string | null;
 }
 
 function mapSupabaseEvent(e: SupabaseEvent): ScheduleEvent {
@@ -50,6 +51,7 @@ function mapSupabaseEvent(e: SupabaseEvent): ScheduleEvent {
         image: e.image_url,
         prizePool: e.prize_pool ?? undefined,
         teamSize: e.team_size ?? undefined,
+        registrationLink: e.registration_link ?? undefined,
     };
 }
 

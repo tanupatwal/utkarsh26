@@ -6,7 +6,7 @@
     position: relative;
     background: #0a0a0a;
     color: #fff;
-    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    font-family: var(--font-heading);
     overflow: hidden;
     z-index: 30;
 }
@@ -34,7 +34,7 @@
 }
 
 .footer__brand-title {
-    font-family: 'Space Grotesk', sans-serif;
+    font-family: var(--font-heading);
     font-size: clamp(2.5rem, 7vw, 5rem);
     font-weight: 900;
     text-transform: uppercase;

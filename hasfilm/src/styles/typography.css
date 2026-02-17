@@ -1,0 +1,60 @@
+/* ===========================
+   Typography Tokens — Option C (Cutting-Edge)
+   ===========================
+   Centralized font-family, weight, and size tokens.
+   All typography in the project should reference these
+   for consistency. Fonts are loaded via <link> in index.html.
+
+   Stack:
+     Display  → Josefin Sans  (Art Deco geometric, elegant)
+     Heading  → Manrope       (warm geometric, modern)
+     Body     → DM Sans       (clean, screen-optimized)
+     Heritage → Eczar         (Devanagari + Latin, high-contrast)
+     Serif    → Fraunces      (variable wonky serif, heritage×tech)
+     Mono     → Inconsolata   (refined, 8 weights)
+*/
+
+:root {
+    /* ── Font Families ──────────────────────────── */
+    --font-display: 'Josefin Sans', sans-serif;
+    /*  Display / hero titles, section names         */
+    --font-heading: 'Manrope', sans-serif;
+    /*  Subheadings, card titles, nav UI             */
+    --font-body: 'DM Sans', sans-serif;
+    /*  Body text, paragraphs, descriptions          */
+    --font-heritage: 'Eczar', serif;
+    /*  Heritage/Indic body — scoped to About        */
+    --font-serif: 'Fraunces', Georgia, serif;
+    /*  Elegant variable serif — Hindi tagline, quotes */
+    --font-mono: 'Inconsolata', 'SF Mono', monospace;
+    /*  Timestamps, technical metadata, codes        */
+
+    /* ── Font Weights ──────────────────────────── */
+    --weight-light: 200;
+    --weight-normal: 400;
+    --weight-medium: 500;
+    --weight-semibold: 600;
+    --weight-bold: 700;
+    --weight-extrabold: 800;
+    --weight-black: 900;
+
+    /* ── Font Sizes (fluid, mobile→desktop) ───── */
+    --text-xs: clamp(0.65rem, 0.55rem + 0.4vw, 0.75rem);
+    /*  ~10–12px — tiny labels, timestamps           */
+    --text-sm: clamp(0.75rem, 0.65rem + 0.5vw, 0.875rem);
+    /*  ~12–14px — captions, secondary text          */
+    --text-base: clamp(0.875rem, 0.8rem + 0.35vw, 1rem);
+    /*  ~14–16px — body text baseline                */
+    --text-lg: clamp(1rem, 0.9rem + 0.5vw, 1.125rem);
+    /*  ~16–18px — slightly emphasised body          */
+    --text-xl: clamp(1.125rem, 1rem + 0.6vw, 1.25rem);
+    /*  ~18–20px — card titles, large body           */
+    --text-2xl: clamp(1.25rem, 1rem + 1vw, 1.5rem);
+    /*  ~20–24px — section subheadings               */
+    --text-3xl: clamp(1.5rem, 1.1rem + 1.5vw, 1.875rem);
+    /*  ~24–30px — section titles                    */
+    --text-4xl: clamp(1.875rem, 1.3rem + 2.2vw, 2.25rem);
+    /*  ~30–36px — hero subtitles                    */
+    --text-5xl: clamp(2.25rem, 1.5rem + 3vw, 3rem);
+    /*  ~36–48px — hero titles                       */
+}

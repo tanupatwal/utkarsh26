@@ -225,7 +225,7 @@ const STYLES = `
 .${CLS}-meta {
   display: flex; align-items: center; gap: 0.5rem;
   font-size: 0.68rem; color: rgba(148,163,184,0.9);
-  font-family: 'Inter', 'SF Mono', monospace;
+  font-family: var(--font-mono);
 }
 .${CLS}-meta-icon {
   width: 14px; height: 14px; opacity: 0.7;
@@ -298,7 +298,7 @@ const STYLES = `
 .${CLS}-modal-img-title {
   position: absolute; bottom: 1.2rem; left: 1.2rem; right: 1.2rem;
   z-index: 3;
-  font-family: 'Space Grotesk', 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: clamp(1.1rem, 2vw, 1.5rem);
   font-weight: 800;
   letter-spacing: 0.12em;
@@ -333,7 +333,7 @@ const STYLES = `
   border-left: 1px solid rgba(56,189,248,0.08);
 }
 .${CLS}-modal-details h2 {
-  font-family: 'Space Grotesk', 'Orbitron', sans-serif;
+  font-family: var(--font-heading);
   font-size: clamp(1.4rem, 2.5vw, 1.8rem);
   font-weight: 800;
   letter-spacing: 0.1em;
@@ -364,7 +364,7 @@ const STYLES = `
   opacity: 0.9;
 }
 .${CLS}-modal-row-label {
-  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.14em;
@@ -373,7 +373,7 @@ const STYLES = `
   min-width: 100px;
 }
 .${CLS}-modal-row-value {
-  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-family: var(--font-heading);
   font-size: 0.92rem;
   font-weight: 500;
   color: #e2e8f0;
@@ -510,7 +510,7 @@ const STYLES = `
     gap: 0.25rem;
   }
   .${CLS}-mob-title {
-    font-family: 'Space Grotesk', 'Orbitron', sans-serif;
+    font-family: var(--font-heading);
     font-size: 0.82rem;
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -527,7 +527,7 @@ const STYLES = `
     gap: 0.5rem;
     font-size: 0.65rem;
     color: rgba(148,163,184,0.8);
-    font-family: 'Inter', 'SF Mono', monospace;
+    font-family: var(--font-mono);
   }
   .${CLS}-mob-subtitle svg {
     width: 12px;
@@ -625,7 +625,7 @@ const STYLES = `
     opacity: 0.9;
   }
   .${CLS}-mob-exp-label {
-    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    font-family: var(--font-heading);
     font-size: 0.65rem;
     font-weight: 700;
     letter-spacing: 0.12em;
@@ -634,7 +634,7 @@ const STYLES = `
     min-width: 70px;
   }
   .${CLS}-mob-exp-value {
-    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    font-family: var(--font-heading);
     font-size: 0.75rem;
     font-weight: 500;
     color: #e2e8f0;
@@ -653,7 +653,7 @@ const STYLES = `
     border: 1px solid ${ACCENT_MED};
     clip-path: polygon(3% 0, 100% 0, 97% 100%, 0 100%);
     color: ${ACCENT};
-    font-family: 'Space Grotesk', 'Orbitron', sans-serif;
+    font-family: var(--font-heading);
     font-size: 0.7rem;
     font-weight: 700;
     letter-spacing: 0.15em;
@@ -679,7 +679,7 @@ const STYLES = `
     border: 1px dashed ${ACCENT_MED};
     clip-path: polygon(2% 0, 100% 0, 98% 100%, 0 100%);
     color: ${ACCENT};
-    font-family: 'Space Grotesk', 'Orbitron', sans-serif;
+    font-family: var(--font-heading);
     font-size: 0.72rem;
     font-weight: 700;
     letter-spacing: 0.18em;
@@ -831,7 +831,7 @@ const ScheduleSection: React.FC = () => {
                 position: 'relative',
                 width: '100%', minHeight: '100vh',
                 opacity: 0, zIndex: 25,
-                fontFamily: "'Space Grotesk', 'Inter', sans-serif",
+                fontFamily: "var(--font-heading)",
                 color: '#fff',
             }}
         >
@@ -939,7 +939,7 @@ const ScheduleSection: React.FC = () => {
                                     }}
                                 >
                                     <span style={{
-                                        fontFamily: "'Space Grotesk', 'Orbitron', sans-serif",
+                                        fontFamily: "var(--font-heading)",
                                         fontSize: 'clamp(1.4rem, 2.5vw, 1.8rem)',
                                         fontWeight: 700,
                                         letterSpacing: '0.15em',

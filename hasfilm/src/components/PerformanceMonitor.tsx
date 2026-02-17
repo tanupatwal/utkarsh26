@@ -114,7 +114,7 @@ export const PerformanceMonitor: React.FC<PerformanceMonitorProps> = ({
             padding: '12px 16px',
             backgroundColor: 'rgba(0, 0, 0, 0.85)',
             color: '#ffffff',
-            fontFamily: "'JetBrains Mono', 'Monaco', monospace",
+            fontFamily: "var(--font-mono)",
             fontSize: '12px',
             lineHeight: '1.5',
             borderRadius: '8px',

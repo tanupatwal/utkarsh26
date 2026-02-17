@@ -10,7 +10,7 @@
     background: var(--color-black, #0B0F1A);
     padding: 3rem 1rem 3rem;
     overflow: hidden;
-    font-family: 'Rajdhani', 'Inter', sans-serif;
+    font-family: var(--font-heritage);
     color: #fff;
 }
 
@@ -77,7 +77,7 @@
 }
 
 .mob-highlights__title {
-    font-family: 'Orbitron', 'Space Grotesk', sans-serif;
+    font-family: var(--font-display);
     font-size: clamp(1.8rem, 8vw, 2.8rem);
     font-weight: 800;
     text-transform: uppercase;
@@ -98,7 +98,7 @@
 }
 
 .mob-highlights__tagline {
-    font-family: 'Playfair Display', 'Georgia', serif;
+    font-family: var(--font-serif);
     font-style: italic;
     font-size: 1.05rem;
     color: rgba(255, 255, 255, 0.45);
@@ -204,7 +204,7 @@
 }
 
 .mob-highlights__hero-counter {
-    font-family: monospace;
+    font-family: var(--font-mono);
     font-size: 0.7rem;
     color: var(--color-cyan, #0ea5e9);
     margin-bottom: 0.25rem;
@@ -213,7 +213,7 @@
 }
 
 .mob-highlights__hero-title {
-    font-family: 'Orbitron', 'Space Grotesk', sans-serif;
+    font-family: var(--font-display);
     font-size: clamp(1.1rem, 4.5vw, 1.4rem);
     font-weight: 700;
     color: #fff;
@@ -337,7 +337,7 @@
 }
 
 .mob-highlights__card-label h4 {
-    font-family: 'Orbitron', 'Space Grotesk', sans-serif;
+    font-family: var(--font-display);
     font-size: 0.75rem;
     font-weight: 700;
     color: #fff;
@@ -375,7 +375,7 @@
 }
 
 .mob-highlights__card-quote p {
-    font-family: 'Playfair Display', 'Georgia', serif;
+    font-family: var(--font-serif);
     font-style: italic;
     font-size: 0.65rem;
     color: rgba(255, 255, 255, 0.75);
@@ -419,7 +419,7 @@
 }
 
 .mob-highlights__archive-tag {
-    font-family: monospace;
+    font-family: var(--font-mono);
     font-size: 0.7rem;
     color: var(--color-cyan, #0ea5e9);
     margin-bottom: 0.5rem;
@@ -427,7 +427,7 @@
 }
 
 .mob-highlights__archive-year {
-    font-family: 'Orbitron', 'Space Grotesk', sans-serif;
+    font-family: var(--font-display);
     font-size: clamp(1.5rem, 6vw, 2rem);
     font-weight: 800;
     color: #fff;
@@ -449,7 +449,7 @@
     border-radius: 6px;
     background: transparent;
     color: var(--color-cyan, #0ea5e9);
-    font-family: 'Orbitron', 'Space Grotesk', sans-serif;
+    font-family: var(--font-display);
     font-size: 0.65rem;
     font-weight: 700;
     letter-spacing: 0.2em;

@@ -10,6 +10,7 @@ import LenisProvider from './providers/LenisProvider';
 import { galleryProgress } from './hooks/galleryProgress';
 import { useIsMobile } from './hooks/useIsMobile';
 import './styles/spacing.css';
+import './styles/typography.css';
 
 gsap.registerPlugin(ScrollTrigger);
 

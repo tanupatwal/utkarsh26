@@ -23,7 +23,7 @@ const STYLES = `
   width: 100%; height: 100vh;
   overflow: hidden;
   background: #000;
-  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-family: var(--font-heading);
   color: #fff;
   z-index: 26;
 }
@@ -116,7 +116,7 @@ const STYLES = `
 }
 .${CLS}-label strong {
   font-weight: 700;
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: var(--font-heading);
 }
 
 /* ─── Names window container ─── */
@@ -150,7 +150,7 @@ const STYLES = `
 /* ─── Name item ─── */
 .${CLS}-name {
   cursor: pointer;
-  font-family: 'Space Grotesk', 'Inter', sans-serif;
+  font-family: var(--font-heading);
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.08em;

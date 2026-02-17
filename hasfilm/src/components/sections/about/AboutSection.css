@@ -2,8 +2,7 @@
    AboutSection — Cyberpunk Neon Theme (Reference-Matched)
    ══════════════════════════════════════════════════ */
 
-/* ── Fonts ────────────────────────────────────── */
-@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap');
+/* ── Fonts: loaded centrally via index.html ──── */
 
 /* ── Root container ───────────────────────────── */
 .about-root {
@@ -62,7 +61,7 @@
 
 /* ── Title ────────────────────────────────────── */
 .about-title {
-    font-family: 'Orbitron', sans-serif;
+    font-family: var(--font-display);
     font-size: clamp(1.4rem, 3.5vw, 2.4rem);
     font-weight: 700;
     letter-spacing: 0.08em;
@@ -91,7 +90,7 @@
     transform: translateX(-50%);
     width: 100%;
     text-align: center;
-    font-family: 'Orbitron', sans-serif;
+    font-family: var(--font-display);
     font-size: 25vw;
     font-weight: 900;
     letter-spacing: 0.1em;
@@ -176,7 +175,7 @@
 }
 
 .about-card-title {
-    font-family: 'Orbitron', sans-serif;
+    font-family: var(--font-display);
     font-size: clamp(0.9rem, 1.2vw, 1.15rem);
     font-weight: 700;
     letter-spacing: 0.05em;
@@ -186,7 +185,7 @@
 }
 
 .about-card-text {
-    font-family: 'Rajdhani', sans-serif;
+    font-family: var(--font-heritage);
     font-size: clamp(0.9rem, 1.1vw, 1.1rem);
     font-weight: 500;
     line-height: 1.6;
@@ -371,7 +370,7 @@
 }
 
 .about-stat-number {
-    font-family: 'Orbitron', sans-serif;
+    font-family: var(--font-display);
     font-size: clamp(2rem, 4.5vw, 3.5rem);
     font-weight: 900;
     letter-spacing: 0.05em;
@@ -380,7 +379,7 @@
 }
 
 .about-stat-label {
-    font-family: 'Rajdhani', sans-serif;
+    font-family: var(--font-heritage);
     font-size: clamp(0.85rem, 1.2vw, 1.1rem);
     font-weight: 600;
     letter-spacing: 0.1em;
