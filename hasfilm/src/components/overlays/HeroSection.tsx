@@ -1,7 +1,8 @@
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef } from 'react';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { TIMELINE } from '../../config/timeline';
+import { scrollProgress } from '../../hooks/useScrollProgress';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -9,31 +10,13 @@ gsap.registerPlugin(ScrollTrigger);
  * HeroSection — Full-viewport video background with overlay text.
  * Lives OUTSIDE the Three.js Canvas as a fixed layer.
  *
- * Simple scroll behaviour:
- *   - Stays visible and fully opaque at scroll top
- *   - Fades out smoothly as scroll approaches HERO_END
- *   - Reappears when scrolling back up
- *
- * Text & fonts are identical to the original design.
+ * Post-Lenis migration: Uses a simple rAF loop reading scrollProgress
+ * instead of hacking into drei's scroll container.
  */
 const HeroSection: React.FC = () => {
     const containerRef = useRef<HTMLDivElement>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
-
-    // Find drei ScrollControls' scroll container
-    const findScrollContainer = useCallback((): HTMLElement | null => {
-        const candidates = document.querySelectorAll('div[style]');
-        for (const el of candidates) {
-            const style = (el as HTMLElement).style;
-            if (
-                (style.overflow === 'auto' || style.overflowY === 'auto') &&
-                el.scrollHeight > el.clientHeight
-            ) {
-                return el as HTMLElement;
-            }
-        }
-        return null;
-    }, []);
+    const rafRef = useRef<number>(0);
 
     useEffect(() => {
         // Autoplay video
@@ -43,77 +26,41 @@ const HeroSection: React.FC = () => {
             });
         }
 
-        let scrollContainer: HTMLElement | null = null;
-        let ctx: gsap.Context | null = null;
+        // Simple rAF fade based on scrollProgress
+        const tick = () => {
+            if (!containerRef.current) {
+                rafRef.current = requestAnimationFrame(tick);
+                return;
+            }
 
-        const setupScrollTrigger = (scroller: HTMLElement) => {
-            const scrollDistance = scroller.scrollHeight - scroller.clientHeight;
-            if (scrollDistance <= 0) return;
+            const r = scrollProgress.current;
 
-            // Fade-out starts at 60% of HERO_END, ends at HERO_END
-            const fadeStartPx = TIMELINE.HERO_END * 0.6 * scrollDistance;
-            const fadeEndPx = TIMELINE.HERO_END * scrollDistance;
+            // Fade starts at 60% of HERO_END, complete at HERO_END
+            const fadeStart = TIMELINE.HERO_END * 0.6;
+            const fadeEnd = TIMELINE.HERO_END;
 
-            ctx = gsap.context(() => {
-                // Single timeline: fade the hero out as we approach HERO_END
-                gsap.timeline({
-                    scrollTrigger: {
-                        scroller: scroller,
-                        trigger: scroller.children[0] || scroller,
-                        start: `${fadeStartPx}px top`,
-                        end: `${fadeEndPx}px top`,
-                        scrub: 0.3,
-                        invalidateOnRefresh: true,
-                        onUpdate: (self) => {
-                            if (containerRef.current) {
-                                containerRef.current.style.visibility =
-                                    self.progress >= 0.99 ? 'hidden' : 'visible';
-                            }
-                        },
-                    },
-                })
-                    .fromTo(
-                        containerRef.current,
-                        { opacity: 1 },
-                        { opacity: 0, ease: 'power2.in' }
-                    );
+            if (r <= fadeStart) {
+                containerRef.current.style.opacity = '1';
+                containerRef.current.style.visibility = 'visible';
+            } else if (r >= fadeEnd) {
+                containerRef.current.style.opacity = '0';
+                containerRef.current.style.visibility = 'hidden';
+            } else {
+                const t = (r - fadeStart) / (fadeEnd - fadeStart);
+                const eased = t * t; // power2.in
+                containerRef.current.style.opacity = (1 - eased).toString();
+                containerRef.current.style.visibility = 'visible';
+            }
 
-                // After HERO_END: keep hidden
-                ScrollTrigger.create({
-                    scroller: scroller,
-                    trigger: scroller.children[0] || scroller,
-                    start: `${fadeEndPx}px top`,
-                    end: 'bottom bottom',
-                    onEnter: () => {
-                        if (containerRef.current) {
-                            containerRef.current.style.visibility = 'hidden';
-                            containerRef.current.style.opacity = '0';
-                        }
-                    },
-                    onLeaveBack: () => {
-                        if (containerRef.current) {
-                            containerRef.current.style.visibility = 'visible';
-                        }
-                    },
-                });
-            });
+            rafRef.current = requestAnimationFrame(tick);
         };
 
-        // Retry finding the scroll container (Canvas may not be ready immediately)
-        const findTimer = setInterval(() => {
-            scrollContainer = findScrollContainer();
-            if (scrollContainer) {
-                clearInterval(findTimer);
-                setupScrollTrigger(scrollContainer);
-            }
-        }, 100);
+        rafRef.current = requestAnimationFrame(tick);
 
         return () => {
-            clearInterval(findTimer);
-            if (ctx) ctx.revert();
-            ScrollTrigger.getAll().forEach(st => st.kill());
+            if (rafRef.current) cancelAnimationFrame(rafRef.current);
         };
-    }, [findScrollContainer]);
+    }, []);
 
     return (
         <div
@@ -249,7 +196,8 @@ const HeroSection: React.FC = () => {
                         background-position: 200% center;
                     }
                 }
-            `}</style>
+            `}
+            </style>
         </div>
     );
 };

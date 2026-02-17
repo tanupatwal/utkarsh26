@@ -1,9 +1,10 @@
 import React, { useRef } from 'react';
 import { useFrame, useThree } from '@react-three/fiber';
-import { useScroll, Sparkles } from '@react-three/drei';
+import { Sparkles } from '@react-three/drei';
 import * as THREE from 'three';
 import { TIMELINE, SCENE_CONFIG, CAMERA_CONFIG } from '../../../config';
 import { GALLERY_CONTENT } from '../../../data';
+import { scrollProgress } from '../../../hooks/useScrollProgress';
 import ThickPanel from './ThickPanel';
 import GalleryEffects from './GalleryEffects';
 import { useGalleryColors, tintFogColor } from '../../../hooks/useGalleryColors';
@@ -14,7 +15,6 @@ import { useGalleryColors, tintFogColor } from '../../../hooks/useGalleryColors'
  * The last panel disintegrates from left → right when scrolled past.
  */
 const GalleryGroup: React.FC = () => {
-    const scroll = useScroll();
     const groupRef = useRef<THREE.Group>(null);
     const backgroundRef = useRef<THREE.Group>(null); // Ref for Parallax Layer
     const { camera, scene } = useThree();
@@ -83,7 +83,7 @@ const GalleryGroup: React.FC = () => {
     }
 
     useFrame(() => {
-        const r = scroll.offset;
+        const r = scrollProgress.current;
 
         // Manage active state for performance — only render heavy effects
         // during the actual gallery zone, not before (About section) or after (Highlights)

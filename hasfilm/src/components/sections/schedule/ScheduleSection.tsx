@@ -1,20 +1,15 @@
-import React, { useRef, useState, useCallback, useMemo, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { useScroll } from '@react-three/drei';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
-import { SCROLL_CONFIG, TIMELINE } from '../../../config';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { SCHEDULE_DAYS, getEventsForDay, CATEGORY_COLORS } from '../../../data/schedule';
 import type { ScheduleEvent } from '../../../data/schedule';
+
+gsap.registerPlugin(ScrollTrigger);
 
 // ════════════════════════════════════════════════
 //  CONFIGURATION
 // ════════════════════════════════════════════════
 
-const SCHEDULE_FADE_START = TIMELINE.SCHEDULE_FADE_START;
-const SCHEDULE_FADE_FULL = TIMELINE.SCHEDULE_FADE_FULL;
-const SCHEDULE_FADE_OUT_START = TIMELINE.SCHEDULE_FADE_OUT_START;
-const SCHEDULE_FADE_OUT_FULL = TIMELINE.SCHEDULE_FADE_OUT_FULL;
 const CARD_STAGGER_MS = 50;
 
 const ACCENT = '#38bdf8'; // sky-400
@@ -210,7 +205,6 @@ const STYLES = `
   gap: 1.5rem;
   width: 100%;
   transform-style: preserve-3d;
-  perspective: 1000px;
   animation: ${CLS}FadeIn 0.35s ease both;
 }
 @keyframes ${CLS}FadeIn {
@@ -452,14 +446,13 @@ const STYLES = `
 // ════════════════════════════════════════════════
 
 const ScheduleSection: React.FC = () => {
-    const scroll = useScroll();
+
     const containerRef = useRef<HTMLDivElement>(null);
-    const opacityRef = useRef(0);
+    const bgRef = useRef<HTMLDivElement>(null);
 
     const [activeDay, setActiveDay] = useState(1);
     const [cardsRevealed, setCardsRevealed] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(null);
-    const revealTimerRef = useRef(0);
 
     // Navigate events from modal with arrow keys / Escape
     const navigateEvent = useCallback((dir: -1 | 1) => {
@@ -502,98 +495,97 @@ const ScheduleSection: React.FC = () => {
         return { pathD: `M ${sx} 0 L ${fx} 0 L ${dx} 40 L 1000 40`, fx, dx };
     }, [activeDay]);
 
+    // ── ScrollTrigger: fade-in only (no fade-out at end → continuous flow into Team) ──
+    useEffect(() => {
+        const el = containerRef.current;
+        if (!el) return;
 
-    // ── Scroll entrance ──
-    useFrame((_state, delta) => {
-        if (!containerRef.current) return;
-        const r = scroll.offset;
-        const vh = typeof window !== 'undefined' ? window.innerHeight : 0;
-        const targetY = vh * (SCROLL_CONFIG.PAGES - 1) * r;
+        // Fade in as section enters viewport — stays at full opacity (no fade-out)
+        const fadeInTl = gsap.timeline({
+            scrollTrigger: {
+                trigger: '#schedule-section',
+                start: 'top 90%',
+                end: 'top 20%',
+                scrub: 0.5,
+            },
+        });
+        fadeInTl.fromTo(el, { opacity: 0 }, { opacity: 1 });
 
-        let revealT = 0;
-        if (r >= SCHEDULE_FADE_START && r < SCHEDULE_FADE_FULL) {
-            revealT = (r - SCHEDULE_FADE_START) / (SCHEDULE_FADE_FULL - SCHEDULE_FADE_START);
-        } else if (r >= SCHEDULE_FADE_FULL && r < SCHEDULE_FADE_OUT_START) {
-            revealT = 1;
-        } else if (r >= SCHEDULE_FADE_OUT_START && r < SCHEDULE_FADE_OUT_FULL) {
-            revealT = 1 - (r - SCHEDULE_FADE_OUT_START) / (SCHEDULE_FADE_OUT_FULL - SCHEDULE_FADE_OUT_START);
-        } else if (r >= SCHEDULE_FADE_OUT_FULL) {
-            revealT = 0;
-        }
+        // Cards: reveal once section is in view, only hide if user scrolls back ABOVE
+        const st = ScrollTrigger.create({
+            trigger: '#schedule-section',
+            start: 'top 70%',
+            end: 'bottom top',
+            onEnter: () => setCardsRevealed(true),
+            onEnterBack: () => setCardsRevealed(true),
+            onLeave: () => setCardsRevealed(true),      // stay revealed when leaving to Team
+            onLeaveBack: () => setCardsRevealed(false),  // hide only when scrolling back up past section
+        });
 
-        // Dynamic damp lambda: when opacity is far from target (e.g. re-entry
-        // after a teleport from Team REWINDING), use a much higher lambda so
-        // the section snaps in quickly instead of slowly ramping through its
-        // narrow 3.5% scroll window.
-        const opacityGap = Math.abs(revealT - opacityRef.current);
-        const dampLambda = opacityGap > 0.4 ? 12 : 4;
-        opacityRef.current = THREE.MathUtils.damp(opacityRef.current, revealT, dampLambda, delta);
-        containerRef.current.style.transform = `translate3d(0, ${targetY}px, 0)`;
-        containerRef.current.style.opacity = String(opacityRef.current.toFixed(3));
-
-        if (opacityRef.current > 0.5 && !cardsRevealed) {
-            revealTimerRef.current += delta;
-            if (revealTimerRef.current > 0.3) setCardsRevealed(true);
-        }
-        if (opacityRef.current < 0.1 && cardsRevealed) {
-            setCardsRevealed(false);
-            revealTimerRef.current = 0;
-        }
-        containerRef.current.style.pointerEvents = opacityRef.current > 0.1 ? 'auto' : 'none';
-    });
+        return () => {
+            fadeInTl.kill();
+            st.kill();
+        };
+    }, []);
 
     return (
         <div
             ref={containerRef}
             style={{
-                position: 'fixed', top: 0, left: 0,
-                width: '100vw', height: '100dvh',
-                opacity: 0, zIndex: 25, overflow: 'hidden auto',
-                scrollBehavior: 'smooth',
-                WebkitOverflowScrolling: 'touch',
-                background: 'radial-gradient(ellipse at 50% 30%, #020617 0%, #000 100%)',
+                position: 'relative',
+                width: '100%', minHeight: '100vh',
+                opacity: 0, zIndex: 25,
                 fontFamily: "'Space Grotesk', 'Inter', sans-serif",
                 color: '#fff',
             }}
         >
             <style>{STYLES}</style>
 
-            {/* ── Scanlines + noise ── */}
-            <div className={`${CLS}-scanlines`} />
-            <div className={`${CLS}-noise`} />
+            {/* ── Sticky background layer — sticks at 100vh while content scrolls ── */}
+            <div
+                ref={bgRef}
+                style={{
+                    position: 'sticky', top: 0,
+                    width: '100%', height: '100vh',
+                    zIndex: 0, pointerEvents: 'none',
+                    background: 'radial-gradient(ellipse at 50% 30%, #020617 0%, #000 100%)',
+                }}
+            >
+                {/* Scanlines + noise */}
+                <div className={`${CLS}-scanlines`} />
+                <div className={`${CLS}-noise`} />
 
-            {/* ── Background: perspective grid floor ── */}
-            <div style={{ position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
                 {/* Receding grid floor */}
-                <div style={{
-                    position: 'absolute',
-                    left: '-50%', right: '-50%', bottom: '-20%',
-                    height: '80%',
-                    backgroundImage: `
-            linear-gradient(to right, ${ACCENT_DIM} 1px, transparent 1px),
-            linear-gradient(to bottom, ${ACCENT_DIM} 1px, transparent 1px)
-          `,
-                    backgroundSize: '60px 60px',
-                    opacity: 0.35,
-                    transform: 'perspective(400px) rotateX(65deg)',
-                    transformOrigin: 'bottom center',
-                    maskImage: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 70%)',
-                    WebkitMaskImage: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 70%)',
-                }} />
-                {/* Top-left glow orb */}
-                <div style={{
-                    position: 'absolute', top: '-5%', left: '15%',
-                    width: '30rem', height: '30rem',
-                    background: 'radial-gradient(circle, rgba(56,189,248,0.08) 0%, transparent 70%)',
-                    borderRadius: '50%',
-                }} />
-                {/* Bottom-right glow orb */}
-                <div style={{
-                    position: 'absolute', bottom: '5%', right: '10%',
-                    width: '25rem', height: '25rem',
-                    background: 'radial-gradient(circle, rgba(56,189,248,0.05) 0%, transparent 70%)',
-                    borderRadius: '50%',
-                }} />
+                <div style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
+                    <div style={{
+                        position: 'absolute',
+                        left: '-50%', right: '-50%', bottom: '-20%',
+                        height: '80%',
+                        backgroundImage: `
+                linear-gradient(to right, ${ACCENT_DIM} 1px, transparent 1px),
+                linear-gradient(to bottom, ${ACCENT_DIM} 1px, transparent 1px)
+              `,
+                        backgroundSize: '60px 60px',
+                        opacity: 0.35,
+                        transform: 'perspective(400px) rotateX(65deg)',
+                        transformOrigin: 'bottom center',
+                        maskImage: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 70%)',
+                        WebkitMaskImage: 'linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 70%)',
+                    }} />
+                    {/* Glow orbs */}
+                    <div style={{
+                        position: 'absolute', top: '-5%', left: '15%',
+                        width: '30rem', height: '30rem',
+                        background: 'radial-gradient(circle, rgba(56,189,248,0.08) 0%, transparent 70%)',
+                        borderRadius: '50%',
+                    }} />
+                    <div style={{
+                        position: 'absolute', bottom: '5%', right: '10%',
+                        width: '25rem', height: '25rem',
+                        background: 'radial-gradient(circle, rgba(56,189,248,0.05) 0%, transparent 70%)',
+                        borderRadius: '50%',
+                    }} />
+                </div>
             </div>
 
             {/* ── Corner brackets (viewport) ── */}
@@ -616,14 +608,14 @@ const ScheduleSection: React.FC = () => {
                 }} />
             ))}
 
-            {/* ── Main content ── */}
+            {/* ── Main content (pulled up over the sticky bg) ── */}
             <main style={{
                 position: 'relative', zIndex: 10,
                 width: '100%', minHeight: '100dvh',
+                marginTop: '-100vh',
                 display: 'flex', flexDirection: 'column',
                 alignItems: 'center', justifyContent: 'flex-start',
                 paddingTop: '2rem', paddingBottom: '5rem',
-                perspective: '1200px',
             }}>
                 {/* ── Day tabs ── */}
                 <nav style={{
@@ -826,151 +818,149 @@ const ScheduleSection: React.FC = () => {
                 </div>
             </main>
 
-            {/* ── EVENT DETAIL MODAL (portal to body) ── */}
-            {createPortal(
-                <div
-                    className={`${CLS}-modal-backdrop ${selectedEvent ? 'open' : ''}`}
-                    onClick={() => setSelectedEvent(null)}
-                >
-                    <style>{STYLES}</style>
-                    {selectedEvent && (() => {
-                        const ev = selectedEvent;
-                        const catColor = ev.category ? CATEGORY_COLORS[ev.category] || ACCENT : ACCENT;
-                        const eventsForDay = getEventsForDay(ev.dayId);
-                        const currentIdx = eventsForDay.findIndex(e => e.title === ev.title);
-                        const isFirst = currentIdx <= 0;
-                        const isLast = currentIdx >= eventsForDay.length - 1;
-                        return (
-                            <div
-                                className={`${CLS}-modal-content`}
-                                onClick={(e) => e.stopPropagation()}
-                                style={{ position: 'relative' }}
-                            >
-                                {/* Close button */}
+            {/* ── EVENT DETAIL MODAL ── */}
+            <div
+                className={`${CLS}-modal-backdrop ${selectedEvent ? 'open' : ''}`}
+                onClick={() => setSelectedEvent(null)}
+                style={{ position: 'fixed' }}
+            >
+                <style>{STYLES}</style>
+                {selectedEvent && (() => {
+                    const ev = selectedEvent;
+                    const catColor = ev.category ? CATEGORY_COLORS[ev.category] || ACCENT : ACCENT;
+                    const eventsForDay = getEventsForDay(ev.dayId);
+                    const currentIdx = eventsForDay.findIndex(e => e.title === ev.title);
+                    const isFirst = currentIdx <= 0;
+                    const isLast = currentIdx >= eventsForDay.length - 1;
+                    return (
+                        <div
+                            className={`${CLS}-modal-content`}
+                            onClick={(e) => e.stopPropagation()}
+                            style={{ position: 'relative' }}
+                        >
+                            {/* Close button */}
+                            <button
+                                className={`${CLS}-modal-close`}
+                                onClick={() => setSelectedEvent(null)}
+                                aria-label="Close"
+                            >✕</button>
+
+                            {/* Prev arrow */}
+                            {!isFirst && (
                                 <button
-                                    className={`${CLS}-modal-close`}
-                                    onClick={() => setSelectedEvent(null)}
-                                    aria-label="Close"
-                                >✕</button>
+                                    className={`${CLS}-modal-nav prev`}
+                                    onClick={(e) => { e.stopPropagation(); navigateEvent(-1); }}
+                                    aria-label="Previous event"
+                                >
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 19l-7-7 7-7" /></svg>
+                                </button>
+                            )}
 
-                                {/* Prev arrow */}
-                                {!isFirst && (
-                                    <button
-                                        className={`${CLS}-modal-nav prev`}
-                                        onClick={(e) => { e.stopPropagation(); navigateEvent(-1); }}
-                                        aria-label="Previous event"
-                                    >
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M15 19l-7-7 7-7" /></svg>
-                                    </button>
+                            {/* Next arrow */}
+                            {!isLast && (
+                                <button
+                                    className={`${CLS}-modal-nav next`}
+                                    onClick={(e) => { e.stopPropagation(); navigateEvent(1); }}
+                                    aria-label="Next event"
+                                >
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 5l7 7-7 7" /></svg>
+                                </button>
+                            )}
+
+                            {/* Event counter */}
+                            <span className={`${CLS}-modal-counter`}>
+                                {currentIdx + 1} / {eventsForDay.length}
+                            </span>
+
+                            {/* Left: Image */}
+                            <div className={`${CLS}-modal-img-wrap`} style={{
+                                borderColor: catColor,
+                                boxShadow: `0 0 20px ${catColor}33, 0 0 60px ${catColor}14, inset 0 0 30px ${catColor}0d`,
+                            }}>
+                                <img className={`${CLS}-modal-img`} src={ev.image} alt={ev.title} />
+                                <span className={`${CLS}-modal-img-title`}>{ev.title}</span>
+                            </div>
+
+                            {/* Right: Details */}
+                            <div className={`${CLS}-modal-details`}>
+                                <h2>{ev.title}</h2>
+                                {ev.description && (
+                                    <p className={`${CLS}-modal-desc`}>{ev.description}</p>
                                 )}
 
-                                {/* Next arrow */}
-                                {!isLast && (
-                                    <button
-                                        className={`${CLS}-modal-nav next`}
-                                        onClick={(e) => { e.stopPropagation(); navigateEvent(1); }}
-                                        aria-label="Next event"
-                                    >
-                                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M9 5l7 7-7 7" /></svg>
-                                    </button>
-                                )}
-
-                                {/* Event counter */}
-                                <span className={`${CLS}-modal-counter`}>
-                                    {currentIdx + 1} / {eventsForDay.length}
-                                </span>
-
-                                {/* Left: Image */}
-                                <div className={`${CLS}-modal-img-wrap`} style={{
-                                    borderColor: catColor,
-                                    boxShadow: `0 0 20px ${catColor}33, 0 0 60px ${catColor}14, inset 0 0 30px ${catColor}0d`,
-                                }}>
-                                    <img className={`${CLS}-modal-img`} src={ev.image} alt={ev.title} />
-                                    <span className={`${CLS}-modal-img-title`}>{ev.title}</span>
-                                </div>
-
-                                {/* Right: Details */}
-                                <div className={`${CLS}-modal-details`}>
-                                    <h2>{ev.title}</h2>
-                                    {ev.description && (
-                                        <p className={`${CLS}-modal-desc`}>{ev.description}</p>
-                                    )}
-
-                                    <div style={{ marginTop: '0.5rem' }}>
-                                        {/* Time */}
-                                        <div className={`${CLS}-modal-row`}>
-                                            <svg className={`${CLS}-modal-row-icon`} viewBox="0 0 24 24" fill="none" stroke={catColor} strokeWidth="1.5">
-                                                <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
-                                            </svg>
-                                            <span className={`${CLS}-modal-row-label`}>Time:</span>
-                                            <span className={`${CLS}-modal-row-value`}>
-                                                {ev.time}{ev.endTime ? ` – ${ev.endTime}` : ''}
-                                            </span>
-                                        </div>
-
-                                        {/* Venue */}
-                                        <div className={`${CLS}-modal-row`}>
-                                            <svg className={`${CLS}-modal-row-icon`} viewBox="0 0 24 24" fill="none" stroke={catColor} strokeWidth="1.5">
-                                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
-                                                <circle cx="12" cy="9" r="2.5" />
-                                            </svg>
-                                            <span className={`${CLS}-modal-row-label`}>Venue:</span>
-                                            <span className={`${CLS}-modal-row-value`}>{ev.venue}</span>
-                                        </div>
-
-                                        {/* Prize Pool */}
-                                        {ev.prizePool && (
-                                            <div className={`${CLS}-modal-row`}>
-                                                <svg className={`${CLS}-modal-row-icon`} viewBox="0 0 24 24" fill="none" stroke={catColor} strokeWidth="1.5">
-                                                    <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
-                                                    <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
-                                                    <path d="M4 22h16" />
-                                                    <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
-                                                    <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
-                                                    <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
-                                                </svg>
-                                                <span className={`${CLS}-modal-row-label`}>Prize Pool:</span>
-                                                <span className={`${CLS}-modal-row-value`} style={{ color: catColor, fontWeight: 700 }}>
-                                                    {ev.prizePool}
-                                                </span>
-                                            </div>
-                                        )}
-
-                                        {/* Team Size */}
-                                        {ev.teamSize && (
-                                            <div className={`${CLS}-modal-row`}>
-                                                <svg className={`${CLS}-modal-row-icon`} viewBox="0 0 24 24" fill="none" stroke={catColor} strokeWidth="1.5">
-                                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                                                    <circle cx="9" cy="7" r="4" />
-                                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                                                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                                                </svg>
-                                                <span className={`${CLS}-modal-row-label`}>Team Size:</span>
-                                                <span className={`${CLS}-modal-row-value`}>{ev.teamSize}</span>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Category badge */}
-                                    <div style={{ marginTop: 'auto', paddingTop: '1rem' }}>
-                                        <span style={{
-                                            fontSize: '0.65rem', fontWeight: 700,
-                                            padding: '0.25rem 0.8rem',
-                                            letterSpacing: '0.14em', textTransform: 'uppercase' as const,
-                                            background: `${catColor}20`, color: catColor,
-                                            border: `1px solid ${catColor}40`,
-                                            clipPath: 'polygon(8% 0, 100% 0, 92% 100%, 0 100%)',
-                                        }}>
-                                            {ev.category?.toUpperCase() || 'EVENT'}
+                                <div style={{ marginTop: '0.5rem' }}>
+                                    {/* Time */}
+                                    <div className={`${CLS}-modal-row`}>
+                                        <svg className={`${CLS}-modal-row-icon`} viewBox="0 0 24 24" fill="none" stroke={catColor} strokeWidth="1.5">
+                                            <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
+                                        </svg>
+                                        <span className={`${CLS}-modal-row-label`}>Time:</span>
+                                        <span className={`${CLS}-modal-row-value`}>
+                                            {ev.time}{ev.endTime ? ` – ${ev.endTime}` : ''}
                                         </span>
                                     </div>
+
+                                    {/* Venue */}
+                                    <div className={`${CLS}-modal-row`}>
+                                        <svg className={`${CLS}-modal-row-icon`} viewBox="0 0 24 24" fill="none" stroke={catColor} strokeWidth="1.5">
+                                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
+                                            <circle cx="12" cy="9" r="2.5" />
+                                        </svg>
+                                        <span className={`${CLS}-modal-row-label`}>Venue:</span>
+                                        <span className={`${CLS}-modal-row-value`}>{ev.venue}</span>
+                                    </div>
+
+                                    {/* Prize Pool */}
+                                    {ev.prizePool && (
+                                        <div className={`${CLS}-modal-row`}>
+                                            <svg className={`${CLS}-modal-row-icon`} viewBox="0 0 24 24" fill="none" stroke={catColor} strokeWidth="1.5">
+                                                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
+                                                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
+                                                <path d="M4 22h16" />
+                                                <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
+                                                <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
+                                                <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
+                                            </svg>
+                                            <span className={`${CLS}-modal-row-label`}>Prize Pool:</span>
+                                            <span className={`${CLS}-modal-row-value`} style={{ color: catColor, fontWeight: 700 }}>
+                                                {ev.prizePool}
+                                            </span>
+                                        </div>
+                                    )}
+
+                                    {/* Team Size */}
+                                    {ev.teamSize && (
+                                        <div className={`${CLS}-modal-row`}>
+                                            <svg className={`${CLS}-modal-row-icon`} viewBox="0 0 24 24" fill="none" stroke={catColor} strokeWidth="1.5">
+                                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                                <circle cx="9" cy="7" r="4" />
+                                                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                                                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                            </svg>
+                                            <span className={`${CLS}-modal-row-label`}>Team Size:</span>
+                                            <span className={`${CLS}-modal-row-value`}>{ev.teamSize}</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Category badge */}
+                                <div style={{ marginTop: 'auto', paddingTop: '1rem' }}>
+                                    <span style={{
+                                        fontSize: '0.65rem', fontWeight: 700,
+                                        padding: '0.25rem 0.8rem',
+                                        letterSpacing: '0.14em', textTransform: 'uppercase' as const,
+                                        background: `${catColor}20`, color: catColor,
+                                        border: `1px solid ${catColor}40`,
+                                        clipPath: 'polygon(8% 0, 100% 0, 92% 100%, 0 100%)',
+                                    }}>
+                                        {ev.category?.toUpperCase() || 'EVENT'}
+                                    </span>
                                 </div>
                             </div>
-                        );
-                    })()}
-                </div>,
-                document.body
-            )}
+                        </div>
+                    );
+                })()}
+            </div>
 
             {/* ── Bottom indicator ── */}
             <div style={{

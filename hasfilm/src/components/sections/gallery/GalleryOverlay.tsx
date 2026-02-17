@@ -1,14 +1,18 @@
 // src/components/sections/gallery/GalleryOverlay.tsx
-import React, { useState, useRef, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { useScroll } from '@react-three/drei';
-import { useFrame } from '@react-three/fiber';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
 import { GALLERY_CONTENT } from '../../../data/gallery';
 import { TIMELINE } from '../../../config/timeline';
+import { scrollProgress } from '../../../hooks/useScrollProgress';
 
+/**
+ * GalleryOverlay — HUD overlay for the 3D gallery section.
+ *
+ * Post-Lenis migration: This component lives in <main> as a regular DOM element.
+ * It uses a rAF loop (instead of useFrame) to animate in sync with scrollProgress.
+ * Since it's positioned sticky inside the gallery-trigger div, no portal is needed.
+ */
 const GalleryOverlay: React.FC = () => {
-    const scroll = useScroll();
     const [activeIndex, setActiveIndex] = useState(0);
     const innerRef = useRef<HTMLDivElement>(null);
     const opacityRef = useRef(0);
@@ -16,90 +20,68 @@ const GalleryOverlay: React.FC = () => {
     const progressRef = useRef<HTMLDivElement>(null);
     const dotsRef = useRef<HTMLDivElement>(null);
     const scrimRef = useRef<HTMLDivElement>(null);
-
-    // Portal root — renders overlay DOM directly on document.body,
-    // bypassing <Scroll html>'s automatic scroll-offset transforms.
-    const [portalRoot, setPortalRoot] = useState<HTMLDivElement | null>(null);
-
-    useEffect(() => {
-        const el = document.createElement('div');
-        el.id = 'gallery-overlay-portal';
-        el.style.cssText = 'position:fixed;inset:0;width:100%;height:100vh;pointer-events:none;z-index:30;';
-        document.body.appendChild(el);
-        setPortalRoot(el);
-        return () => {
-            document.body.removeChild(el);
-        };
-    }, []);
-
-    // Smoothed exit progress (0 = fully visible, 1 = fully collapsed)
     const exitProgress = useRef(0);
+    const activeIndexRef = useRef(0);
+    const rafRef = useRef<number>(0);
+    const lastTimeRef = useRef(0);
 
-    useFrame((_state, delta) => {
-        if (!innerRef.current) return;
+    const tick = useCallback((time: number) => {
+        if (!innerRef.current) {
+            rafRef.current = requestAnimationFrame(tick);
+            return;
+        }
 
-        const r = scroll.offset;
+        // Calculate delta
+        if (lastTimeRef.current === 0) lastTimeRef.current = time;
+        const deltaMs = Math.min(time - lastTimeRef.current, 50);
+        const delta = deltaMs / 1000;
+        lastTimeRef.current = time;
 
-        // 1. Visibility Logic: Fade in for gallery, fade out before dissolve
+        const r = scrollProgress.current;
+
+        // 1. Visibility Logic
         const isVisible = r >= TIMELINE.GALLERY_START && r <= TIMELINE.GALLERY_VIEW_END;
         const targetOpacity = isVisible ? 1 : 0;
         opacityRef.current = THREE.MathUtils.damp(opacityRef.current, targetOpacity, 3, delta);
-
-        // No manual scroll compensation needed — the overlay is portaled
-        // to document.body (position: fixed), completely outside <Scroll html>.
         innerRef.current.style.opacity = opacityRef.current.toString();
 
-        // 2. Active Index Calculation — must use same range as GalleryGroup's viewing phase
+        // 2. Active Index Calculation
         if (r >= TIMELINE.GALLERY_START) {
             const totalItems = GALLERY_CONTENT.length;
             const progress = (r - TIMELINE.GALLERY_START) / (TIMELINE.GALLERY_VIEW_END - TIMELINE.GALLERY_START);
 
-            // Half-step padding: maps scroll evenly across all panels
-            // so panel 0 and panel N-1 each get equal dwell time
             const rawIndex = Math.max(0, Math.min(progress * totalItems - 0.5, totalItems - 1));
             const index = Math.round(rawIndex);
 
-            if (index !== activeIndex) {
+            if (index !== activeIndexRef.current) {
+                activeIndexRef.current = index;
                 setActiveIndex(index);
             }
 
-            // === EXIT SEQUENCE at end of gallery ===
-            // The last panel lands at ~96% progress. Everything dwells there.
-            // Only when the user scrolls PAST 0.96 does anything start leaving.
-            // Sequence:
-            //   progress 0–0.96  → full dwell, nothing fades
-            //   progress 0.96–1  → exitT ramps 0→1
-            //     ep 0.00–0.45   → text slowly fades + slides left + blurs
-            //     ep 0.45–0.60   → pause (text gone, HUD still visible)
-            //     ep 0.60–0.75   → scrim fades
-            //     ep 0.70–0.85   → progress bar slides down + fades
-            //     ep 0.75–0.95   → dots slide right + fade (last to leave)
+            // === EXIT SEQUENCE ===
             const exitStart = 0.96;
             const exitT = progress > exitStart ? (progress - exitStart) / (1 - exitStart) : 0;
             const targetExit = Math.min(1, Math.max(0, exitT));
-            // Slower damp (3) so it feels like a deliberate, drawn-out removal
             exitProgress.current = THREE.MathUtils.damp(exitProgress.current, targetExit, 3, delta);
 
             const ep = exitProgress.current;
 
-            // Phase 1 (ep 0 → 0.45): Text fades slowly + slides left + blurs
+            // Phase 1: Text fades + slides left + blurs
             if (textRef.current) {
                 const textT = Math.min(1, ep / 0.45);
-                const eased = textT * textT; // quadratic ease-in
+                const eased = textT * textT;
                 textRef.current.style.opacity = (1 - eased).toString();
                 textRef.current.style.transform = `translate3d(${-eased * 40}px, -50%, 0)`;
                 textRef.current.style.filter = `blur(${eased * 6}px)`;
             }
 
-            // Phase 2 (ep 0.45 → 0.60): HOLD — text gone, HUD stays
-
-            // Phase 3a (ep 0.60 → 0.75): Scrim fades out
+            // Phase 3a: Scrim fades out
             if (scrimRef.current) {
                 const scrimT = Math.max(0, Math.min(1, (ep - 0.60) / 0.15));
                 scrimRef.current.style.opacity = (1 - scrimT).toString();
             }
 
-            // Phase 3b (ep 0.70 → 0.85): Progress bar fades + slides down
+            // Phase 3b: Progress bar fades + slides down
             if (progressRef.current) {
                 const barT = Math.max(0, Math.min(1, (ep - 0.70) / 0.15));
                 const barEased = barT * barT;
@@ -107,7 +89,7 @@ const GalleryOverlay: React.FC = () => {
                 progressRef.current.style.transform = `translate3d(-50%, ${barEased * 24}px, 0)`;
             }
 
-            // Phase 3c (ep 0.75 → 0.95): Dots fade + slide right (last to leave)
+            // Phase 3c: Dots fade + slide right
             if (dotsRef.current) {
                 const dotsT = Math.max(0, Math.min(1, (ep - 0.75) / 0.20));
                 const dotsEased = dotsT * dotsT;
@@ -115,7 +97,7 @@ const GalleryOverlay: React.FC = () => {
                 dotsRef.current.style.transform = `translate3d(${dotsEased * 16}px, -50%, 0)`;
             }
         } else {
-            // Reset exit state + inline styles when outside gallery
+            // Reset exit state
             exitProgress.current = 0;
             if (textRef.current) {
                 textRef.current.style.opacity = '';
@@ -132,18 +114,32 @@ const GalleryOverlay: React.FC = () => {
                 dotsRef.current.style.transform = '';
             }
         }
-    });
+
+        rafRef.current = requestAnimationFrame(tick);
+    }, []);
+
+    useEffect(() => {
+        rafRef.current = requestAnimationFrame(tick);
+        return () => {
+            if (rafRef.current) cancelAnimationFrame(rafRef.current);
+        };
+    }, [tick]);
 
     const activeItem = GALLERY_CONTENT[activeIndex];
-    if (!activeItem || !portalRoot) return null;
+    if (!activeItem) return null;
 
-    return createPortal(
+    return (
         <div
             ref={innerRef}
-            className="absolute inset-0 w-full h-full"
             style={{
+                position: 'sticky',
+                top: 0,
+                width: '100%',
+                height: '100vh',
                 opacity: 0,
                 willChange: 'opacity',
+                pointerEvents: 'none',
+                zIndex: 30,
             }}
         >
             {/* Left gradient scrim + text shadow */}
@@ -169,7 +165,6 @@ const GalleryOverlay: React.FC = () => {
 
             {/* 2. Text Content (Left Side) */}
             <div ref={textRef} className="absolute top-1/2 left-8 md:left-20 -translate-y-1/2 max-w-lg" style={{ willChange: 'transform, opacity' }}>
-
                 <div key={`title-${activeIndex}`} className="gallery-text-enter overflow-hidden relative">
                     <h2
                         className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter leading-none"
@@ -209,8 +204,7 @@ const GalleryOverlay: React.FC = () => {
                     />
                 ))}
             </div>
-        </div>,
-        portalRoot
+        </div>
     );
 };
 

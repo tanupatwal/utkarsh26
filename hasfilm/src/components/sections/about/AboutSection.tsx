@@ -1,10 +1,8 @@
 // src/components/sections/about/AboutSection.tsx
-import React, { useState, useRef, useEffect } from 'react';
-import { createPortal } from 'react-dom';
-import { useScroll } from '@react-three/drei';
-import { useFrame } from '@react-three/fiber';
+import React, { useRef, useEffect, useCallback } from 'react';
 import * as THREE from 'three';
 import { TIMELINE } from '../../../config/timeline';
+import { scrollProgress } from '../../../hooks/useScrollProgress';
 
 // ════════════════════════════════════════════════
 //  CONTENT
@@ -28,26 +26,24 @@ const PARAGRAPHS = [
 // ════════════════════════════════════════════════
 
 const AboutSection: React.FC = () => {
-    const scroll = useScroll();
     const contentRef = useRef<HTMLDivElement>(null);
     const opacityRef = useRef(0);
+    const rafRef = useRef<number>(0);
+    const lastTimeRef = useRef(0);
 
-    // Portal root — renders outside <Scroll html> to avoid jitter
-    const [portalRoot, setPortalRoot] = useState<HTMLDivElement | null>(null);
+    const tick = useCallback((time: number) => {
+        if (!contentRef.current) {
+            rafRef.current = requestAnimationFrame(tick);
+            return;
+        }
 
-    useEffect(() => {
-        const el = document.createElement('div');
-        el.id = 'about-overlay-portal';
-        el.style.cssText = 'position:fixed;inset:0;width:100%;height:100vh;pointer-events:none;z-index:15;';
-        document.body.appendChild(el);
-        setPortalRoot(el);
-        return () => { document.body.removeChild(el); };
-    }, []);
+        // Calculate delta
+        if (lastTimeRef.current === 0) lastTimeRef.current = time;
+        const deltaMs = Math.min(time - lastTimeRef.current, 50);
+        const delta = deltaMs / 1000;
+        lastTimeRef.current = time;
 
-    useFrame((_state, delta) => {
-        if (!contentRef.current) return;
-
-        const r = scroll.offset;
+        const r = scrollProgress.current;
 
         // Simple fade: in during ABOUT_START→+0.03, hold, out during ABOUT_STAY→TRANSITION
         let targetOpacity = 0;
@@ -67,15 +63,23 @@ const AboutSection: React.FC = () => {
 
         opacityRef.current = THREE.MathUtils.damp(opacityRef.current, targetOpacity, 6, delta);
         contentRef.current.style.opacity = opacityRef.current.toString();
-    });
+        contentRef.current.style.visibility = opacityRef.current < 0.01 ? 'hidden' : 'visible';
 
-    if (!portalRoot) return null;
+        rafRef.current = requestAnimationFrame(tick);
+    }, []);
 
-    return createPortal(
+    useEffect(() => {
+        rafRef.current = requestAnimationFrame(tick);
+        return () => {
+            if (rafRef.current) cancelAnimationFrame(rafRef.current);
+        };
+    }, [tick]);
+
+    return (
         <div
             ref={contentRef}
             style={{
-                position: 'absolute',
+                position: 'fixed',
                 inset: 0,
                 display: 'flex',
                 flexDirection: 'column',
@@ -85,6 +89,8 @@ const AboutSection: React.FC = () => {
                 opacity: 0,
                 willChange: 'opacity',
                 background: 'linear-gradient(180deg, #050505 0%, #0a0a0f 50%, #050505 100%)',
+                zIndex: 15,
+                pointerEvents: 'none',
             }}
         >
             {/* Subtitle */}
@@ -204,8 +210,7 @@ const AboutSection: React.FC = () => {
                     </div>
                 ))}
             </div>
-        </div>,
-        portalRoot
+        </div>
     );
 };
 

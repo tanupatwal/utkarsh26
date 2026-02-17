@@ -1,36 +1,25 @@
 import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
-import { useScroll } from '@react-three/drei';
-import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
-import { SCROLL_CONFIG, TIMELINE } from '../../../config';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { TEAM_MEMBERS, TEAM_BG_IMAGES } from '../../../data/team';
+
+gsap.registerPlugin(ScrollTrigger);
 
 // ════════════════════════════════════════════════
 //  CONFIGURATION
 // ════════════════════════════════════════════════
 
-/** Scroll range where the team section fades in */
-const TEAM_FADE_START = TIMELINE.TEAM_FADE_START;
-const TEAM_FADE_FULL = TIMELINE.TEAM_FADE_FULL;
-
-/** Wheel delta thresholds for entry/exit gates (px of accumulated wheel delta) */
-const ENTRY_GATE_THRESHOLD = 250;
-const EXIT_GATE_THRESHOLD = 300;
-
-/** Cooldown between wheel-driven navigation steps (ms) */
-const WHEEL_COOLDOWN_MS = 100;
-
 const CLS = 'tm';
 
 // ════════════════════════════════════════════════
-//  CSS
+//  CSS (unchanged from original)
 // ════════════════════════════════════════════════
 
 const STYLES = `
 /* ─── Root container ─── */
 .${CLS}-root {
-  position: fixed; inset: 0;
-  width: 100vw; height: 100dvh;
+  position: sticky; top: 0;
+  width: 100%; height: 100vh;
   overflow: hidden;
   background: #000;
   font-family: 'Space Grotesk', 'Inter', sans-serif;
@@ -350,61 +339,26 @@ function distClass(dist: number): string {
   return `dist-4`;
 }
 
-/** Map wheel deltaY magnitude to navigation step size */
-function velocityToStep(absDelta: number): number {
-  if (absDelta < 50) return 1;       // gentle nudge → ±1
-  if (absDelta < 150) return 3;      // moderate flick → ±3
-  return 5;                           // fast swipe → ±5
-}
-
-// ════════════════════════════════════════════════
-//  SCROLL TRAP STATE MACHINE
-// ════════════════════════════════════════════════
-//
-//  States:
-//    INACTIVE  → section not visible, wheel events pass through
-//    ENTERING  → section just appeared, accumulating wheel delta (dwell pause)
-//    BROWSING  → navigating through team members, wheel events trapped
-//    EXITING   → at boundary (first/last member), accumulating overflow
-//    RELEASED  → threshold exceeded, pushing scrollTop and releasing trap
-//
-
-type TrapState = 'INACTIVE' | 'ENTERING' | 'BROWSING' | 'EXITING' | 'REWINDING' | 'RELEASED';
-
 // ════════════════════════════════════════════════
 //  COMPONENT
 // ════════════════════════════════════════════════
 
 const TeamSection: React.FC = () => {
-  const scroll = useScroll();
   const containerRef = useRef<HTMLDivElement>(null);
-  const opacityRef = useRef(0);
   const mouseRef = useRef({ x: 0, y: 0 });
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [prevActiveIndex, setPrevActiveIndex] = useState(0);
   const [hoverIndex, setHoverIndex] = useState<number | null>(null);
-  const [isVisible, setIsVisible] = useState(false);
   const prevEffectiveRef = useRef(0);
-
-  // ── Scroll trap refs ──
-  const trapStateRef = useRef<TrapState>('INACTIVE');
-  const entryAccumRef = useRef(0);      // accumulated wheel delta during entry dwell
-  const exitAccumRef = useRef(0);       // accumulated wheel delta at boundary
-  const exitDirectionRef = useRef<'up' | 'down'>('down');
-  const wheelCooldownRef = useRef(0);
-  const isTrappingRef = useRef(false);  // snapshot for wheel handler
-  const activeIndexRef = useRef(0);     // ref mirror of activeIndex for wheel handler
-  const rewindIndexRef = useRef(0);     // animated index during REWINDING
-  const rewindAccumRef = useRef(0);     // sub-frame accumulator for rewind speed
-  const releasedAtRef = useRef(0);      // timestamp of last release (for cooldown)
+  const activeIndexRef = useRef(0);
 
   const totalMembers = TEAM_MEMBERS.length;
 
   // Effective active index (hover overrides scroll-driven)
   const effectiveIndex = hoverIndex !== null ? hoverIndex : activeIndex;
 
-  // Keep ref in sync with state
+  // Keep ref in sync
   useEffect(() => { activeIndexRef.current = activeIndex; }, [activeIndex]);
 
   // Track previous effective index for exit animation
@@ -415,24 +369,59 @@ const TeamSection: React.FC = () => {
     }
   }, [effectiveIndex]);
 
-  // ── Manual navigation (arrows, keys) ──
+  // ── ScrollTrigger: fade + pin + snap ──
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    // Fade in/out
+    const fadeTl = gsap.timeline({
+      scrollTrigger: {
+        trigger: '#team-section',
+        start: 'top bottom',
+        end: 'bottom top',
+        scrub: 0.5,
+      },
+    });
+    fadeTl
+      .fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.15 })
+      .to(el, { opacity: 1, duration: 0.5 })
+      .to(el, { opacity: 0, duration: 0.15 });
+
+    // Scroll-driven member selection via scrub progress
+    const memberST = ScrollTrigger.create({
+      trigger: '#team-section',
+      start: 'top 40%',
+      end: 'bottom 60%',
+      scrub: 0.3,
+      onUpdate: (self) => {
+        const p = self.progress; // 0..1
+        const idx = Math.round(p * (totalMembers - 1));
+        const clamped = Math.max(0, Math.min(totalMembers - 1, idx));
+        if (clamped !== activeIndexRef.current) {
+          activeIndexRef.current = clamped;
+          setActiveIndex(clamped);
+        }
+      },
+    });
+
+    return () => {
+      fadeTl.kill();
+      memberST.kill();
+    };
+  }, [totalMembers]);
+
+  // ── Arrow / keyboard navigation ──
   const navigateBy = useCallback((delta: number) => {
     setActiveIndex(prev => {
       const next = Math.max(0, Math.min(totalMembers - 1, prev + delta));
       activeIndexRef.current = next;
       return next;
     });
-    // If we were exiting but the user navigates back into the list, cancel exit
-    if (trapStateRef.current === 'EXITING') {
-      trapStateRef.current = 'BROWSING';
-      exitAccumRef.current = 0;
-    }
   }, [totalMembers]);
 
-  // ── Keyboard arrow support ──
   useEffect(() => {
     const handleKey = (e: KeyboardEvent) => {
-      if (!isTrappingRef.current) return;
       if (e.key === 'ArrowDown' || e.key === 'ArrowRight') {
         e.preventDefault();
         navigateBy(1);
@@ -445,126 +434,7 @@ const TeamSection: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKey);
   }, [navigateBy]);
 
-  // ═══════════════════════════════════════════════
-  //  WHEEL EVENT TRAP — the core scroll-hijacking
-  // ═══════════════════════════════════════════════
-  useEffect(() => {
-    const handleWheel = (e: WheelEvent) => {
-      const state = trapStateRef.current;
-
-      // If not trapping, let ScrollControls handle it
-      // BUT block events briefly after release to prevent momentum overshoot
-      if (state === 'INACTIVE' || state === 'RELEASED') {
-        const msSinceRelease = Date.now() - releasedAtRef.current;
-        if (msSinceRelease < 600) {
-          // Still in cooldown — eat the event so momentum doesn't overshoot Schedule
-          e.preventDefault();
-          e.stopPropagation();
-        }
-        return;
-      }
-
-      // TRAP the event — prevent ScrollControls from receiving it
-      e.preventDefault();
-      e.stopPropagation();
-
-      const absDelta = Math.abs(e.deltaY);
-      if (absDelta < 3) return; // noise filter
-
-      const direction = e.deltaY > 0 ? 1 : -1; // 1 = down, -1 = up
-
-      // ── ENTERING state: accumulate before allowing navigation ──
-      if (state === 'ENTERING') {
-        entryAccumRef.current += absDelta;
-        if (entryAccumRef.current >= ENTRY_GATE_THRESHOLD) {
-          trapStateRef.current = 'BROWSING';
-          entryAccumRef.current = 0;
-        }
-        return;
-      }
-
-      // ── EXITING state: accumulate overflow to break out ──
-      if (state === 'EXITING') {
-        // If user reverses direction, go back to browsing
-        const exitDir = exitDirectionRef.current;
-        if ((exitDir === 'down' && direction < 0) || (exitDir === 'up' && direction > 0)) {
-          trapStateRef.current = 'BROWSING';
-          exitAccumRef.current = 0;
-          return;
-        }
-
-        exitAccumRef.current += absDelta;
-        if (exitAccumRef.current >= EXIT_GATE_THRESHOLD) {
-          exitAccumRef.current = 0;
-
-          if (exitDir === 'up') {
-            // Exit up: jump to Schedule section
-            trapStateRef.current = 'RELEASED';
-            isTrappingRef.current = false;
-            releasedAtRef.current = Date.now(); // start cooldown
-
-            if (scroll.el) {
-              const scrollContainer = scroll.el as HTMLElement;
-              const scrollHeight = scrollContainer.scrollHeight - scrollContainer.clientHeight;
-              const targetOffset = (TIMELINE.SCHEDULE_FADE_FULL + TIMELINE.SCHEDULE_FADE_OUT_START) / 2; // Schedule dwell zone midpoint
-              scrollContainer.scrollTop = targetOffset * scrollHeight;
-            }
-            opacityRef.current = 0;
-            if (containerRef.current) {
-              containerRef.current.style.opacity = '0';
-              containerRef.current.style.visibility = 'hidden';
-            }
-          } else {
-            // Exit down: team is the last section, nowhere to go.
-            // Bounce back to BROWSING instead of releasing the trap.
-            trapStateRef.current = 'BROWSING';
-            exitAccumRef.current = 0;
-          }
-        }
-        return;
-      }
-
-      // ── BROWSING state: navigate through members with velocity ──
-      if (state === 'BROWSING') {
-        const now = Date.now();
-        if (now - wheelCooldownRef.current < WHEEL_COOLDOWN_MS) return;
-        wheelCooldownRef.current = now;
-
-        const currentIdx = activeIndexRef.current;
-        const step = velocityToStep(absDelta);
-
-        // Check if we're at a boundary
-        if (direction > 0 && currentIdx >= totalMembers - 1) {
-          // At last member, scrolling down → enter EXITING state
-          trapStateRef.current = 'EXITING';
-          exitDirectionRef.current = 'down';
-          exitAccumRef.current = absDelta;
-          return;
-        }
-
-        if (direction < 0 && currentIdx <= 0) {
-          // At first member, scrolling up → enter EXITING state
-          trapStateRef.current = 'EXITING';
-          exitDirectionRef.current = 'up';
-          exitAccumRef.current = absDelta;
-          return;
-        }
-
-        // Navigate
-        const newIdx = Math.max(0, Math.min(totalMembers - 1, currentIdx + direction * step));
-        if (newIdx !== currentIdx) {
-          activeIndexRef.current = newIdx;
-          setActiveIndex(newIdx);
-        }
-      }
-    };
-
-    // Capture phase + non-passive to block ScrollControls
-    window.addEventListener('wheel', handleWheel, { passive: false, capture: true });
-    return () => window.removeEventListener('wheel', handleWheel, { capture: true } as EventListenerOptions);
-  }, [totalMembers, scroll]);
-
-  // Track mouse for parallax
+  // ── Mouse parallax ──
   useEffect(() => {
     const handleMouse = (e: MouseEvent) => {
       mouseRef.current = {
@@ -576,9 +446,26 @@ const TeamSection: React.FC = () => {
     return () => window.removeEventListener('mousemove', handleMouse);
   }, []);
 
-  // Parallax applied via refs for perf
   const geoRef = useRef<HTMLDivElement>(null);
   const imgFrameRef = useRef<HTMLDivElement>(null);
+
+  // Lightweight rAF for parallax only (no opacity math)
+  const rafRef = useRef<number>(0);
+  useEffect(() => {
+    const tick = () => {
+      rafRef.current = requestAnimationFrame(tick);
+      const mx = mouseRef.current.x;
+      const my = mouseRef.current.y;
+      if (geoRef.current) {
+        geoRef.current.style.transform = `translate(${mx * 8}px, ${my * 8}px)`;
+      }
+      if (imgFrameRef.current) {
+        imgFrameRef.current.style.transform = `translate(${mx * 6}px, ${my * 6}px)`;
+      }
+    };
+    rafRef.current = requestAnimationFrame(tick);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, []);
 
   const handleNameEnter = useCallback((idx: number) => {
     setHoverIndex(idx);
@@ -588,7 +475,7 @@ const TeamSection: React.FC = () => {
     setHoverIndex(null);
   }, []);
 
-  // Precompute drift columns — 3 columns, faster speeds
+  // Precompute drift columns
   const driftColumns = useMemo(() => {
     const third = Math.ceil(TEAM_BG_IMAGES.length / 3);
     const col1 = TEAM_BG_IMAGES.slice(0, third);
@@ -600,137 +487,6 @@ const TeamSection: React.FC = () => {
       { images: [...col3, ...col3], right: '2%', duration: 22, direction: 'up' as const },
     ];
   }, []);
-
-  // ── Frame loop: opacity, visibility, trap state management ──
-  useFrame((_state, delta) => {
-    if (!containerRef.current) return;
-    const r = scroll.offset;
-    const vh = typeof window !== 'undefined' ? window.innerHeight : 0;
-    const targetY = vh * (SCROLL_CONFIG.PAGES - 1) * r;
-
-    // ── Trap state machine transitions ──
-    const trapState = trapStateRef.current;
-    const trapIsActive = trapState === 'ENTERING' || trapState === 'BROWSING' || trapState === 'EXITING' || trapState === 'REWINDING';
-
-    if (trapIsActive) {
-      // Force full opacity while trap is active — don't let damped
-      // scroll.offset drive opacity, because the pin and scroll.offset
-      // race each other, causing premature fade-outs.
-      opacityRef.current = 1;
-      containerRef.current.style.opacity = '1';
-      containerRef.current.style.visibility = 'visible';
-      containerRef.current.style.pointerEvents = 'auto';
-    } else {
-      // Normal opacity based on scroll position (INACTIVE or RELEASED)
-      let revealT = 0;
-      if (r >= TEAM_FADE_START && r < TEAM_FADE_FULL) {
-        revealT = (r - TEAM_FADE_START) / (TEAM_FADE_FULL - TEAM_FADE_START);
-      } else if (r >= TEAM_FADE_FULL) {
-        revealT = 1;
-      }
-
-      opacityRef.current = THREE.MathUtils.damp(opacityRef.current, revealT, 4, delta);
-      containerRef.current.style.opacity = String(opacityRef.current.toFixed(3));
-      containerRef.current.style.pointerEvents = opacityRef.current > 0.1 ? 'auto' : 'none';
-      containerRef.current.style.visibility = opacityRef.current < 0.02 ? 'hidden' : 'visible';
-    }
-
-    containerRef.current.style.transform = `translate3d(0, ${targetY}px, 0)`;
-
-    // ── Visibility-based entry/exit (only when trap is NOT active) ──
-    const wasVisible = isVisible;
-    const nowVisible = opacityRef.current > 0.3;
-    const nowHidden = opacityRef.current < 0.1;
-
-    if (!trapIsActive && nowVisible && !wasVisible) {
-      setIsVisible(true);
-      // Entering the section — start entry gate
-      trapStateRef.current = 'ENTERING';
-      entryAccumRef.current = 0;
-      exitAccumRef.current = 0;
-      isTrappingRef.current = true;
-      // Reset to first member on entry
-      setActiveIndex(0);
-      activeIndexRef.current = 0;
-    }
-
-    if (!trapIsActive && nowHidden && wasVisible) {
-      setIsVisible(false);
-      // Left the section — deactivate trap
-      trapStateRef.current = 'INACTIVE';
-      isTrappingRef.current = false;
-      entryAccumRef.current = 0;
-      exitAccumRef.current = 0;
-    }
-
-    // If RELEASED and we've scrolled away from the section, go back to INACTIVE
-    if (trapState === 'RELEASED' && nowHidden) {
-      trapStateRef.current = 'INACTIVE';
-      isTrappingRef.current = false;
-    }
-
-    // If RELEASED but still visible (scrollTop hasn't moved us away yet), keep released
-    // This allows ScrollControls to catch up
-
-    // ── REWINDING animation: rapidly scroll backward through all names ──
-    if (trapStateRef.current === 'REWINDING') {
-      // Force opacity to stay at 1 during rewind
-      opacityRef.current = 1;
-      containerRef.current.style.opacity = '1';
-
-      // Decrement ~3 members per frame for a fast rewind feel
-      rewindAccumRef.current += delta * 72; // ~3 steps at 60fps
-      const stepsThisFrame = Math.floor(rewindAccumRef.current);
-      if (stepsThisFrame > 0) {
-        rewindAccumRef.current -= stepsThisFrame;
-        const newIdx = Math.max(0, rewindIndexRef.current - stepsThisFrame);
-        rewindIndexRef.current = newIdx;
-        activeIndexRef.current = newIdx;
-        setActiveIndex(newIdx);
-
-        // Rewind complete (reached first member) — release
-        if (newIdx <= 0) {
-          trapStateRef.current = 'RELEASED';
-          isTrappingRef.current = false;
-
-          // Jump scroll to the Schedule dwell zone so the user sees it
-          if (scroll.el) {
-            const scrollContainer = scroll.el as HTMLElement;
-            const scrollHeight = scrollContainer.scrollHeight - scrollContainer.clientHeight;
-            const targetOffset = (TIMELINE.SCHEDULE_FADE_FULL + TIMELINE.SCHEDULE_FADE_OUT_START) / 2; // Schedule dwell zone midpoint
-            scrollContainer.scrollTop = targetOffset * scrollHeight;
-          }
-          // Snap our own opacity to 0 immediately so we don't linger on screen
-          opacityRef.current = 0;
-          containerRef.current.style.opacity = '0';
-          containerRef.current.style.visibility = 'hidden';
-        }
-      }
-    }
-
-    // ── Pin scrollTop while trapping ──
-    // When trapping, keep scroll.el pinned so ScrollControls doesn't drift
-    const isTrapping = trapStateRef.current !== 'INACTIVE' && trapStateRef.current !== 'RELEASED';
-    isTrappingRef.current = isTrapping;
-
-    if (isTrapping && scroll.el) {
-      const scrollContainer = scroll.el as HTMLElement;
-      const scrollHeight = scrollContainer.scrollHeight - scrollContainer.clientHeight;
-      // Pin at the team section's start position
-      const pinOffset = TEAM_FADE_FULL;
-      scrollContainer.scrollTop = pinOffset * scrollHeight;
-    }
-
-    // Apply parallax
-    const mx = mouseRef.current.x;
-    const my = mouseRef.current.y;
-    if (geoRef.current) {
-      geoRef.current.style.transform = `translate(${mx * 8}px, ${my * 8}px)`;
-    }
-    if (imgFrameRef.current) {
-      imgFrameRef.current.style.transform = `translate(${mx * 6}px, ${my * 6}px)`;
-    }
-  });
 
   // Determine which names to show (window around active)
   const windowStart = Math.max(0, effectiveIndex - VISIBLE_RADIUS);
@@ -757,12 +513,10 @@ const TeamSection: React.FC = () => {
       {/* ── Geometric background ── */}
       <div ref={geoRef} className={`${CLS}-geo`}>
         <svg viewBox="0 0 1200 800" fill="none" xmlns="http://www.w3.org/2000/svg">
-          {/* Large circle strokes */}
           <circle cx="600" cy="400" r="280" stroke="rgba(255,255,255,0.3)" strokeWidth="0.5" />
           <circle cx="600" cy="400" r="350" stroke="rgba(255,255,255,0.15)" strokeWidth="0.5" />
           <circle cx="200" cy="600" r="200" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5" />
           <circle cx="1000" cy="200" r="180" stroke="rgba(255,255,255,0.1)" strokeWidth="0.5" />
-          {/* Grid lines */}
           <line x1="0" y1="400" x2="1200" y2="400" stroke="rgba(255,255,255,0.08)" strokeWidth="0.5" />
           <line x1="600" y1="0" x2="600" y2="800" stroke="rgba(255,255,255,0.08)" strokeWidth="0.5" />
           <line x1="300" y1="0" x2="300" y2="800" stroke="rgba(255,255,255,0.04)" strokeWidth="0.5" />
@@ -770,7 +524,7 @@ const TeamSection: React.FC = () => {
         </svg>
       </div>
 
-      {/* ── Drifting background photos — 3 faster columns ── */}
+      {/* ── Drifting background photos ── */}
       <div className={`${CLS}-drift-wrap`}>
         {driftColumns.map((col, ci) => (
           <div
@@ -793,14 +547,12 @@ const TeamSection: React.FC = () => {
 
       {/* ── Main layout ── */}
       <div className={`${CLS}-layout`}>
-        {/* Left: Names — CENTERED in left half */}
+        {/* Left: Names */}
         <div className={`${CLS}-left`}>
-          {/* "Our Team" label */}
           <div className={`${CLS}-label`}>
             <em>Our</em> <strong>Team</strong>
           </div>
 
-          {/* Names window with fade masks */}
           <div className={`${CLS}-names-window`}>
             {visibleMembers.map((member, vi) => {
               const realIdx = windowStart + vi;
@@ -819,7 +571,6 @@ const TeamSection: React.FC = () => {
             })}
           </div>
 
-          {/* Page counter */}
           <div className={`${CLS}-counter`}>
             <span className="current">{counterCurrent}</span>
             {' / '}
@@ -827,10 +578,9 @@ const TeamSection: React.FC = () => {
           </div>
         </div>
 
-        {/* Right: Image + Arrows (arrows OUTSIDE image frame) */}
+        {/* Right: Image + Arrows */}
         <div className={`${CLS}-right`}>
           <div className={`${CLS}-img-wrap`}>
-            {/* Left arrow */}
             <button
               className={`${CLS}-arrow`}
               onClick={() => navigateBy(-1)}
@@ -840,7 +590,6 @@ const TeamSection: React.FC = () => {
               ‹
             </button>
 
-            {/* Image frame */}
             <div ref={imgFrameRef} className={`${CLS}-img-frame`}>
               {TEAM_MEMBERS.map((member, i) => {
                 const isActive = i === effectiveIndex;
@@ -857,7 +606,6 @@ const TeamSection: React.FC = () => {
               })}
             </div>
 
-            {/* Right arrow */}
             <button
               className={`${CLS}-arrow`}
               onClick={() => navigateBy(1)}
@@ -868,7 +616,6 @@ const TeamSection: React.FC = () => {
             </button>
           </div>
 
-          {/* Role label */}
           <div className={`${CLS}-role`} key={effectiveIndex}>
             {currentMember?.role}
           </div>
