@@ -170,7 +170,7 @@ const GalleryOverlay: React.FC = () => {
             </div>
 
             {/* 2. Text Content (Left Side) */}
-            <div ref={textRef} className="absolute top-1/2 left-8 md:left-20 -translate-y-1/2 max-w-lg" style={{ willChange: 'transform, opacity' }}>
+            <div ref={textRef} className="absolute bottom-16 left-8 md:left-20 max-w-lg" style={{ willChange: 'transform, opacity' }}>
                 <div key={`title-${activeIndex}`} className="gallery-text-enter overflow-hidden relative">
                     <h2
                         className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter leading-none"
