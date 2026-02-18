@@ -3,10 +3,10 @@
    ===========================
    Centralized font-family, weight, and size tokens.
    All typography in the project should reference these
-   for consistency. Fonts are loaded via <link> in index.html.
+   for consistency.
 
    Stack:
-     Display  → Josefin Sans  (Art Deco geometric, elegant)
+     Display  → Clash Display (geometric display, bold)
      Heading  → Manrope       (warm geometric, modern)
      Body     → DM Sans       (clean, screen-optimized)
      Heritage → Eczar         (Devanagari + Latin, high-contrast)
@@ -14,11 +14,56 @@
      Mono     → Inconsolata   (refined, 8 weights)
 */
 
+/* ── Clash Display Font Face ───────────────────── */
+@font-face {
+    font-family: 'Clash Display';
+    src: local('ClashDisplay-Extralight'), url('/assets/fonts/ClashDisplay-Extralight.otf');
+    font-weight: 200;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Clash Display';
+    src: local('ClashDisplay-Light'), url('/assets/fonts/ClashDisplay-Light.otf');
+    font-weight: 300;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Clash Display';
+    src: local('ClashDisplay-Regular'), url('/assets/fonts/ClashDisplay-Regular.otf');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Clash Display';
+    src: local('ClashDisplay-Medium'), url('/assets/fonts/ClashDisplay-Medium.otf');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Clash Display';
+    src: local('ClashDisplay-Semibold'), url('/assets/fonts/ClashDisplay-Semibold.otf');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+@font-face {
+    font-family: 'Clash Display';
+    src: local('ClashDisplay-Bold'), url('/assets/fonts/ClashDisplay-Bold.otf');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+
 :root {
     /* ── Font Families ──────────────────────────── */
-    --font-display: 'Josefin Sans', sans-serif;
+    --font-display: 'Clash Display', 'Josefin Sans', sans-serif;
     /*  Display / hero titles, section names         */
-    --font-heading: 'Manrope', sans-serif;
+    --font-heading: 'Clash Display', 'Manrope', sans-serif;
     /*  Subheadings, card titles, nav UI             */
     --font-body: 'DM Sans', sans-serif;
     /*  Body text, paragraphs, descriptions          */

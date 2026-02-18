@@ -173,8 +173,9 @@ const GalleryOverlay: React.FC = () => {
             <div ref={textRef} className="absolute bottom-16 left-8 md:left-20 max-w-lg" style={{ willChange: 'transform, opacity' }}>
                 <div key={`title-${activeIndex}`} className="gallery-text-enter overflow-hidden relative">
                     <h2
-                        className="text-5xl md:text-7xl font-black text-white uppercase italic tracking-tighter leading-none"
+                        className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter leading-none"
                         style={{
+                            fontFamily: "'Clash Display', sans-serif",
                             textShadow: '0 0 15px rgba(0,0,0,0.8), 0 2px 30px rgba(0,0,0,0.5)',
                         }}
                     >
