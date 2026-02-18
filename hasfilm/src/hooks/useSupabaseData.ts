@@ -35,6 +35,7 @@ export interface SupabaseEvent {
     coordinator_contact: string | null;
     description: string | null;
     registration_link: string | null;
+    image_url: string | null;
 }
 
 function mapSupabaseEvent(e: SupabaseEvent): ScheduleEvent {
@@ -48,6 +49,7 @@ function mapSupabaseEvent(e: SupabaseEvent): ScheduleEvent {
         coordinatorContact: e.coordinator_contact ?? undefined,
         description: e.description ?? undefined,
         registrationLink: e.registration_link ?? undefined,
+        imageUrl: e.image_url ?? undefined,
     };
 }
 

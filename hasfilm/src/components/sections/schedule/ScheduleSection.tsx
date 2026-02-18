@@ -1013,11 +1013,20 @@ const ScheduleSection: React.FC = () => {
                                     {/* Card body — gradient + typography (no image) */}
                                     <div className={`${CLS}-body`}>
                                         <div className={`${CLS}-cat-strip`} style={{ background: ACCENT, ['--cat-color' as any]: ACCENT }} />
-                                        {/* Gradient background instead of image */}
-                                        <div style={{
-                                            position: 'absolute', inset: 0,
-                                            background: `linear-gradient(135deg, rgba(56,189,248,0.08) 0%, rgba(2,6,23,0.95) 60%, rgba(56,189,248,0.04) 100%)`,
-                                        }} />
+                                        {/* Event poster or gradient fallback */}
+                                        {event.imageUrl ? (
+                                            <img
+                                                src={event.imageUrl}
+                                                alt={event.title}
+                                                className={`${CLS}-img`}
+                                                loading="lazy"
+                                            />
+                                        ) : (
+                                            <div style={{
+                                                position: 'absolute', inset: 0,
+                                                background: `linear-gradient(135deg, rgba(56,189,248,0.08) 0%, rgba(2,6,23,0.95) 60%, rgba(56,189,248,0.04) 100%)`,
+                                            }} />
+                                        )}
                                         <div className={`${CLS}-grad`} />
                                         {/* Title bar at bottom */}
                                         <div className={`${CLS}-title`}>
@@ -1177,6 +1186,20 @@ const ScheduleSection: React.FC = () => {
                                         {/* Expanded details */}
                                         <div className={`${CLS}-mob-details`}>
                                             <div className={`${CLS}-mob-exp-content`}>
+                                                {/* Poster image */}
+                                                {event.imageUrl && (
+                                                    <img
+                                                        src={event.imageUrl}
+                                                        alt={event.title}
+                                                        className={`${CLS}-mob-exp-img`}
+                                                        loading="lazy"
+                                                        style={{
+                                                            width: '100%', borderRadius: '6px',
+                                                            marginBottom: '0.75rem',
+                                                            border: `1px solid ${ACCENT}30`,
+                                                        }}
+                                                    />
+                                                )}
                                                 {event.description && (
                                                     <p className={`${CLS}-mob-exp-desc`}>{event.description}</p>
                                                 )}
@@ -1313,13 +1336,22 @@ const ScheduleSection: React.FC = () => {
                                 {currentIdx + 1} / {eventsForDay.length}
                             </span>
 
-                            {/* Left: Gradient panel instead of image */}
+                            {/* Left: Poster image or gradient fallback */}
                             <div className={`${CLS}-modal-img-wrap`} style={{
                                 borderColor: ACCENT_MED,
                                 boxShadow: `0 0 20px ${ACCENT}33, 0 0 60px ${ACCENT}14, inset 0 0 30px ${ACCENT}0d`,
-                                background: `linear-gradient(135deg, rgba(56,189,248,0.12) 0%, rgba(2,6,23,0.95) 50%, rgba(56,189,248,0.05) 100%)`,
+                                background: ev.imageUrl ? 'transparent' : `linear-gradient(135deg, rgba(56,189,248,0.12) 0%, rgba(2,6,23,0.95) 50%, rgba(56,189,248,0.05) 100%)`,
                             }}>
-                                <span className={`${CLS}-modal-img-title`}>{ev.title}</span>
+                                {ev.imageUrl ? (
+                                    <img
+                                        src={ev.imageUrl}
+                                        alt={ev.title}
+                                        className={`${CLS}-modal-img`}
+                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                    />
+                                ) : (
+                                    <span className={`${CLS}-modal-img-title`}>{ev.title}</span>
+                                )}
                             </div>
 
                             {/* Right: Details */}

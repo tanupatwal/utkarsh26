@@ -10,6 +10,7 @@ export interface ScheduleEvent {
     coordinatorContact?: string;
     description?: string;
     registrationLink?: string;
+    imageUrl?: string;
 }
 
 export interface ScheduleDay {
