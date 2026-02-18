@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { CATEGORY_COLORS } from '../../../data/schedule';
 import type { ScheduleEvent } from '../../../data/schedule';
 import { useEvents } from '../../../hooks/useSupabaseData';
 
@@ -51,7 +50,7 @@ const STYLES = `
 /* ─── Card: chamfered octagonal shape ─── */
 .${CLS}-card {
   position: relative;
-  height: clamp(260px, 22rem, 340px);
+  height: clamp(180px, 15rem, 240px);
   width: 100%;
   cursor: pointer;
   transform-style: preserve-3d;
@@ -721,7 +720,7 @@ const ScheduleSection: React.FC = () => {
     const [cardsRevealed, setCardsRevealed] = useState(false);
     const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(null);
     const [expandedIndex, setExpandedIndex] = useState<number | null>(null);
-    const [visibleCount, setVisibleCount] = useState(6);
+
 
     // Helper: filter events by day (replaces hardcoded getEventsForDay)
     const getEventsForDay = useCallback(
@@ -765,7 +764,6 @@ const ScheduleSection: React.FC = () => {
     const handleDayClick = useCallback((dayId: number) => {
         setActiveDay(dayId);
         setExpandedIndex(null);
-        setVisibleCount(6); // reset progressive loading on day switch
     }, []);
 
     const dayEvents = useMemo(() => getEventsForDay(activeDay), [activeDay, getEventsForDay]);
@@ -1005,19 +1003,21 @@ const ScheduleSection: React.FC = () => {
                     {/* Desktop 3D Card Grid */}
                     <div key={activeDay} className={`${CLS}-grid`}>
                         {dayEvents.map((event, i) => {
-                            const catColor = event.category ? CATEGORY_COLORS[event.category] || ACCENT : ACCENT;
-                            const catLabel = event.category?.toUpperCase() || 'EVENT';
                             return (
                                 <div
-                                    key={event.title}
+                                    key={`${event.title}-${i}`}
                                     className={`${CLS}-card ${cardsRevealed ? 'revealed' : ''}`}
-                                    style={{ transitionDelay: `${i * CARD_STAGGER_MS}ms` }}
+                                    style={{ transitionDelay: `${Math.min(i, 15) * CARD_STAGGER_MS}ms` }}
                                     onClick={() => setSelectedEvent(event)}
                                 >
-                                    {/* Card body */}
+                                    {/* Card body — gradient + typography (no image) */}
                                     <div className={`${CLS}-body`}>
-                                        <div className={`${CLS}-cat-strip`} style={{ background: catColor, ['--cat-color' as any]: catColor }} />
-                                        <img className={`${CLS}-img`} src={event.image} alt={event.title} loading="lazy" />
+                                        <div className={`${CLS}-cat-strip`} style={{ background: ACCENT, ['--cat-color' as any]: ACCENT }} />
+                                        {/* Gradient background instead of image */}
+                                        <div style={{
+                                            position: 'absolute', inset: 0,
+                                            background: `linear-gradient(135deg, rgba(56,189,248,0.08) 0%, rgba(2,6,23,0.95) 60%, rgba(56,189,248,0.04) 100%)`,
+                                        }} />
                                         <div className={`${CLS}-grad`} />
                                         {/* Title bar at bottom */}
                                         <div className={`${CLS}-title`}>
@@ -1029,6 +1029,11 @@ const ScheduleSection: React.FC = () => {
                                             }}>
                                                 {event.title}
                                             </h3>
+                                            {event.society && (
+                                                <span style={{ fontSize: '0.6rem', color: ACCENT, letterSpacing: '0.1em', marginTop: '0.3rem', display: 'block' }}>
+                                                    {event.society}
+                                                </span>
+                                            )}
                                             <div style={{
                                                 height: 2, width: '2rem', marginTop: '0.4rem',
                                                 background: `linear-gradient(to right, ${ACCENT}, transparent)`,
@@ -1038,23 +1043,13 @@ const ScheduleSection: React.FC = () => {
 
                                     {/* ── Glass info overlay ── */}
                                     <div className={`${CLS}-glass`}>
-                                        {/* Title + category */}
-                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                            <h3 style={{
-                                                fontSize: 'clamp(0.85rem, 1.1vw, 1.05rem)',
-                                                fontWeight: 700, color: '#fff',
-                                                letterSpacing: '0.1em', textTransform: 'uppercase', margin: 0,
-                                            }}>
-                                                {event.title}
-                                            </h3>
-                                            <span className={`${CLS}-cat-tag`} style={{
-                                                background: `${catColor}20`, color: catColor,
-                                                border: `1px solid ${catColor}40`,
-                                                clipPath: 'polygon(8% 0, 100% 0, 92% 100%, 0 100%)',
-                                            }}>
-                                                {catLabel}
-                                            </span>
-                                        </div>
+                                        <h3 style={{
+                                            fontSize: 'clamp(0.85rem, 1.1vw, 1.05rem)',
+                                            fontWeight: 700, color: '#fff',
+                                            letterSpacing: '0.1em', textTransform: 'uppercase', margin: 0,
+                                        }}>
+                                            {event.title}
+                                        </h3>
 
                                         <div className={`${CLS}-divider`} />
 
@@ -1063,13 +1058,7 @@ const ScheduleSection: React.FC = () => {
                                             <svg className={`${CLS}-meta-icon`} viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.5">
                                                 <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
                                             </svg>
-                                            <span>{event.time}{event.endTime ? ` – ${event.endTime}` : ''}</span>
-                                            {event.prizePool && (
-                                                <>
-                                                    <span style={{ width: 3, height: 3, background: ACCENT, borderRadius: '50%', display: 'inline-block' }} />
-                                                    <span style={{ color: ACCENT, fontWeight: 700, letterSpacing: '0.05em' }}>₹ {event.prizePool}</span>
-                                                </>
-                                            )}
+                                            <span>{event.time}</span>
                                         </div>
 
                                         {/* Venue row */}
@@ -1079,19 +1068,37 @@ const ScheduleSection: React.FC = () => {
                                                 <circle cx="12" cy="9" r="2.5" />
                                             </svg>
                                             <span>{event.venue}</span>
-                                            {event.teamSize && (
-                                                <>
-                                                    <span style={{ width: 3, height: 3, background: ACCENT, borderRadius: '50%', display: 'inline-block' }} />
-                                                    <svg className={`${CLS}-meta-icon`} viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.5">
-                                                        <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                                                        <circle cx="9" cy="7" r="4" />
-                                                        <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                                                        <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                                                    </svg>
-                                                    <span>{event.teamSize}</span>
-                                                </>
-                                            )}
                                         </div>
+
+                                        {/* Society */}
+                                        {event.society && (
+                                            <div className={`${CLS}-meta`}>
+                                                <svg className={`${CLS}-meta-icon`} viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.5">
+                                                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                                    <circle cx="9" cy="7" r="4" />
+                                                    <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                                                    <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                                                </svg>
+                                                <span>{event.society}</span>
+                                            </div>
+                                        )}
+
+                                        {/* Coordinator */}
+                                        {event.coordinator && (
+                                            <div className={`${CLS}-meta`}>
+                                                <svg className={`${CLS}-meta-icon`} viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.5">
+                                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                                    <circle cx="12" cy="7" r="4" />
+                                                </svg>
+                                                <span>{event.coordinator}</span>
+                                                {event.coordinatorContact && (
+                                                    <>
+                                                        <span style={{ width: 3, height: 3, background: ACCENT, borderRadius: '50%', display: 'inline-block' }} />
+                                                        <span style={{ color: ACCENT }}>{event.coordinatorContact}</span>
+                                                    </>
+                                                )}
+                                            </div>
+                                        )}
 
                                         {/* Description */}
                                         {event.description && (
@@ -1116,13 +1123,11 @@ const ScheduleSection: React.FC = () => {
                     {/* ── Mobile Accordion List ── */}
                     {isMobile && (
                         <div key={`mob-${activeDay}`} className={`${CLS}-mob-list`}>
-                            {dayEvents.slice(0, visibleCount).map((event, i) => {
-                                const catColor = event.category ? CATEGORY_COLORS[event.category] || ACCENT : ACCENT;
-                                const catLabel = event.category?.toUpperCase() || 'EVENT';
+                            {dayEvents.map((event, i) => {
                                 const isExpanded = expandedIndex === i;
                                 return (
                                     <div
-                                        key={event.title}
+                                        key={`${event.title}-${i}`}
                                         className={`${CLS}-mob-item ${isExpanded ? 'expanded' : ''}`}
                                         style={{
                                             opacity: cardsRevealed ? 1 : 0,
@@ -1130,27 +1135,21 @@ const ScheduleSection: React.FC = () => {
                                             transition: `opacity 0.4s ease ${i * 40}ms, transform 0.4s ease ${i * 40}ms, border-color 0.3s ease, box-shadow 0.3s ease`,
                                         }}
                                     >
-                                        {/* Category color strip on left */}
-                                        <div className={`${CLS}-mob-cat-line`} style={{ background: catColor }} />
+                                        {/* Accent strip on left */}
+                                        <div className={`${CLS}-mob-cat-line`} style={{ background: ACCENT }} />
 
                                         {/* Collapsed header */}
                                         <div
                                             className={`${CLS}-mob-header`}
                                             onClick={() => handleAccordionToggle(i)}
                                         >
-                                            <img
-                                                className={`${CLS}-mob-thumb`}
-                                                src={event.image}
-                                                alt={event.title}
-                                                loading="lazy"
-                                            />
                                             <div className={`${CLS}-mob-info`}>
                                                 <h4 className={`${CLS}-mob-title`}>{event.title}</h4>
                                                 <div className={`${CLS}-mob-subtitle`}>
                                                     <svg viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.5">
                                                         <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
                                                     </svg>
-                                                    <span>{event.time}{event.endTime ? ` – ${event.endTime}` : ''}</span>
+                                                    <span>{event.time}</span>
                                                     <span className="dot" />
                                                     <svg viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.5">
                                                         <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
@@ -1160,13 +1159,15 @@ const ScheduleSection: React.FC = () => {
                                                 </div>
                                             </div>
                                             <div className={`${CLS}-mob-right`}>
-                                                <span className={`${CLS}-cat-tag`} style={{
-                                                    background: `${catColor}20`, color: catColor,
-                                                    border: `1px solid ${catColor}40`,
-                                                    clipPath: 'polygon(8% 0, 100% 0, 92% 100%, 0 100%)',
-                                                }}>
-                                                    {catLabel}
-                                                </span>
+                                                {event.society && (
+                                                    <span className={`${CLS}-cat-tag`} style={{
+                                                        background: `${ACCENT}20`, color: ACCENT,
+                                                        border: `1px solid ${ACCENT}40`,
+                                                        clipPath: 'polygon(8% 0, 100% 0, 92% 100%, 0 100%)',
+                                                    }}>
+                                                        {event.society}
+                                                    </span>
+                                                )}
                                                 <svg className={`${CLS}-mob-chevron`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                                     <path d="M6 9l6 6 6-6" />
                                                 </svg>
@@ -1175,12 +1176,6 @@ const ScheduleSection: React.FC = () => {
 
                                         {/* Expanded details */}
                                         <div className={`${CLS}-mob-details`}>
-                                            <img
-                                                className={`${CLS}-mob-exp-img`}
-                                                src={event.image}
-                                                alt={event.title}
-                                                loading="lazy"
-                                            />
                                             <div className={`${CLS}-mob-exp-content`}>
                                                 {event.description && (
                                                     <p className={`${CLS}-mob-exp-desc`}>{event.description}</p>
@@ -1190,18 +1185,16 @@ const ScheduleSection: React.FC = () => {
 
                                                 {/* Time */}
                                                 <div className={`${CLS}-mob-exp-row`}>
-                                                    <svg viewBox="0 0 24 24" fill="none" stroke={catColor} strokeWidth="1.5">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.5">
                                                         <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
                                                     </svg>
                                                     <span className={`${CLS}-mob-exp-label`}>Time</span>
-                                                    <span className={`${CLS}-mob-exp-value`}>
-                                                        {event.time}{event.endTime ? ` – ${event.endTime}` : ''}
-                                                    </span>
+                                                    <span className={`${CLS}-mob-exp-value`}>{event.time}</span>
                                                 </div>
 
                                                 {/* Venue */}
                                                 <div className={`${CLS}-mob-exp-row`}>
-                                                    <svg viewBox="0 0 24 24" fill="none" stroke={catColor} strokeWidth="1.5">
+                                                    <svg viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.5">
                                                         <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
                                                         <circle cx="12" cy="9" r="2.5" />
                                                     </svg>
@@ -1209,64 +1202,59 @@ const ScheduleSection: React.FC = () => {
                                                     <span className={`${CLS}-mob-exp-value`}>{event.venue}</span>
                                                 </div>
 
-                                                {/* Prize Pool */}
-                                                {event.prizePool && (
+                                                {/* Society */}
+                                                {event.society && (
                                                     <div className={`${CLS}-mob-exp-row`}>
-                                                        <svg viewBox="0 0 24 24" fill="none" stroke={catColor} strokeWidth="1.5">
-                                                            <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
-                                                            <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
-                                                            <path d="M4 22h16" />
-                                                            <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
-                                                        </svg>
-                                                        <span className={`${CLS}-mob-exp-label`}>Prize</span>
-                                                        <span className={`${CLS}-mob-exp-value`} style={{ color: catColor, fontWeight: 700 }}>
-                                                            {event.prizePool}
-                                                        </span>
-                                                    </div>
-                                                )}
-
-                                                {/* Team Size */}
-                                                {event.teamSize && (
-                                                    <div className={`${CLS}-mob-exp-row`}>
-                                                        <svg viewBox="0 0 24 24" fill="none" stroke={catColor} strokeWidth="1.5">
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.5">
                                                             <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                                                             <circle cx="9" cy="7" r="4" />
                                                             <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
                                                             <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                                                         </svg>
-                                                        <span className={`${CLS}-mob-exp-label`}>Team</span>
-                                                        <span className={`${CLS}-mob-exp-value`}>{event.teamSize}</span>
+                                                        <span className={`${CLS}-mob-exp-label`}>Society</span>
+                                                        <span className={`${CLS}-mob-exp-value`}>{event.society}</span>
+                                                    </div>
+                                                )}
+
+                                                {/* Coordinator */}
+                                                {event.coordinator && (
+                                                    <div className={`${CLS}-mob-exp-row`}>
+                                                        <svg viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.5">
+                                                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                                            <circle cx="12" cy="7" r="4" />
+                                                        </svg>
+                                                        <span className={`${CLS}-mob-exp-label`}>Contact</span>
+                                                        <span className={`${CLS}-mob-exp-value`}>
+                                                            {event.coordinator}
+                                                            {event.coordinatorContact && ` · ${event.coordinatorContact}`}
+                                                        </span>
                                                     </div>
                                                 )}
 
                                                 {/* Register CTA */}
-                                                <div className={`${CLS}-mob-cta`}>
-                                                    Register Now
-                                                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                                        <path d="M5 12h14M12 5l7 7-7 7" />
-                                                    </svg>
-                                                </div>
+                                                {event.registrationLink && (
+                                                    <a href={event.registrationLink} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none' }}>
+                                                        <div className={`${CLS}-mob-cta`}>
+                                                            Register Now
+                                                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                                                <path d="M5 12h14M12 5l7 7-7 7" />
+                                                            </svg>
+                                                        </div>
+                                                    </a>
+                                                )}
                                             </div>
                                         </div>
                                     </div>
                                 );
                             })}
 
-                            {/* View More button */}
-                            {visibleCount < dayEvents.length && (
-                                <div
-                                    className={`${CLS}-mob-viewmore`}
-                                    onClick={() => setVisibleCount(prev => prev + 6)}
-                                >
-                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                        <path d="M12 5v14M5 12h14" />
-                                    </svg>
-                                    View More
-                                    <span className={`${CLS}-mob-viewmore-count`}>
-                                        {Math.min(visibleCount, dayEvents.length)} / {dayEvents.length}
-                                    </span>
-                                </div>
-                            )}
+                            {/* Event count */}
+                            <div style={{
+                                textAlign: 'center', padding: '1rem 0', fontSize: '0.65rem',
+                                color: ACCENT_MED, letterSpacing: '0.15em', textTransform: 'uppercase',
+                            }}>
+                                {dayEvents.length} events
+                            </div>
                         </div>
                     )}
                 </div>
@@ -1281,7 +1269,6 @@ const ScheduleSection: React.FC = () => {
                 <style>{STYLES}</style>
                 {selectedEvent && (() => {
                     const ev = selectedEvent;
-                    const catColor = ev.category ? CATEGORY_COLORS[ev.category] || ACCENT : ACCENT;
                     const eventsForDay = getEventsForDay(ev.dayId);
                     const currentIdx = eventsForDay.findIndex(e => e.title === ev.title);
                     const isFirst = currentIdx <= 0;
@@ -1326,12 +1313,12 @@ const ScheduleSection: React.FC = () => {
                                 {currentIdx + 1} / {eventsForDay.length}
                             </span>
 
-                            {/* Left: Image */}
+                            {/* Left: Gradient panel instead of image */}
                             <div className={`${CLS}-modal-img-wrap`} style={{
-                                borderColor: catColor,
-                                boxShadow: `0 0 20px ${catColor}33, 0 0 60px ${catColor}14, inset 0 0 30px ${catColor}0d`,
+                                borderColor: ACCENT_MED,
+                                boxShadow: `0 0 20px ${ACCENT}33, 0 0 60px ${ACCENT}14, inset 0 0 30px ${ACCENT}0d`,
+                                background: `linear-gradient(135deg, rgba(56,189,248,0.12) 0%, rgba(2,6,23,0.95) 50%, rgba(56,189,248,0.05) 100%)`,
                             }}>
-                                <img className={`${CLS}-modal-img`} src={ev.image} alt={ev.title} />
                                 <span className={`${CLS}-modal-img-title`}>{ev.title}</span>
                             </div>
 
@@ -1345,18 +1332,16 @@ const ScheduleSection: React.FC = () => {
                                 <div style={{ marginTop: '0.5rem' }}>
                                     {/* Time */}
                                     <div className={`${CLS}-modal-row`}>
-                                        <svg className={`${CLS}-modal-row-icon`} viewBox="0 0 24 24" fill="none" stroke={catColor} strokeWidth="1.5">
+                                        <svg className={`${CLS}-modal-row-icon`} viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.5">
                                             <circle cx="12" cy="12" r="10" /><path d="M12 6v6l4 2" />
                                         </svg>
                                         <span className={`${CLS}-modal-row-label`}>Time:</span>
-                                        <span className={`${CLS}-modal-row-value`}>
-                                            {ev.time}{ev.endTime ? ` – ${ev.endTime}` : ''}
-                                        </span>
+                                        <span className={`${CLS}-modal-row-value`}>{ev.time}</span>
                                     </div>
 
                                     {/* Venue */}
                                     <div className={`${CLS}-modal-row`}>
-                                        <svg className={`${CLS}-modal-row-icon`} viewBox="0 0 24 24" fill="none" stroke={catColor} strokeWidth="1.5">
+                                        <svg className={`${CLS}-modal-row-icon`} viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.5">
                                             <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z" />
                                             <circle cx="12" cy="9" r="2.5" />
                                         </svg>
@@ -1364,52 +1349,51 @@ const ScheduleSection: React.FC = () => {
                                         <span className={`${CLS}-modal-row-value`}>{ev.venue}</span>
                                     </div>
 
-                                    {/* Prize Pool */}
-                                    {ev.prizePool && (
+                                    {/* Society */}
+                                    {ev.society && (
                                         <div className={`${CLS}-modal-row`}>
-                                            <svg className={`${CLS}-modal-row-icon`} viewBox="0 0 24 24" fill="none" stroke={catColor} strokeWidth="1.5">
-                                                <path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6" />
-                                                <path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18" />
-                                                <path d="M4 22h16" />
-                                                <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22" />
-                                                <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22" />
-                                                <path d="M18 2H6v7a6 6 0 0 0 12 0V2Z" />
-                                            </svg>
-                                            <span className={`${CLS}-modal-row-label`}>Prize Pool:</span>
-                                            <span className={`${CLS}-modal-row-value`} style={{ color: catColor, fontWeight: 700 }}>
-                                                {ev.prizePool}
-                                            </span>
-                                        </div>
-                                    )}
-
-                                    {/* Team Size */}
-                                    {ev.teamSize && (
-                                        <div className={`${CLS}-modal-row`}>
-                                            <svg className={`${CLS}-modal-row-icon`} viewBox="0 0 24 24" fill="none" stroke={catColor} strokeWidth="1.5">
+                                            <svg className={`${CLS}-modal-row-icon`} viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.5">
                                                 <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
                                                 <circle cx="9" cy="7" r="4" />
                                                 <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
                                                 <path d="M16 3.13a4 4 0 0 1 0 7.75" />
                                             </svg>
-                                            <span className={`${CLS}-modal-row-label`}>Team Size:</span>
-                                            <span className={`${CLS}-modal-row-value`}>{ev.teamSize}</span>
+                                            <span className={`${CLS}-modal-row-label`}>Society:</span>
+                                            <span className={`${CLS}-modal-row-value`}>{ev.society}</span>
+                                        </div>
+                                    )}
+
+                                    {/* Coordinator */}
+                                    {ev.coordinator && (
+                                        <div className={`${CLS}-modal-row`}>
+                                            <svg className={`${CLS}-modal-row-icon`} viewBox="0 0 24 24" fill="none" stroke={ACCENT} strokeWidth="1.5">
+                                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                                <circle cx="12" cy="7" r="4" />
+                                            </svg>
+                                            <span className={`${CLS}-modal-row-label`}>Contact:</span>
+                                            <span className={`${CLS}-modal-row-value`}>
+                                                {ev.coordinator}
+                                                {ev.coordinatorContact && ` · ${ev.coordinatorContact}`}
+                                            </span>
                                         </div>
                                     )}
                                 </div>
 
-                                {/* Category badge */}
-                                <div style={{ marginTop: 'auto', paddingTop: '1rem' }}>
-                                    <span style={{
-                                        fontSize: '0.65rem', fontWeight: 700,
-                                        padding: '0.25rem 0.8rem',
-                                        letterSpacing: '0.14em', textTransform: 'uppercase' as const,
-                                        background: `${catColor}20`, color: catColor,
-                                        border: `1px solid ${catColor}40`,
-                                        clipPath: 'polygon(8% 0, 100% 0, 92% 100%, 0 100%)',
-                                    }}>
-                                        {ev.category?.toUpperCase() || 'EVENT'}
-                                    </span>
-                                </div>
+                                {/* Society badge at bottom */}
+                                {ev.society && (
+                                    <div style={{ marginTop: 'auto', paddingTop: '1rem' }}>
+                                        <span style={{
+                                            fontSize: '0.65rem', fontWeight: 700,
+                                            padding: '0.25rem 0.8rem',
+                                            letterSpacing: '0.14em', textTransform: 'uppercase' as const,
+                                            background: `${ACCENT}20`, color: ACCENT,
+                                            border: `1px solid ${ACCENT}40`,
+                                            clipPath: 'polygon(8% 0, 100% 0, 92% 100%, 0 100%)',
+                                        }}>
+                                            {ev.society}
+                                        </span>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     );

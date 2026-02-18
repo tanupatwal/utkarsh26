@@ -1,16 +1,14 @@
-// src/data/schedule.ts
+// src/data/schedule.ts — Real event data from final list
 
 export interface ScheduleEvent {
     dayId: number;
     time: string;
-    endTime?: string;
     title: string;
     venue: string;
+    society?: string;
+    coordinator?: string;
+    coordinatorContact?: string;
     description?: string;
-    category?: 'tech' | 'cultural' | 'sports' | 'ceremony' | 'music';
-    image: string;
-    prizePool?: string;
-    teamSize?: string;
     registrationLink?: string;
 }
 
@@ -26,91 +24,131 @@ export const SCHEDULE_DAYS: ScheduleDay[] = [
     { id: 3, label: 'DAY 03', date: 'Feb 27' },
 ];
 
-const img = (n: number) => `/assets/eventimg/img${((n - 1) % 9) + 1}.webp`;
-
 export const SCHEDULE_EVENTS: ScheduleEvent[] = [
     // ════════════════════════════════════════
-    //  DAY 1 — 20 events
+    //  DAY 1
     // ════════════════════════════════════════
-    { dayId: 1, time: '08:00', endTime: '09:00', title: 'Opening Ceremony', venue: 'Main Auditorium', category: 'ceremony', description: 'The grand inauguration of Utkarsh — lighting of the lamp, keynote address, and the official countdown.', image: img(1) },
-    { dayId: 1, time: '09:00', endTime: '11:00', title: 'Hackathon Kickoff', venue: 'Innovation Lab', category: 'tech', description: '24 hours of non-stop coding. Teams of 4. Build anything. The clock starts now.', image: img(2), prizePool: '₹75,000', teamSize: '2-4 Members' },
-    { dayId: 1, time: '09:30', endTime: '11:00', title: 'Robo Wars', venue: 'Tech Block C', category: 'tech', description: 'Design, build, and battle your custom combat robot for supremacy in the arena.', image: img(3), prizePool: '₹50,000', teamSize: '2-4 Members' },
-    { dayId: 1, time: '10:00', endTime: '12:00', title: 'Dance Battle', venue: 'Open Stage', category: 'cultural', description: 'Crews from across the state go head-to-head in an electrifying dance showdown.', image: img(4), prizePool: '₹30,000', teamSize: '4-8 Members' },
-    { dayId: 1, time: '10:00', endTime: '11:30', title: 'Code Sprint', venue: 'Lab 201', category: 'tech', description: 'Solve algorithmic challenges under intense time pressure. Only the sharpest coders survive.', image: img(5), prizePool: '₹25,000', teamSize: '1-2 Members' },
-    { dayId: 1, time: '10:30', endTime: '12:00', title: 'Photography Walk', venue: 'Campus Grounds', category: 'cultural', description: 'Capture the essence of the fest through your lens. Best shots win prizes.', image: img(6) },
-    { dayId: 1, time: '11:00', endTime: '13:00', title: 'Cricket T10', venue: 'Sports Ground', category: 'sports', description: 'Fast-paced T10 cricket with knockout rounds. Bring your A-game.', image: img(7), prizePool: '₹20,000', teamSize: '11 Members' },
-    { dayId: 1, time: '11:30', endTime: '13:00', title: 'AI Nexus', venue: 'Seminar Hall B', category: 'tech', description: 'Workshop on building AI agents — from prompt engineering to autonomous systems.', image: img(8) },
-    { dayId: 1, time: '12:00', endTime: '13:30', title: 'Meme War', venue: 'Student Center', category: 'cultural', description: 'The internet\'s finest art form meets live competition. Create, present, dominate.', image: img(9), prizePool: '₹5,000' },
-    { dayId: 1, time: '13:00', endTime: '14:30', title: 'CTF Arena', venue: 'Cyber Lab', category: 'tech', description: 'Capture The Flag — crack ciphers, exploit vulnerabilities, and hack your way to the top.', image: img(1), prizePool: '₹40,000', teamSize: '2-3 Members' },
-    { dayId: 1, time: '14:00', endTime: '15:30', title: 'Debate Championship', venue: 'Seminar Hall A', category: 'cultural', description: 'Oxford-style debates on the most polarizing topics of our time.', image: img(2), teamSize: '2 Members' },
-    { dayId: 1, time: '14:00', endTime: '16:00', title: 'Futsal League', venue: 'Indoor Court', category: 'sports', description: 'Five-a-side football with non-stop action. Fast feet and faster goals.', image: img(3), prizePool: '₹15,000', teamSize: '5+2 Members' },
-    { dayId: 1, time: '14:30', endTime: '16:00', title: 'Pitch Fest', venue: 'Innovation Lab', category: 'tech', description: 'Got a startup idea? Pitch it to real investors and win seed funding.', image: img(4), prizePool: '₹1,00,000' },
-    { dayId: 1, time: '15:00', endTime: '16:30', title: 'Beatboxing Showdown', venue: 'Open Stage', category: 'music', description: 'Drop beats with nothing but your voice. The crowd decides the winner.', image: img(5), prizePool: '₹10,000' },
-    { dayId: 1, time: '15:30', endTime: '17:00', title: 'Drone Racing', venue: 'Sports Ground', category: 'tech', description: 'FPV drones race through an obstacle course at breakneck speed.', image: img(6), prizePool: '₹35,000', teamSize: '1-2 Members' },
-    { dayId: 1, time: '16:00', endTime: '17:30', title: 'Treasure Hunt', venue: 'Full Campus', category: 'cultural', description: 'Solve cryptic clues and race to hidden checkpoints across campus.', image: img(7), teamSize: '3-5 Members' },
-    { dayId: 1, time: '16:30', endTime: '18:00', title: 'Robotics Arena', venue: 'Tech Block C', category: 'tech', description: 'Autonomous bots compete in obstacle courses, sumo wrestling, and line following.', image: img(8), prizePool: '₹50,000', teamSize: '2-4 Members' },
-    { dayId: 1, time: '17:00', endTime: '18:30', title: 'Open Mic Night', venue: 'Amphitheatre', category: 'music', description: 'Singers, poets, comedians — the stage is yours. Sign up and shine.', image: img(9) },
-    { dayId: 1, time: '18:00', endTime: '19:30', title: 'Battle of Bands', venue: 'Main Stage', category: 'music', description: 'College bands go head-to-head in an epic musical showdown.', image: img(1), prizePool: '₹25,000', teamSize: '3-7 Members' },
-    { dayId: 1, time: '20:00', endTime: '23:00', title: 'Pro Night — DJ Set', venue: 'Main Stage', category: 'music', description: 'The bass drops as the campus transforms into a festival ground under the stars.', image: img(2) },
+
+    // ── Main Stage / Auditorium / Amphitheater ──
+    { dayId: 1, time: '3:00 PM – 6:00 PM', title: 'Mr & Mrs Utkarsh', venue: 'Main Stage', society: 'Imperials', coordinator: 'Ritika Tiwari', coordinatorContact: '8383953234' },
+    { dayId: 1, time: '12:00 PM – 2:30 PM', title: 'Kalam Kriti', venue: 'Auditorium', society: 'Alfaaz', coordinator: 'Amar Singh', coordinatorContact: '7982148861' },
+    { dayId: 1, time: '3:00 PM – 6:00 PM', title: 'Naadsangam (Indian Classical Group Singing)', venue: 'Auditorium', society: 'Swaranjali', coordinator: 'Shashank Poddar', coordinatorContact: '7669663186' },
+    { dayId: 1, time: '11:30 AM – 6:00 PM', title: 'Jagran – Street Play Competition', venue: 'Flag Hosting Ground', society: 'Yakshagan', coordinator: 'Priyanshi Sharma', coordinatorContact: '8368281307' },
+    { dayId: 1, time: '1:00 PM – 2:30 PM', title: 'Inferno / Nach Baliye', venue: 'Amphitheater', society: 'Insync', coordinator: 'Priyanshi Suneja', coordinatorContact: '7837501502' },
+    { dayId: 1, time: '12:00 PM – 2:00 PM', title: 'Solo Dance Competition', venue: 'Amphitheater', coordinator: 'Dishti Kaushik', coordinatorContact: '8527830710' },
+    { dayId: 1, time: '9:00 AM – 10:00 AM', title: 'Nukkad Natak', venue: 'Amphitheater', society: 'NSS', coordinator: 'Maitraiyee', coordinatorContact: '7827855396' },
+
+    // ── Classrooms / Labs ──
+    { dayId: 1, time: '11:30 AM – 6:00 PM', title: 'Escape Room 2.0', venue: '2101-2102', society: 'Word Wizards', coordinator: 'Nikunj Sharma', coordinatorContact: '8860262882' },
+    { dayId: 1, time: '12:00 PM – 3:00 PM', title: 'The Trial', venue: '2008-2009', society: 'Awaaz', coordinator: 'Shobhna', coordinatorContact: '8178732481' },
+    { dayId: 1, time: '11:30 AM – 6:00 PM', title: 'Chitraka', venue: '2002', society: 'Confluenz', coordinator: 'Nikhil', coordinatorContact: '8527884605' },
+    { dayId: 1, time: '11:30 AM – 6:00 PM', title: 'Back in Time', venue: '20035305', society: 'Avant', coordinator: 'Yug Bhagat', coordinatorContact: '9560196454' },
+    { dayId: 1, time: '12:00 PM – 3:00 PM', title: 'Arogyam Quest', venue: '2310', society: 'NSS', coordinator: 'Rubi Negi', coordinatorContact: '7982016030' },
+    { dayId: 1, time: '11:30 AM – 4:00 PM', title: 'Rocket League', venue: '2208', society: 'Datazoic', coordinator: 'Sarthak Rajwar', coordinatorContact: '8851920675' },
+    { dayId: 1, time: '11:30 AM – 4:00 PM', title: 'Rangoli Making', venue: 'Corridor of AIML Block', society: 'Kritrim Dhi', coordinator: 'Riddhi Bansal', coordinatorContact: '7982940921' },
+    { dayId: 1, time: '1:30 PM – 3:30 PM', title: 'Decrypt And Escape', venue: '2404', society: 'GeeksForGeeks', coordinator: 'Aashi Maheshwari', coordinatorContact: '9311713551' },
+    { dayId: 1, time: '11:30 AM – 1:30 PM', title: 'Technical Rangoli', venue: '5302', coordinator: 'Sakshi Prasad', coordinatorContact: '9582568838' },
+    { dayId: 1, time: '11:30 AM – 1:30 PM', title: 'Debate Competition', venue: '2004', society: 'Neev', coordinator: 'Vivek Kumar', coordinatorContact: '9953994956' },
+    { dayId: 1, time: '12:00 PM – 2:00 PM', title: 'Poster Making', venue: '4003', society: 'Neev', coordinator: 'Aryan Verma', coordinatorContact: '9310754460' },
+    { dayId: 1, time: '11:30 AM – 1:30 PM', title: 'Debate', venue: '4301', coordinator: 'Satyam', coordinatorContact: '9310415494' },
+    { dayId: 1, time: '11:30 AM – 5:30 PM', title: 'REDEMPTION: Personality Debate (ADABI 5.0)', venue: '2409', society: 'Quintessence', coordinator: 'Harsh Punia', coordinatorContact: '7619997487' },
+    { dayId: 1, time: '12:00 PM – 1:00 PM', title: 'Cyber-sense', venue: '2108', society: 'GDGC', coordinator: 'Mehak Aggarwal', coordinatorContact: '9899745351' },
+    { dayId: 1, time: '12:00 PM – 1:00 PM', title: 'Phish or Legit', venue: '4101', society: 'GDGC', coordinator: 'Arnav Singla', coordinatorContact: '9205229659' },
+    { dayId: 1, time: '2:30 PM – 5:30 PM', title: 'Hamsadhwani (Semi-Classical Solo)', venue: '2113', society: 'Swaranjali', coordinator: 'Shashank Poddar', coordinatorContact: '7669663186' },
+    { dayId: 1, time: '2:00 PM – 5:00 PM', title: 'Mridangam (Instrumental Solo)', venue: '2216', society: 'Swaranjali', coordinator: 'Shashank Poddar', coordinatorContact: '7669663186' },
+    { dayId: 1, time: '11:30 AM – 1:30 PM', title: 'Balloon Blast Challenge', venue: '4202', coordinator: 'Sangati Veera Mounika', coordinatorContact: '9311639978' },
+    { dayId: 1, time: '11:00 AM – 2:00 PM', title: 'AdCraft', venue: '1203', society: 'Sankalp Society', coordinator: 'Riya', coordinatorContact: '9205824949' },
+    { dayId: 1, time: '11:00 AM – 2:00 PM', title: 'AdCraft', venue: '1203A', society: 'Sankalp Society', coordinator: 'Rohit', coordinatorContact: '9311844351' },
+    { dayId: 1, time: '10:00 AM – 11:30 AM', title: 'Poster Making Competition', venue: '1002', coordinator: 'Mohd. Tamheed', coordinatorContact: '9220823244' },
+    { dayId: 1, time: '1:30 PM – 2:30 PM', title: 'Case Analysis Competition', venue: '1007', coordinator: 'Ashwin', coordinatorContact: '7042519590' },
+    { dayId: 1, time: '12:00 PM – 1:00 PM', title: 'Debate Competition', venue: '1007', coordinator: 'Khushi Bhandari', coordinatorContact: '9811558813' },
+    { dayId: 1, time: '12:00 PM – 1:00 PM', title: 'Quiz Competition', venue: '1004', coordinator: 'Mr. Anjal David', coordinatorContact: '7011131445' },
+    { dayId: 1, time: '11:30 AM – 3:30 PM', title: 'Roast and Defend', venue: '2202', society: 'Kritrim Dhi', coordinator: 'Zubair', coordinatorContact: '7678263597' },
+    { dayId: 1, time: '11:30 AM – 5:30 PM', title: 'Write-O-Mania & War of Verses', venue: '4106', society: 'Alfaaz', coordinator: 'Kanishka Singhal', coordinatorContact: '9310525081' },
+    { dayId: 1, time: '11:30 AM – 6:00 PM', title: 'Candescent', venue: 'Open Area of Block 2', society: 'Avant Garde', coordinator: 'Yug Bhagat', coordinatorContact: '9560196454' },
+    { dayId: 1, time: '11:30 AM – 3:30 PM', title: 'FLIPSIDE FORUM II', venue: 'Moot Court', society: 'The Discurso Masters', coordinator: 'Apoorv Sharma', coordinatorContact: '7982522043' },
+
+    // ── Tech Events (Day 1) ──
+    { dayId: 1, time: '11:30 AM – 6:00 PM', title: 'Gaming Arena', venue: '2203', society: 'Kritrim Dhi', coordinator: 'Nirmaan Vashisht', coordinatorContact: '9560485315' },
+    { dayId: 1, time: '11:30 AM – 2:30 PM', title: 'Vibe Coding', venue: '2208', society: 'Datazoic', coordinator: 'Sarthak Rajwar', coordinatorContact: '8851920675' },
+    { dayId: 1, time: '1:00 PM – 3:00 PM', title: 'CreatEX', venue: '2210', society: 'Geek Room ADGIPS', coordinator: 'Sampreeti Rastogi', coordinatorContact: '9643638194' },
+    { dayId: 1, time: '10:00 AM – 1:00 PM', title: 'IdeaXcelerate', venue: '3201', society: 'CS Dept', coordinator: 'Ishaan Saklani', coordinatorContact: '8448617197' },
+    { dayId: 1, time: '11:00 AM – 1:00 PM', title: 'Automation Arena', venue: '2303', society: 'AAIRO', coordinator: 'Pranav Kaushik', coordinatorContact: '9821213075' },
+    { dayId: 1, time: '1:00 PM – 3:00 PM', title: 'Black Box Crawl', venue: '4101', society: 'GDGC', coordinator: 'Mridul Chaudhary', coordinatorContact: '9654252294' },
+    { dayId: 1, time: '12:00 PM – 3:00 PM', title: 'NFT Rush', venue: '4303', society: 'E-Cell', coordinator: 'Dakshyani Murari', coordinatorContact: '8178045176' },
+    { dayId: 1, time: '11:00 AM – 2:00 PM', title: 'Buzzer Time', venue: '5001', society: 'Bityug', coordinator: 'Deepesh Jain', coordinatorContact: '9582690242' },
+    { dayId: 1, time: '2:00 PM – 5:00 PM', title: 'AI Compatibility Test', venue: '5001', society: 'Bityug', coordinator: 'Deepesh Jain', coordinatorContact: '9582690242' },
+    { dayId: 1, time: '9:00 AM – 12:00 PM', title: 'Poster Making Using AI', venue: '5203', coordinator: 'Kanishk Mishra', coordinatorContact: '9354706457' },
+    { dayId: 1, time: '9:00 AM – 2:00 PM', title: 'Hackathon', venue: '5206', coordinator: 'Mayank Baliyan', coordinatorContact: '9667389721' },
+    { dayId: 1, time: '11:00 AM – 3:00 PM', title: 'Subway Surfers', venue: 'Canteen Area', society: 'Robogyan', coordinator: 'Ayush Kumar Jha', coordinatorContact: '7827109679' },
+    { dayId: 1, time: '11:00 AM – 1:00 PM', title: 'Hackathon', venue: '2404', society: 'ECE Dept', coordinator: 'Mayank Baliyan', coordinatorContact: '9667389721' },
+    { dayId: 1, time: '12:00 PM – 2:00 PM', title: 'Tech Debate', venue: '5202', society: 'ECE Dept', coordinator: 'Karan Jha', coordinatorContact: '9310349603' },
+    { dayId: 1, time: '12:00 PM – 1:00 PM', title: 'AI Logo Prompt Showdown', venue: '2106', society: 'GDGC', coordinator: 'Mehak Aggarwal', coordinatorContact: '9899745351' },
 
     // ════════════════════════════════════════
-    //  DAY 2 — 20 events
+    //  DAY 2
     // ════════════════════════════════════════
-    { dayId: 2, time: '08:30', endTime: '10:00', title: 'Yoga & Wellness', venue: 'Sports Ground', category: 'sports', description: 'Start the day with energy. Yoga, meditation, and group warm-ups.', image: img(3) },
-    { dayId: 2, time: '09:00', endTime: '10:30', title: 'Guest Lecture', venue: 'Seminar Hall A', category: 'tech', description: 'Industry leaders share insights on AI, startups, and the future of technology.', image: img(4) },
-    { dayId: 2, time: '09:30', endTime: '11:00', title: 'Web Dev Sprint', venue: 'Lab 301', category: 'tech', description: 'Build a full-stack web app in 90 minutes. Judged on design, functionality, and creativity.', image: img(5), prizePool: '₹20,000', teamSize: '1-3 Members' },
-    { dayId: 2, time: '10:00', endTime: '12:00', title: 'Art Exhibition', venue: 'Gallery Wing', category: 'cultural', description: 'Student artists showcase paintings, sculptures, and digital installations.', image: img(6) },
-    { dayId: 2, time: '10:00', endTime: '11:30', title: 'Quiz Bowl', venue: 'Seminar Hall B', category: 'cultural', description: 'Test your general knowledge in this high-stakes, rapid-fire quiz competition.', image: img(7), prizePool: '₹15,000', teamSize: '3 Members' },
-    { dayId: 2, time: '10:30', endTime: '12:00', title: 'E-Sports: Valorant', venue: 'Gaming Arena', category: 'tech', description: 'Squad up and dominate in the Valorant tournament. Glory awaits.', image: img(8), prizePool: '₹30,000', teamSize: '5 Members' },
-    { dayId: 2, time: '11:00', endTime: '13:00', title: 'Street Play', venue: 'Open Stage', category: 'cultural', description: 'Nukkad Natak — powerful street theatre tackling social issues.', image: img(9), teamSize: '8-15 Members' },
-    { dayId: 2, time: '11:30', endTime: '13:00', title: 'IoT Workshop', venue: 'Lab 201', category: 'tech', description: 'Hands-on workshop: build a smart home device with Arduino and sensors.', image: img(1) },
-    { dayId: 2, time: '12:00', endTime: '14:00', title: 'Basketball 3v3', venue: 'Indoor Court', category: 'sports', description: 'Half-court, full intensity. Three-on-three basketball with knockout format.', image: img(2), prizePool: '₹12,000', teamSize: '3+1 Members' },
-    { dayId: 2, time: '13:00', endTime: '14:30', title: 'Cooking Without Fire', venue: 'Student Center', category: 'cultural', description: 'Create gourmet dishes without any heat source. Creativity is the main ingredient.', image: img(3), teamSize: '2 Members' },
-    { dayId: 2, time: '14:00', endTime: '17:00', title: 'Cricket Finals', venue: 'Sports Ground', category: 'sports', description: 'The culmination of the inter-college cricket tournament. Winner takes the trophy.', image: img(4), prizePool: '₹40,000', teamSize: '11 Members' },
-    { dayId: 2, time: '14:00', endTime: '15:30', title: 'Short Film Screening', venue: 'Auditorium B', category: 'cultural', description: 'Student-directed short films premiere on the big screen. Followed by Q&A.', image: img(5) },
-    { dayId: 2, time: '15:00', endTime: '16:30', title: 'ML Challenge', venue: 'Cyber Lab', category: 'tech', description: 'Build and train a machine learning model on a surprise dataset. Accuracy wins.', image: img(6), prizePool: '₹30,000', teamSize: '1-2 Members' },
-    { dayId: 2, time: '15:30', endTime: '17:00', title: 'Arm Wrestling', venue: 'Amphitheatre', category: 'sports', description: 'Raw strength, technique, and willpower. Weight categories from 60kg to 90kg+.', image: img(7), prizePool: '₹8,000' },
-    { dayId: 2, time: '16:00', endTime: '17:30', title: 'Fashion Design', venue: 'Gallery Wing', category: 'cultural', description: 'Design an outfit from recycled materials. Sustainability meets high fashion.', image: img(8), teamSize: '2-3 Members' },
-    { dayId: 2, time: '16:30', endTime: '18:00', title: 'Rap Battle', venue: 'Amphitheatre', category: 'music', description: 'Bars, flow, and punchlines. Freestyle rap with elimination rounds.', image: img(9), prizePool: '₹10,000' },
-    { dayId: 2, time: '17:00', endTime: '18:30', title: 'Stand-Up Comedy', venue: 'Open Stage', category: 'cultural', description: 'Laugh till it hurts. Campus comedians and a surprise guest keep the energy high.', image: img(1) },
-    { dayId: 2, time: '18:00', endTime: '19:30', title: 'Unplugged Session', venue: 'Amphitheatre', category: 'music', description: 'Acoustic performances under the evening sky. Pure music, zero electronics.', image: img(2) },
-    { dayId: 2, time: '19:00', endTime: '20:30', title: 'DJ Workshop', venue: 'Main Stage', category: 'music', description: 'Learn mixing, scratching, and beat-matching from a professional DJ.', image: img(3) },
-    { dayId: 2, time: '20:00', endTime: '23:00', title: 'Band Night', venue: 'Main Stage', category: 'music', description: 'Live performances from student bands and a headliner act that will shake the ground.', image: img(4) },
+
+    // ── Main Stage ──
+    { dayId: 2, time: '9:30 AM – 11:30 AM', title: 'Cultural Clash', venue: 'Main Stage', society: 'Virsa', coordinator: 'Harsh Vardhan', coordinatorContact: '9555954349' },
+    { dayId: 2, time: '12:00 PM – 2:00 PM', title: 'Talaash-e-Kala', venue: 'Main Stage', society: 'Nrityakumb', coordinator: 'Namami', coordinatorContact: '8287812506' },
+    { dayId: 2, time: '3:00 PM – 5:00 PM', title: 'Fashionista', venue: 'Main Stage', society: 'Imperials', coordinator: 'Ritika Tiwari', coordinatorContact: '8383953234' },
+
+    // ── Other Cultural & Classroom Events ──
+    { dayId: 2, time: '10:00 AM', title: 'OUTLAST ARENA 2.0', venue: 'In Front of 4th-5th Block', society: 'The Campus Chronicles', coordinator: 'Nikhil Garg', coordinatorContact: '9560570312' },
+    { dayId: 2, time: 'Full Day', title: 'Old-School Sketchbook', venue: '20035305', society: 'Avant', coordinator: 'Yug Bhagat', coordinatorContact: '9560196454' },
+    { dayId: 2, time: 'Full Day', title: 'Chitraka 7.0', venue: '2002', society: 'Confluenz', coordinator: 'Nikhil Sood' },
+    { dayId: 2, time: 'Full Day', title: 'Escape Room 2.0', venue: '2101-2102', society: 'Word Wizard', coordinator: 'Nikunj Sharma', coordinatorContact: '8860262882' },
+    { dayId: 2, time: '11:30 AM – 2:30 PM', title: 'Picture This! & Campus Feud', venue: '2209', society: 'Datazoic', coordinator: 'Sarthak Rajwar', coordinatorContact: '8851920675' },
+    { dayId: 2, time: '11:00 AM – 4:00 PM', title: 'Odysseia', venue: '2303-2304', society: 'The Invincibles', coordinator: 'Vibhuti Chaddha', coordinatorContact: '8014251300' },
+    { dayId: 2, time: '10:00 AM – 2:30 PM', title: 'Clash of Carnival', venue: '5001', society: 'Enactus', coordinator: 'Shruti Shrivastava', coordinatorContact: '9968596642' },
+    { dayId: 2, time: '12:00 PM – 1:30 PM', title: 'Mystery Investigation', venue: '4003', society: 'Neev', coordinator: 'Vaibhav Singh', coordinatorContact: '8595976141' },
+    { dayId: 2, time: '11:00 AM – 12:00 PM', title: 'Starlight Showcase', venue: '3201', coordinator: 'Khushi Bhardwaj', coordinatorContact: '8882035057' },
+    { dayId: 2, time: '11:30 AM – 4:30 PM', title: 'Bidding Wars 2.0', venue: '2404', society: 'IEEE ADGIPS', coordinator: 'Krish Batra', coordinatorContact: '9311293521' },
+    { dayId: 2, time: '11:00 AM – 3:00 PM', title: 'I am the Star!', venue: '1205', society: 'Sankalp Society', coordinator: 'Ms. Arti', coordinatorContact: '7275741300' },
+    { dayId: 2, time: '11:00 AM – 2:00 PM', title: 'Trash to Treasure', venue: '1205', society: 'Sankalp Society', coordinator: 'Ms. Meenu', coordinatorContact: '7703820873' },
+    { dayId: 2, time: '9:00 AM – 11:30 AM', title: 'Yugantar – Mono Act Competition', venue: 'Auditorium', society: 'Yakshagan', coordinator: 'Priyanshi Sharma', coordinatorContact: '8368281307' },
+    { dayId: 2, time: '2:30 PM – 6:00 PM', title: 'Nocturne (Western Group Singing – A Cappella)', venue: 'Auditorium', society: 'Swaranjali', coordinator: 'Shashank Poddar', coordinatorContact: '7669663186' },
+    { dayId: 2, time: '12:00 PM – 2:00 PM', title: "Trader's Tussle", venue: '5004', society: 'E-Cell', coordinator: 'Dakshyani Murari', coordinatorContact: '8178045176' },
+    { dayId: 2, time: '9:00 AM – 3:30 PM', title: 'Verdict: A Multilevel Debate (ADABI 5.0)', venue: '2409-2401', society: 'Quintessence', coordinator: 'Harsh Punia', coordinatorContact: '7619997487' },
+    { dayId: 2, time: '12:00 PM – 3:00 PM', title: "Survivor's Arena", venue: '2nd Block Basement', society: 'Awaaz', coordinator: 'Saransh', coordinatorContact: '8375954517' },
+    { dayId: 2, time: '1:00 PM – 5:00 PM', title: 'AID O EIGHT', venue: 'Amphitheater', society: 'Alfaaz', coordinator: 'Ananway Tripathi', coordinatorContact: '8887821309' },
+    { dayId: 2, time: '11:00 AM – 12:00 PM', title: 'Nukkad Natak', venue: 'Flag Hosting Ground', society: 'NSS', coordinator: 'Maitreey Jakhmola', coordinatorContact: '7827855396' },
+    { dayId: 2, time: '9:00 AM – 6:00 PM', title: 'Freak It Out', venue: 'Badminton Court', society: 'Freak Streets', coordinator: 'Aayush Pandey', coordinatorContact: '8826870013' },
+
+    // ── Tech Events (Day 2) ──
+    { dayId: 2, time: '12:00 PM – 3:00 PM', title: 'Bridge Competition', venue: '2103', society: 'Neev', coordinator: 'Vivek Kumar', coordinatorContact: '9953994956' },
+    { dayId: 2, time: '1:30 PM – 4:00 PM', title: 'Chaos Circuit', venue: '2113', society: 'GeeksForGeeks', coordinator: 'Aashi Maheshwari', coordinatorContact: '9311713551' },
+    { dayId: 2, time: '11:00 AM – 3:00 PM', title: 'Digital Crime Scene', venue: '2203', society: 'Kritrim Dhi', coordinator: 'Saksham Gupta', coordinatorContact: '9911912563' },
+    { dayId: 2, time: '11:00 AM – 2:00 PM', title: 'Prompt the Beat', venue: '2205', society: 'Kritrim Dhi', coordinator: 'Ritik Choudhary', coordinatorContact: '7011148769' },
+    { dayId: 2, time: '12:00 PM – 2:00 PM', title: 'Glitch Arena', venue: '3201', society: 'CS Dept', coordinator: 'Khushi Bhardwaj', coordinatorContact: '8882035057' },
+    { dayId: 2, time: '10:00 AM – 12:00 PM', title: 'TechTag Protocol', venue: '3205', society: 'CS Dept', coordinator: 'Tarun Kumar', coordinatorContact: '9289080835' },
+    { dayId: 2, time: '11:00 AM – 1:30 PM', title: 'AI Coding Arena', venue: '2303', society: 'AAIRO', coordinator: 'Pranav Kaushik', coordinatorContact: '9821213075' },
+    { dayId: 2, time: '12:00 PM – 2:30 PM', title: 'Project Parade', venue: '4101', society: 'GDGC', coordinator: 'Mehak Agarwal', coordinatorContact: '9899745351' },
+    { dayId: 2, time: '11:30 AM – 1:00 PM', title: 'BGMI Gaming', venue: '4202', society: 'CSE Dept', coordinator: 'Pushker Rawat', coordinatorContact: '9310094714' },
+    { dayId: 2, time: '1:30 PM – 2:30 PM', title: 'THE LOGIC MATRIX', venue: '4202', society: 'CSE Dept', coordinator: 'Khushal', coordinatorContact: '7838832423' },
+    { dayId: 2, time: '2:00 PM – 5:00 PM', title: 'Reaction Time', venue: '5001, 5004', society: 'Bityug', coordinator: 'Deepesh Jain', coordinatorContact: '9582690242' },
+    { dayId: 2, time: '9:00 AM – 5:00 PM', title: 'Technical Presentation', venue: '5106', society: 'ECE Dept', coordinator: 'Dimple', coordinatorContact: '9310716967' },
+    { dayId: 2, time: '2:00 PM – 5:00 PM', title: 'Technical Presentation', venue: '5301', society: 'Bityug', coordinator: 'Deepesh Jain', coordinatorContact: '9582690242' },
+    { dayId: 2, time: '11:00 AM – 3:00 PM', title: 'Subway Surfers', venue: 'Canteen Area', society: 'Robogyan', coordinator: 'Ayush Kumar Jha', coordinatorContact: '7827109679' },
 
     // ════════════════════════════════════════
-    //  DAY 3 — 20 events
+    //  DAY 3
     // ════════════════════════════════════════
-    { dayId: 3, time: '08:00', endTime: '09:30', title: 'Fun Run 5K', venue: 'Campus Loop', category: 'sports', description: 'A fun 5K run around campus with colour splashes and music at every kilometer.', image: img(5) },
-    { dayId: 3, time: '09:00', endTime: '11:00', title: 'Hackathon Demos', venue: 'Innovation Lab', category: 'tech', description: 'Teams present their creations to a panel of judges. The best hack wins it all.', image: img(6), prizePool: '₹75,000', teamSize: '2-4 Members' },
-    { dayId: 3, time: '09:30', endTime: '11:00', title: 'Paper Presentation', venue: 'Seminar Hall B', category: 'tech', description: 'Present your research to an academic panel. Best paper wins publication support.', image: img(7) },
-    { dayId: 3, time: '10:00', endTime: '12:00', title: 'Cosplay Contest', venue: 'Main Auditorium', category: 'cultural', description: 'Become your favorite character. Judged on accuracy, creativity, and stage presence.', image: img(8), prizePool: '₹15,000' },
-    { dayId: 3, time: '10:00', endTime: '11:30', title: 'E-Sports: FIFA', venue: 'Gaming Arena', category: 'tech', description: 'FIFA 26 tournament on the big screen. May the best gamer win.', image: img(9), prizePool: '₹20,000' },
-    { dayId: 3, time: '10:30', endTime: '12:00', title: 'Pottery Workshop', venue: 'Art Room', category: 'cultural', description: 'Get your hands dirty. Learn the art of wheel-thrown pottery from a master craftsperson.', image: img(1) },
-    { dayId: 3, time: '11:00', endTime: '13:00', title: 'Badminton Finals', venue: 'Indoor Court', category: 'sports', description: 'Singles and doubles finals. Speed, precision, and nerves of steel.', image: img(2), prizePool: '₹10,000' },
-    { dayId: 3, time: '11:30', endTime: '13:00', title: 'Blockchain Talk', venue: 'Seminar Hall A', category: 'tech', description: 'Deep dive into DeFi, NFTs, and the future of decentralized technology.', image: img(3) },
-    { dayId: 3, time: '12:00', endTime: '13:30', title: 'Rangoli Competition', venue: 'Gallery Wing', category: 'cultural', description: 'Create stunning colorful rangolis. Blend tradition with innovation.', image: img(4), teamSize: '2-3 Members' },
-    { dayId: 3, time: '12:30', endTime: '14:00', title: 'Fashion Show', venue: 'Main Auditorium', category: 'cultural', description: 'Glamour meets creativity — students walk the ramp in original designs.', image: img(5) },
-    { dayId: 3, time: '13:00', endTime: '14:30', title: 'Chess Blitz', venue: 'Student Center', category: 'sports', description: '3-minute chess blitz tournament. Rapid thinking under brutal time pressure.', image: img(6), prizePool: '₹8,000' },
-    { dayId: 3, time: '14:00', endTime: '15:30', title: 'Virtuality', venue: 'Lab 301', category: 'tech', description: 'VR gaming experience — explore immersive worlds and compete in virtual challenges.', image: img(7) },
-    { dayId: 3, time: '14:30', endTime: '16:00', title: 'Graffiti Wall', venue: 'Campus Grounds', category: 'cultural', description: 'Spray paint your vision on the fest wall. Street art at its finest.', image: img(8) },
-    { dayId: 3, time: '15:00', endTime: '17:00', title: 'E-Sports Tournament', venue: 'Gaming Arena', category: 'tech', description: 'Grand finals across all titles on the big screen. Massive crowd, massive stakes.', image: img(9), prizePool: '₹60,000', teamSize: '1-5 Members' },
-    { dayId: 3, time: '15:30', endTime: '17:00', title: 'Tug of War', venue: 'Sports Ground', category: 'sports', description: 'Raw power meets team coordination. Eight vs eight, no mercy.', image: img(1), teamSize: '8 Members' },
-    { dayId: 3, time: '16:00', endTime: '17:30', title: 'Slam Poetry', venue: 'Amphitheatre', category: 'cultural', description: 'Words that hit hard. Spoken word performances that leave the audience breathless.', image: img(2), prizePool: '₹8,000' },
-    { dayId: 3, time: '17:00', endTime: '18:30', title: 'Awards & Closing', venue: 'Main Auditorium', category: 'ceremony', description: 'Celebrating the winners, the moments, and the memories. See you next year.', image: img(3) },
-    { dayId: 3, time: '18:00', endTime: '19:30', title: 'Lantern Release', venue: 'Sports Ground', category: 'ceremony', description: 'Light a lantern and let it float into the night sky. A moment of collective beauty.', image: img(4) },
-    { dayId: 3, time: '19:00', endTime: '20:00', title: 'Alumni Mixer', venue: 'Student Center', category: 'ceremony', description: 'Connect with alumni over snacks and stories. Networking that actually matters.', image: img(5) },
-    { dayId: 3, time: '20:00', endTime: '23:00', title: 'Star Night', venue: 'Main Stage', category: 'music', description: 'The grand finale — a celebrity performance to close Utkarsh with a bang.', image: img(6) },
+    { dayId: 3, time: '11:00 AM', title: 'Inferno / Nach Baliye', venue: 'Main Stage', society: 'Insync', coordinator: 'Divya Chauhan', coordinatorContact: '7053612015' },
+    { dayId: 3, time: '9:00 AM – 2:00 PM', title: 'Contentio: A Conventional Debate (ADABI 5.0)', venue: '2409 & 2401', society: 'Quintessence', coordinator: 'Harsh Punia', coordinatorContact: '7619997487' },
+    { dayId: 3, time: '11:00 AM – 12:30 PM', title: 'Poetry (Hindi)', venue: '4301', coordinator: 'Ms. Apurva Jain', coordinatorContact: '9871097922' },
+    { dayId: 3, time: '11:00 AM – 12:30 PM', title: 'Nostalgia Cut', venue: '20035305', society: 'Avant Garde', coordinator: 'Yug Bhagat', coordinatorContact: '9560196454' },
+    { dayId: 3, time: 'TBD', title: 'What If?', venue: '2101-2102', society: 'Word Wizards', coordinator: 'Nikunj Sharma', coordinatorContact: '886026288' },
+    { dayId: 3, time: '11:00 AM – 1:00 PM', title: 'Face Painting', venue: '2404', society: 'Imperials', coordinator: 'Ritika Tiwari', coordinatorContact: '8383953234' },
+    { dayId: 3, time: '2:30 PM – 5:30 PM', title: 'Cadence (Western Solo Singing)', venue: '2113', society: 'Swaranjali', coordinator: 'Shashank Poddar', coordinatorContact: '7669663186' },
+    { dayId: 3, time: '11:00 AM – 3:00 PM', title: 'Vedic Ventures', venue: '1203 B', society: 'Sankalp Society', coordinator: 'Ms. Preeti Mam', coordinatorContact: '9899170291' },
+    { dayId: 3, time: '9:00 AM – 2:00 PM', title: 'Utkarsh Idol', venue: 'Amphitheater', society: 'Swaranjali', coordinator: 'Shashank Poddar', coordinatorContact: '7669663186' },
+    { dayId: 3, time: '12:00 PM – 2:30 PM', title: "Yakshagan's Annual Plays (Ticketed Shows)", venue: 'Auditorium', society: 'Yakshagan', coordinator: 'Priyanshi Sharma', coordinatorContact: '8368281307' },
+    { dayId: 3, time: '10:00 AM – 1:30 PM', title: 'Jack Of All Jests', venue: '2214', society: 'Alfaaz', coordinator: 'Vedant Joshi', coordinatorContact: '7668212892' },
+    { dayId: 3, time: '10:00 AM – 11:00 AM', title: 'Play', venue: 'Near Canteen Area', coordinator: 'Priyanshi Sharma', coordinatorContact: '8368281307' },
 ];
 
 export function getEventsForDay(dayId: number): ScheduleEvent[] {
     return SCHEDULE_EVENTS.filter(e => e.dayId === dayId);
 }
-
-// Category accent colors
-export const CATEGORY_COLORS: Record<string, string> = {
-    tech: '#38BDF8',
-    cultural: '#A78BFA',
-    sports: '#34D399',
-    ceremony: '#FBBF24',
-    music: '#F472B6',
-};

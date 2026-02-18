@@ -28,14 +28,12 @@ export interface SupabaseEvent {
     id: string;
     day_id: number;
     time: string;
-    end_time: string | null;
     title: string;
     venue: string;
+    society: string | null;
+    coordinator: string | null;
+    coordinator_contact: string | null;
     description: string | null;
-    category: string | null;
-    image_url: string;
-    prize_pool: string | null;
-    team_size: string | null;
     registration_link: string | null;
 }
 
@@ -43,14 +41,12 @@ function mapSupabaseEvent(e: SupabaseEvent): ScheduleEvent {
     return {
         dayId: e.day_id,
         time: e.time,
-        endTime: e.end_time ?? undefined,
         title: e.title,
         venue: e.venue,
+        society: e.society ?? undefined,
+        coordinator: e.coordinator ?? undefined,
+        coordinatorContact: e.coordinator_contact ?? undefined,
         description: e.description ?? undefined,
-        category: e.category as ScheduleEvent['category'],
-        image: e.image_url,
-        prizePool: e.prize_pool ?? undefined,
-        teamSize: e.team_size ?? undefined,
         registrationLink: e.registration_link ?? undefined,
     };
 }
