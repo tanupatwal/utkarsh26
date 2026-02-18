@@ -8,63 +8,108 @@ import { ImageData } from '../types';
 export const HIGHLIGHTS_CONTENT: ImageData[] = [
     {
         url: "/assets/highlights/1.webp",
-        title: "The Grand Stage",
-        description: "Where thousands gathered under one sky to celebrate the spirit of Utkarsh."
+        title: "Break It Out '25",
+        description: "A vibrant crowd gathered around a dance battle arena, capturing the raw energy of street culture."
     },
     {
         url: "/assets/highlights/2.webp",
-        title: "Night of Stars",
-        description: "Electrifying performances that echoed through the campus long after the lights went down."
+        title: "Centre Stage",
+        description: "Dramatic moments unfold as characters come to life under the theatrical spotlight."
     },
     {
         url: "/assets/highlights/3.webp",
-        title: "Behind the Curtain",
-        description: "The chaos, the laughter, the last-minute magic that made it all come together."
+        title: "Shadow Play",
+        description: "Emotion and storytelling merge in a captivating play of light and shadow."
     },
     {
         url: "/assets/highlights/4.webp",
-        title: "Creative Minds",
-        description: "Art installations that transformed empty halls into worlds of wonder."
+        title: "Rhythm in Motion",
+        description: "Synchronized beats and electric energy as dancers take over the main stage."
     },
     {
         url: "/assets/highlights/5.webp",
-        title: "Victory Roar",
-        description: "The moment of triumph — where hard work met glory under the spotlight."
+        title: "Voice of the Night",
+        description: "A soulful performance that resonated with every heartbeat in the crowd."
     },
     {
         url: "/assets/highlights/6.webp",
-        title: "The Crowd",
-        description: "A sea of faces, each carrying their own story of Utkarsh."
+        title: "Grace & Culture",
+        description: "A beautiful fusion of tradition and modernity showcased through dance."
     },
     {
         url: "/assets/highlights/7.webp",
-        title: "First Light",
-        description: "Dawn breaking over a campus still buzzing from the night before."
+        title: "In The Spotlight",
+        description: "Moments of recognition and discourse with distinguished guests."
     },
     {
         url: "/assets/highlights/8.webp",
-        title: "Innovation Hub",
-        description: "Where ideas became prototypes and prototypes became possibilities."
+        title: "Power Moves",
+        description: "High-octane energy and precision choreography that captivated the audience."
     },
     {
         url: "/assets/highlights/9.webp",
-        title: "Street Vibes",
-        description: "The open grounds turned festival — food, music, and spontaneous dance."
+        title: "Electric Atmosphere",
+        description: "The stage illuminated by passion and performance."
     },
     {
         url: "/assets/highlights/10.webp",
-        title: "Rhythm & Soul",
-        description: "Bodies in motion, telling stories that words never could."
+        title: "Main Event",
+        description: "A charismatic performance that set the night on fire."
     },
     {
         url: "/assets/highlights/11.webp",
-        title: "Acoustic Evenings",
-        description: "Melodies that carried through the corridors and stayed in our hearts."
+        title: "Crowd Control",
+        description: "Commanding the stage with an audience lost in the rhythm."
     },
     {
         url: "/assets/highlights/12.webp",
-        title: "Our Campus",
-        description: "The backdrop to it all — where memories were made and friendships forged."
+        title: "Peak Energy",
+        description: "The crescendo of the night where music and spirit collide."
+    },
+    {
+        url: "/assets/highlights/13.webp",
+        title: "Behind the Decks",
+        description: "Orchestrating the vibe that keeps the festival alive."
+    },
+    {
+        url: "/assets/highlights/14.webp",
+        title: "Innovation Showcase",
+        description: "Distinguished guests exploring the creativity and technical prowess of students."
+    },
+    {
+        url: "/assets/highlights/15.webp",
+        title: "Hands in the Air",
+        description: "Pure joy and connection as the beat drops."
+    },
+    {
+        url: "/assets/highlights/16.webp",
+        title: "Folk Rhythms",
+        description: "Vibrant colors and energetic moves celebrating cultural heritage."
+    },
+    {
+        url: "/assets/highlights/17.webp",
+        title: "Words of Wisdom",
+        description: "Inspiring speeches that set the tone for the event."
+    },
+    {
+        url: "/assets/highlights/18.webp",
+        title: "Leadership Speak",
+        description: "Guidance and vision shared from the podium."
+    },
+    {
+        url: "/assets/highlights/19.webp",
+        title: "Honoring Excellence",
+        description: "Recognizing talent and achievement on the main stage."
+    },
+    {
+        url: "/assets/highlights/20.webp",
+        title: "Confetti Celebration",
+        description: "A magical moment of music and color filling the air."
+    },
+    {
+        url: "/assets/highlights/21.webp",
+        title: "Soulful Melodies",
+        description: "Captivating the audience with a powerful vocal performance."
     },
 ];
 

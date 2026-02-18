@@ -229,34 +229,38 @@ const STYLES = `
   background: #111;
 }
 
-/* ─── Image transition: clip-path wipe + scale reveal ─── */
+/* ─── Image transition: smooth fade + scale + unblur ─── */
 .${CLS}-img {
   position: absolute; inset: 0;
   width: 100%; height: 100%;
   object-fit: cover;
-  filter: grayscale(0.85) contrast(1.1);
   opacity: 0;
-  transform: scale(1.12);
-  clip-path: inset(100% 0 0 0);
+  transform: scale(1.15);
+  filter: blur(10px) grayscale(100%);
   transition:
-    opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1),
-    transform 0.9s cubic-bezier(0.16, 1, 0.3, 1),
-    clip-path 0.7s cubic-bezier(0.16, 1, 0.3, 1),
-    filter 0.6s ease;
-  will-change: opacity, transform, clip-path;
+    opacity 0.4s cubic-bezier(0.2, 0.8, 0.2, 1),
+    transform 0.6s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.4s ease;
+  will-change: opacity, transform, filter;
 }
 .${CLS}-img.img-active {
   opacity: 1;
   transform: scale(1);
-  clip-path: inset(0 0 0 0);
+  filter: blur(0px) grayscale(100%) contrast(1.05);
   z-index: 2;
 }
+/* Colorize on hover (either frame hover or name hover via class) */
+.${CLS}-img-frame:hover .${CLS}-img.img-active,
+.${CLS}-img.img-active.img-colored {
+  filter: blur(0px) grayscale(0%) contrast(1.05);
+}
+
 .${CLS}-img.img-prev {
-  opacity: 0.4;
-  transform: scale(1.04);
-  clip-path: inset(0 0 0 0);
-  filter: grayscale(1) contrast(0.8) blur(2px);
+  opacity: 0;
+  transform: scale(1);
+  filter: blur(5px) grayscale(100%);
   z-index: 1;
+  transition: opacity 0.4s ease, filter 0.4s ease;
 }
 
 /* ─── Role label with slide-fade ─── */
@@ -640,10 +644,11 @@ const TeamSection: React.FC = () => {
               {TEAM_MEMBERS.map((member, i) => {
                 const isActive = i === effectiveIndex;
                 const isPrev = i === prevActiveIndex && i !== effectiveIndex;
+                const isHovered = hoverIndex === i;
                 return (
                   <img
                     key={i}
-                    className={`${CLS}-img${isActive ? ' img-active' : ''}${isPrev ? ' img-prev' : ''}`}
+                    className={`${CLS}-img${isActive ? ' img-active' : ''}${isPrev ? ' img-prev' : ''}${isHovered ? ' img-colored' : ''}`}
                     src={member.image}
                     alt={member.name}
                     loading="lazy"
