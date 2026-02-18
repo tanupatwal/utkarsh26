@@ -20,9 +20,9 @@ export interface ScheduleDay {
 }
 
 export const SCHEDULE_DAYS: ScheduleDay[] = [
-    { id: 1, label: 'DAY 01', date: 'Feb 25' },
-    { id: 2, label: 'DAY 02', date: 'Feb 26' },
-    { id: 3, label: 'DAY 03', date: 'Feb 27' },
+    { id: 1, label: 'DAY 01', date: 'Feb 19' },
+    { id: 2, label: 'DAY 02', date: 'Feb 20' },
+    { id: 3, label: 'DAY 03', date: 'Feb 21' },
 ];
 
 export const SCHEDULE_EVENTS: ScheduleEvent[] = [
