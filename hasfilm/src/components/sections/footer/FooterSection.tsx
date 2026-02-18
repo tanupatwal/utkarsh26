@@ -121,15 +121,11 @@ const FooterSection: React.FC = () => {
             {/* ── Bottom bar ── */}
             <div className="footer__bottom">
                 <p className="footer__credit">
-                    Made with <span className="heart">❤️</span> by{' '}
-                    <a
-                        href="http://instagram.com/thecampuschronicles.adgips/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                    >
-                        TCC
-                    </a>{' '}
-                    — The Official Media House of ADGIPS
+                    Made with <span className="heart">❤️</span> 
+
+                             {/* ── jeev-jantu of adgips : ) ── */}
+
+
                 </p>
                 <p className="footer__copyright">
                     © {new Date().getFullYear()} Utkarsh · ADGIPS
