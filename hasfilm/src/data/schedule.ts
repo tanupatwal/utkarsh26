@@ -136,6 +136,7 @@ export const SCHEDULE_EVENTS: ScheduleEvent[] = [
     // ════════════════════════════════════════
     //  DAY 3
     // ════════════════════════════════════════
+    { dayId: 3, time: 'Evening', title: 'Star Night — Charu Semwal Live', venue: 'Main Stage', description: 'The star event of Utkarsh 2026 — an electrifying live performance by Charu Semwal.', imageUrl: '/eventposters/charu_semwal_live.jpg' },
     { dayId: 3, time: '11:00 AM', title: 'Inferno / Nach Baliye', venue: 'Main Stage', society: 'Insync', coordinator: 'Divya Chauhan', coordinatorContact: '7053612015' },
     { dayId: 3, time: '9:00 AM – 2:00 PM', title: 'Contentio: A Conventional Debate (ADABI 5.0)', venue: '2409 & 2401', society: 'Quintessence', coordinator: 'Harsh Punia', coordinatorContact: '7619997487' },
     { dayId: 3, time: '11:00 AM – 12:30 PM', title: 'Poetry (Hindi)', venue: '4301', coordinator: 'Ms. Apurva Jain', coordinatorContact: '9871097922' },

@@ -64,7 +64,7 @@ export function useEvents() {
                 .from('events')
                 .select('*')
                 .order('day_id', { ascending: true })
-                .order('time', { ascending: true });
+                .order('sort_order', { ascending: true });
 
             if (error) throw error;
             return (data as SupabaseEvent[]).map(mapSupabaseEvent);

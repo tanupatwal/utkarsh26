@@ -93,7 +93,7 @@ const App: React.FC = () => {
                     top: 0,
                     left: 0,
                     width: '100%',
-                    height: '100vh',
+                    height: '100dvh',
                     zIndex: 1,
                     pointerEvents: 'none',
                 }}
@@ -118,7 +118,7 @@ const App: React.FC = () => {
                 </div>
 
                 {/* Gallery section — drives 3D gallery + HUD via ScrollTrigger */}
-                <section id="gallery-section" style={{ height: isMobile ? '300vh' : '500vh', position: 'relative' }}>
+                <section id="gallery-section" style={{ height: isMobile ? '400vh' : '500vh', position: 'relative' }}>
                     <GalleryOverlay />
                 </section>
 
@@ -126,11 +126,11 @@ const App: React.FC = () => {
                  *   1. Real scroll height for ScrollTrigger
                  *   2. Stable trigger ID (#highlights-section, etc.)
                  *   Components render position:sticky content inside */}
-                <section id="highlights-section" style={{ height: isMobile ? 'auto' : '175vh', position: 'relative' }}>
+                <section id="highlights-section" style={{ height: isMobile ? 'auto' : '175vh', position: 'relative', background: isMobile ? '#0B0F1A' : 'transparent' }}>
                     {isMobile ? <MobileHighlightsSection /> : <HighlightsSection />}
                 </section>
 
-                <section id="schedule-section" style={{ position: 'relative' }}>
+                <section id="schedule-section" style={{ position: 'relative', background: isMobile ? '#0B0F1A' : 'transparent' }}>
                     <ScheduleSection />
                 </section>
 

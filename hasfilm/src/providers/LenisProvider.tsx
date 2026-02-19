@@ -68,6 +68,14 @@ const LenisProvider: React.FC<LenisProviderProps> = ({ children }) => {
         // Disable GSAP's built-in lag smoothing to prevent stutters
         gsap.ticker.lagSmoothing(0);
 
+        // Mobile: normalizeScroll prevents address bar show/hide from
+        // disrupting ScrollTrigger; ignoreMobileResize avoids constant
+        // recalculations on mobile resize events (GSAP recommended).
+        if (ScrollTrigger.isTouch) {
+            ScrollTrigger.normalizeScroll(true);
+            ScrollTrigger.config({ ignoreMobileResize: true });
+        }
+
         // Gallery velocity dampening — slow scroll in gallery section
         ScrollTrigger.create({
             trigger: '#gallery-section',

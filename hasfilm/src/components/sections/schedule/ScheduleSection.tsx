@@ -491,9 +491,9 @@ const STYLES = `
 
   /* Thumbnail */
   .${CLS}-mob-thumb {
-    width: 48px;
-    height: 48px;
-    min-width: 48px;
+    width: 52px;
+    height: 52px;
+    min-width: 52px;
     border-radius: 6px;
     object-fit: cover;
     border: 1px solid ${ACCENT_DIM};
@@ -510,7 +510,7 @@ const STYLES = `
   }
   .${CLS}-mob-title {
     font-family: var(--font-heading);
-    font-size: 0.82rem;
+    font-size: 0.95rem;
     font-weight: 700;
     letter-spacing: 0.08em;
     text-transform: uppercase;
@@ -524,7 +524,7 @@ const STYLES = `
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    font-size: 0.65rem;
+    font-size: 0.75rem;
     color: rgba(148,163,184,0.8);
     font-family: var(--font-mono);
   }
@@ -789,18 +789,8 @@ const ScheduleSection: React.FC = () => {
         const el = containerRef.current;
         if (!el) return;
 
-        // Fade in only — no fade out on exit
-        const fadeTl = gsap.timeline({
-            scrollTrigger: {
-                trigger: '#schedule-section',
-                start: 'top bottom',
-                end: 'bottom top',
-                scrub: 0.5,
-            },
-        });
-        fadeTl
-            .fromTo(el, { opacity: 0 }, { opacity: 1, duration: 0.15 })
-            .to(el, { opacity: 1, duration: 0.85 });
+        // No opacity scrub — section starts visible (like highlights/team).
+        // Content reveal is handled by `cardsRevealed` state transitions.
 
         // Cards: reveal when section in view
         const st = ScrollTrigger.create({
@@ -809,11 +799,9 @@ const ScheduleSection: React.FC = () => {
             end: 'bottom top',
             onEnter: () => setCardsRevealed(true),
             onEnterBack: () => setCardsRevealed(true),
-            onLeaveBack: () => setCardsRevealed(false),
         });
 
         return () => {
-            fadeTl.kill();
             st.kill();
         };
     }, []);
@@ -828,7 +816,7 @@ const ScheduleSection: React.FC = () => {
             style={{
                 position: 'relative',
                 width: '100%', minHeight: '100vh',
-                opacity: 0, zIndex: 25,
+                opacity: 1, zIndex: 25,
                 fontFamily: "var(--font-heading)",
                 color: '#fff',
             }}
@@ -913,9 +901,12 @@ const ScheduleSection: React.FC = () => {
             }}>
                 {/* ── Day tabs ── */}
                 <nav style={{
-                    position: 'relative', zIndex: 50,
-                    marginBottom: '1.5rem', marginTop: '3rem',
+                    position: isMobile ? 'sticky' as const : 'relative' as const,
+                    top: isMobile ? 0 : undefined,
+                    zIndex: 50,
+                    marginBottom: '1.5rem', marginTop: isMobile ? '4.5rem' : '3rem',
                     width: '100%', maxWidth: '900px', padding: '0 1rem',
+                    background: isMobile ? '#0B0F1A' : 'transparent',
                 }}>
                     <div style={{
                         display: 'flex', justifyContent: 'space-between',
@@ -1152,6 +1143,14 @@ const ScheduleSection: React.FC = () => {
                                             className={`${CLS}-mob-header`}
                                             onClick={() => handleAccordionToggle(i)}
                                         >
+                                            {event.imageUrl && !isExpanded && (
+                                                <img
+                                                    src={event.imageUrl}
+                                                    alt={event.title}
+                                                    className={`${CLS}-mob-thumb`}
+                                                    loading="lazy"
+                                                />
+                                            )}
                                             <div className={`${CLS}-mob-info`}>
                                                 <h4 className={`${CLS}-mob-title`}>{event.title}</h4>
                                                 <div className={`${CLS}-mob-subtitle`}>
